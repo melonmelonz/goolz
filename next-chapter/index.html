@@ -1116,7 +1116,7 @@
 <!-- ══════════════ BOOT SCREEN ══════════════ -->
 <div id="boot">
   <h1>Next Chapter</h1>
-  <div id="boot-tagline">Version 2.2</div>
+  <div id="boot-tagline">Version <span id="boot-version-num">2.3</span></div>
   <div id="boot-bar-wrap"><div id="boot-bar"></div></div>
 </div>
 
@@ -2848,9 +2848,13 @@ Features needed:
 const NCD_VERSION = 'v2.3.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
+// Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
+// system info shows the full "v2.3.0".
 (function syncVersionLabels() {
-  const tag = document.getElementById('mycomp-os-version');
-  if (tag) tag.textContent = NCD_VERSION;
+  const sys = document.getElementById('mycomp-os-version');
+  if (sys) sys.textContent = NCD_VERSION;
+  const boot = document.getElementById('boot-version-num');
+  if (boot) boot.textContent = NCD_VERSION.replace(/^v/, '').replace(/\.\d+$/, '');
 })();
 
 // ═══════════════════════════════════════════════
@@ -2863,7 +2867,9 @@ window.NCD_VERSION = NCD_VERSION;
   // bump re-shows the splash once instead of staying on "already booted".
   const BOOT_VERSION = NCD_VERSION;
 
-  if (sessionStorage.getItem('booted') === BOOT_VERSION) {
+  // localStorage instead of sessionStorage: the boot animation should
+  // play once per version per browser, not every new tab.
+  if (localStorage.getItem('booted') === BOOT_VERSION) {
     boot.style.display = 'none';
     // Defer to next tick: const/let declarations later in this same <script>
     // tag (taskArea, taskBtns, winMeta, _drag, startMenu, etc.) are still in
@@ -2889,7 +2895,7 @@ window.NCD_VERSION = NCD_VERSION;
         boot.classList.add('hidden');
         setTimeout(() => {
           boot.style.display = 'none';
-          sessionStorage.setItem('booted', BOOT_VERSION);
+          localStorage.setItem('booted', BOOT_VERSION);
           initDesktop();
         }, 550);
       }, 300);

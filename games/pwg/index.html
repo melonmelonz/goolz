@@ -423,10 +423,16 @@ function initGame(seed, roster) {
     const [sx, sy] = SPAWNS[r.slot];
     players[r.id] = {
       id: r.id, name: r.name, color: r.color, slot: r.slot,
+      // Logical tile (the source of truth for collision/bombs/pickups)
+      tileX: sx, tileY: sy,
+      // Render position (interpolated during a step, otherwise pinned to tile center)
       x: sx * TILE + TILE / 2, y: sy * TILE + TILE / 2,
+      // Step animation state — null when idle.
+      step: null,
       vx: 0, vy: 0, dir: 1,
       bombs: 1, power: 2, speedTier: 0,
       bombsActive: 0, alive: true,
+      // Networked target (only meaningful for remote peers in netplay)
       tx: sx * TILE + TILE / 2, ty: sy * TILE + TILE / 2,
     };
   }
@@ -503,97 +509,81 @@ function inputVec() {
   return [ix, iy];
 }
 
-// Attempt grid-aligned movement with classic Bomberman "corridor nudge"
-function moveLocal(p, dt) {
-  const [ix, iy] = inputVec();
-  const speed = (BASE_SPEED + p.speedTier * SPEED_STEP) * TILE;
-  // Determine intended direction: prefer non-zero axis. Diagonal: pick whichever has corridor.
-  let dx = 0, dy = 0;
-  if (ix !== 0 && iy === 0) dx = ix;
-  else if (iy !== 0 && ix === 0) dy = iy;
-  else if (ix !== 0 && iy !== 0) {
-    // diagonal — prefer horizontal if blocked vertically and vice versa
-    const ahead = (a, b) => !isSolid(Math.floor(p.x / TILE) + a, Math.floor(p.y / TILE) + b);
-    const tx = Math.floor(p.x / TILE), ty = Math.floor(p.y / TILE);
-    if (ahead(ix, 0) && !ahead(0, iy)) dx = ix;
-    else if (ahead(0, iy) && !ahead(ix, 0)) dy = iy;
-    else dx = ix; // arbitrary
+// ───────────────────────────────────────────────────────────────────────
+// Discrete tile-step movement. Each entity occupies exactly one tile at
+// rest. A "step" is an animated transition into an adjacent tile that
+// takes 1/(BASE_SPEED+...) seconds. While a step is in flight, input is
+// ignored — the entity finishes the step before the next one is queued.
+// This keeps everything aligned to the grid and makes AI trivial.
+// ───────────────────────────────────────────────────────────────────────
+function tileCenterX(tx) { return tx * TILE + TILE / 2; }
+function tileCenterY(ty) { return ty * TILE + TILE / 2; }
+
+// Begin a step into the adjacent tile (dx,dy ∈ {-1,0,1}, exactly one nonzero).
+// Returns true if the step was started, false if blocked or already stepping.
+function startStep(p, dx, dy) {
+  if (p.step) return false;
+  if (!dx && !dy) return false;
+  const ntx = p.tileX + dx, nty = p.tileY + dy;
+  // Allow walking off a bomb you're standing on (the one you just placed).
+  const ignoreBomb = bombAt(p.tileX, p.tileY);
+  if (isSolid(ntx, nty, ignoreBomb)) return false;
+  // Don't walk into another live player on their resting tile.
+  for (const id in players) {
+    const o = players[id];
+    if (!o || !o.alive || o === p) continue;
+    if (!o.step && o.tileX === ntx && o.tileY === nty) return false;
   }
-  if (dx === 0 && dy === 0) { p.vx = p.vy = 0; return; }
+  const tilesPerSec = BASE_SPEED + p.speedTier * SPEED_STEP;
+  p.step = {
+    fromX: tileCenterX(p.tileX), fromY: tileCenterY(p.tileY),
+    toX:   tileCenterX(ntx),     toY:   tileCenterY(nty),
+    progress: 0,
+    duration: 1 / tilesPerSec,
+  };
+  p.tileX = ntx; p.tileY = nty;
+  if (dx > 0) p.dir = 1;
+  else if (dx < 0) p.dir = 3;
+  else if (dy > 0) p.dir = 2;
+  else p.dir = 0;
+  p.vx = dx * tilesPerSec * TILE;
+  p.vy = dy * tilesPerSec * TILE;
+  return true;
+}
 
-  // axis position (along) and cross axis
-  let along, cross, tilesAlong;
-  if (dx !== 0) {
-    along = p.x; cross = p.y; tilesAlong = dx;
-    p.dir = dx > 0 ? 1 : 3;
-  } else {
-    along = p.y; cross = p.x; tilesAlong = dy;
-    p.dir = dy > 0 ? 2 : 0;
-  }
-
-  // Try to move along axis. If blocked by tile in front, try nudging cross to align with corridor.
-  const wantStep = speed * dt * tilesAlong;
-  const tileX = Math.floor(p.x / TILE), tileY = Math.floor(p.y / TILE);
-  const aheadX = tileX + (dx !== 0 ? tilesAlong : 0);
-  const aheadY = tileY + (dy !== 0 ? tilesAlong : 0);
-  const ignoreBomb = bombAt(tileX, tileY); // allow walking off bomb you just placed
-
-  // Cross-axis snap toward tile center if there's a corridor
-  const crossTileCenter = (Math.floor(cross / TILE) + 0.5) * TILE;
-  const crossOff = cross - crossTileCenter;
-  const snapAmt = Math.min(Math.abs(crossOff), speed * dt * 0.85);
-  let canStep = !isSolid(aheadX, aheadY, ignoreBomb);
-
-  // If straight blocked, see if a nudge unlocks it
-  if (!canStep) {
-    if (Math.abs(crossOff) > 1) {
-      // try the next tile in the direction we're closer to
-      const nudgeDir = -Math.sign(crossOff); // toward center
-      const nudgeAheadX = dx !== 0 ? aheadX : aheadX + nudgeDir;
-      const nudgeAheadY = dx !== 0 ? aheadY + nudgeDir : aheadY;
-      if (!isSolid(nudgeAheadX, nudgeAheadY, ignoreBomb)) {
-        // move purely in cross direction this frame
-        if (dx !== 0) p.y -= Math.sign(crossOff) * snapAmt;
-        else p.x -= Math.sign(crossOff) * snapAmt;
-        p.vx = dx !== 0 ? 0 : -Math.sign(crossOff) * speed;
-        p.vy = dx !== 0 ? -Math.sign(crossOff) * speed : 0;
-        return;
-      }
-    }
+// Advance an in-flight step. Returns true the moment the step completes.
+function advanceStep(p, dt) {
+  if (!p.step) {
+    // Pin render position to tile center so nothing drifts.
+    p.x = tileCenterX(p.tileX);
+    p.y = tileCenterY(p.tileY);
     p.vx = p.vy = 0;
-    return;
+    return false;
   }
+  p.step.progress += dt / p.step.duration;
+  if (p.step.progress >= 1) {
+    p.x = p.step.toX;
+    p.y = p.step.toY;
+    p.step = null;
+    p.vx = p.vy = 0;
+    return true;
+  }
+  const t = p.step.progress;
+  p.x = p.step.fromX + (p.step.toX - p.step.fromX) * t;
+  p.y = p.step.fromY + (p.step.toY - p.step.fromY) * t;
+  return false;
+}
 
-  // Center along cross axis as we walk
-  if (Math.abs(crossOff) > 0.1) {
-    if (dx !== 0) p.y -= Math.sign(crossOff) * snapAmt;
-    else p.x -= Math.sign(crossOff) * snapAmt;
-  }
-
-  // Apply along step but clamp to not enter the next tile if it's solid (next-next check)
-  if (dx !== 0) {
-    const newX = p.x + wantStep;
-    // Don't allow center to cross into solid tile
-    const targetTile = Math.floor((newX + Math.sign(wantStep) * TILE * 0.49) / TILE);
-    if (!isSolid(targetTile, tileY, ignoreBomb)) {
-      p.x = newX;
-    } else {
-      // clamp to current tile's edge
-      const edge = (tileX + (wantStep > 0 ? 0.999 : 0.001)) * TILE - Math.sign(wantStep) * TILE * 0.49;
-      p.x = wantStep > 0 ? Math.min(newX, edge) : Math.max(newX, edge);
-    }
-    p.vx = wantStep > 0 ? speed : -speed; p.vy = 0;
-  } else {
-    const newY = p.y + wantStep;
-    const targetTile = Math.floor((newY + Math.sign(wantStep) * TILE * 0.49) / TILE);
-    if (!isSolid(tileX, targetTile, ignoreBomb)) {
-      p.y = newY;
-    } else {
-      const edge = (tileY + (wantStep > 0 ? 0.999 : 0.001)) * TILE - Math.sign(wantStep) * TILE * 0.49;
-      p.y = wantStep > 0 ? Math.min(newY, edge) : Math.max(newY, edge);
-    }
-    p.vy = wantStep > 0 ? speed : -speed; p.vx = 0;
-  }
+// Local human player: read input, finish/start steps. Discrete grid.
+function moveLocal(p, dt) {
+  advanceStep(p, dt);
+  if (p.step) return;                       // mid-step — no new input
+  const [ix, iy] = inputVec();
+  if (!ix && !iy) return;
+  // Single-axis preferred. Diagonal: try horizontal first, fall back to vertical.
+  if (ix && !iy) { startStep(p, ix, 0); return; }
+  if (iy && !ix) { startStep(p, 0, iy); return; }
+  if (!startStep(p, ix, 0)) startStep(p, 0, iy);
 }
 
 // ───────────────────────────────────────────────────────────────────────
@@ -603,7 +593,7 @@ function tryDropBomb() {
   const p = localPlayer();
   if (!p || !p.alive || endResult) return;
   if (p.bombsActive >= p.bombs) return;
-  const tx = Math.floor(p.x / TILE), ty = Math.floor(p.y / TILE);
+  const tx = p.tileX, ty = p.tileY;
   if (bombAt(tx, ty)) return;
   if (tileAt(tx, ty) !== T_EMPTY) return;
   spawnBomb(p.id, tx, ty, p.power, performance.now() / 1000);
@@ -747,15 +737,17 @@ function update(dt, t) {
     if (fires[i].until <= now) fires.splice(i, 1);
   }
 
-  // Pickups
-  if (me_p && me_p.alive) {
-    const tx = Math.floor(me_p.x / TILE), ty = Math.floor(me_p.y / TILE);
-    const pu = powerupAt(tx, ty);
+  // Pickups + soloMode AI bot pickups too. With discrete movement,
+  // pickups trigger when an entity arrives on a tile (= step ended).
+  for (const id in players) {
+    const p = players[id];
+    if (!p || !p.alive) continue;
+    if (id !== me.id && !soloMode) continue; // only local + solo bots
+    const pu = powerupAt(p.tileX, p.tileY);
     if (pu) {
-      applyPowerup(me_p, pu.kind);
+      applyPowerup(p, pu.kind);
       powerups.splice(powerups.indexOf(pu), 1);
-      netSend({ t: 'pickup', tx, ty, kind: pu.kind });
-      rebuildHud();
+      if (id === me.id) { netSend({ t: 'pickup', tx: p.tileX, ty: p.tileY, kind: pu.kind }); rebuildHud(); }
     }
   }
 
@@ -763,15 +755,20 @@ function update(dt, t) {
   for (const id in players) {
     const p = players[id];
     if (!p.alive) continue;
-    const tx = Math.floor(p.x / TILE), ty = Math.floor(p.y / TILE);
+    const tx = p.tileX, ty = p.tileY;
     if (fires.some(f => f.tx === tx && f.ty === ty)) {
       if (id === me.id) {
         p.alive = false;
         netSend({ t: 'death' });
         rebuildHud();
         checkEnd();
+      } else if (soloMode) {
+        // Solo: AI bots have no network, claim death locally.
+        p.alive = false;
+        rebuildHud();
+        checkEnd();
       }
-      // remote player: wait for their own death broadcast (avoid double-counting)
+      // remote (networked) player: wait for their own death broadcast.
     }
   }
 
@@ -1787,63 +1784,69 @@ update = function(dt, t) {
 // AI: pick a target tile each ~0.6s (depending on difficulty), avoid imminent
 // fire, drop candles when adjacent to a gravestone OR an enemy.
 function aiTick(p, bot, dt, t) {
+  // Always advance the in-flight step so the bot reaches its next tile.
+  // Re-plan only when at rest on a tile.
+  if (p.step) { advanceStep(p, dt); return; }
   bot._think -= dt;
-  if (bot._think <= 0) {
+  // Re-plan whenever we land on a fresh tile, or after the think interval.
+  const reachedNewTile = bot._lastTileX !== p.tileX || bot._lastTileY !== p.tileY;
+  if (bot._think <= 0 || reachedNewTile || !bot._intent) {
     bot._think = bot.difficulty === 0 ? 0.9 : bot.difficulty === 1 ? 0.55 : 0.32;
     bot._intent = aiPlanIntent(p, bot);
+    bot._lastTileX = p.tileX; bot._lastTileY = p.tileY;
   }
-  // Move toward the target tile center
-  const tx = Math.floor(p.x / TILE), ty = Math.floor(p.y / TILE);
-  let want = bot._intent || { dir: 0 };
-  // Always run from danger first
+  const tx = p.tileX, ty = p.tileY;
+  let want = bot._intent || { dir: null };
+  // Always run from danger first.
   if (aiInDanger(tx, ty)) {
     const flee = aiFleeDir(p);
     if (flee) want = flee;
   }
-  // Apply movement (mirror moveLocal but with synthetic input)
-  aiMove(p, want, dt, bot);
-  // Maybe place a candle
+  // Maybe place a candle FIRST (before stepping off the tile).
   if (bot._intent?.bomb && p.bombsActive < p.bombs && tileAt(tx, ty) === T_EMPTY && !bombAt(tx, ty)) {
     if (!aiBombSelfTrap(p, tx, ty)) {
       spawnBomb(p.id, tx, ty, p.power, performance.now() / 1000);
       bot._intent.bomb = false;
     }
   }
+  // Initiate the next step.
+  aiMove(p, want, dt, bot);
 }
 
 function aiPlanIntent(p, bot) {
-  const tx = Math.floor(p.x / TILE), ty = Math.floor(p.y / TILE);
-  // Find nearest gravestone OR enemy via simple BFS, prefer enemy at hard difficulty
+  const tx = p.tileX, ty = p.tileY;
+  // Find nearest barrel OR enemy via BFS.
   const targets = [];
   for (const id in players) {
     const e = players[id];
     if (!e.alive || e.id === p.id) continue;
-    targets.push({ x: Math.floor(e.x / TILE), y: Math.floor(e.y / TILE), enemy: true });
+    targets.push({ x: e.tileX, y: e.tileY, enemy: true });
   }
-  // Add adjacent gravestones to push exploration
   for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
     if (tiles[yy * W + xx] === T_BARREL) targets.push({ x: xx, y: yy, enemy: false });
   }
-  if (targets.length === 0) return { dir: 0, bomb: false };
+  if (targets.length === 0) return { dir: null, bomb: false };
   const path = aiBFS(tx, ty, targets);
-  if (!path) return { dir: 0, bomb: false };
-  let dir = 0;
-  if (path.length > 1) {
+  let dir = null;
+  if (path && path.length > 1) {
     const next = path[1];
     if (next.x > tx) dir = 1;
     else if (next.x < tx) dir = 3;
     else if (next.y > ty) dir = 2;
-    else dir = 0;
+    else if (next.y < ty) dir = 0;
   }
-  // Bomb if next-to a gravestone or an enemy and we have a clear escape
+  // Bomb if next-to a barrel or an enemy and (we've planned an escape).
   let shouldBomb = false;
   for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-    const t = tileAt(tx + dx, ty + dy);
-    if (t === T_BARREL) shouldBomb = true;
+    const tt = tileAt(tx + dx, ty + dy);
+    if (tt === T_BARREL) shouldBomb = true;
     for (const tgt of targets) if (tgt.enemy && tgt.x === tx + dx && tgt.y === ty + dy) shouldBomb = true;
   }
   // wisp difficulty bombs less aggressively
   if (bot.difficulty === 0 && Math.random() < 0.5) shouldBomb = false;
+  // If we want to bomb, the next step should be away from the bomb (escape).
+  // The flee logic in aiTick handles that — once bomb is placed, aiInDanger
+  // will be true and aiFleeDir picks a non-blast direction.
   return { dir, bomb: shouldBomb };
 }
 
@@ -1912,51 +1915,66 @@ function aiFleeDir(p) {
   return null;
 }
 
+// Self-trap check: if we drop a bomb at (tx,ty), BFS up to N tile-steps
+// looking for any tile not in the prospective blast pattern. Bot only
+// dares to bomb if such an escape exists. N is generous because the fuse
+// gives plenty of time to step away.
 function aiBombSelfTrap(p, tx, ty) {
-  // Synthetic: simulate a fake bomb at (tx,ty) and check if BFS escape exists in <fuse
-  const fakeBombs = bombs.concat([{ ownerId: p.id, tx, ty, power: p.power, fuseUntil: 0 }]);
-  // any neighbor reachable that isn't in danger?
+  const power = p.power;
+  // Tiles touched by a bomb at (tx,ty) with this power, accounting for walls.
+  const blast = new Set();
+  blast.add(ty * W + tx);
   for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-    const nx = tx + dx, ny = ty + dy;
-    if (isSolid(nx, ny)) continue;
-    let safe = true;
-    for (const b of fakeBombs) {
-      if (b.tx === nx && b.ty === ny) safe = false;
-      if (b.tx === nx && Math.abs(b.ty - ny) <= b.power) safe = false;
-      if (b.ty === ny && Math.abs(b.tx - nx) <= b.power) safe = false;
+    for (let i = 1; i <= power; i++) {
+      const x = tx + dx * i, y = ty + dy * i;
+      if (x < 0 || y < 0 || x >= W || y >= H) break;
+      const t = tileAt(x, y);
+      if (t === T_WALL) break;
+      blast.add(y * W + x);
+      if (t === T_BARREL) break;
     }
-    if (safe) return false;
   }
-  return true; // trapped — don't drop
+  // BFS from (tx,ty) up to MAX_HOPS, treating the bomb's own tile as blocked
+  // for re-entry, walking only on non-solid tiles, looking for a tile not in blast.
+  const MAX_HOPS = 5;
+  const visited = new Uint8Array(W * H);
+  const startKey = ty * W + tx;
+  visited[startKey] = 1;
+  let frontier = [{ x: tx, y: ty, hop: 0 }];
+  while (frontier.length) {
+    const next = [];
+    for (const cur of frontier) {
+      if (cur.hop >= MAX_HOPS) continue;
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = cur.x + dx, ny = cur.y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const k = ny * W + nx;
+        if (visited[k]) continue;
+        if (isSolid(nx, ny)) continue;
+        visited[k] = 1;
+        if (!blast.has(k)) return false; // escape route exists
+        next.push({ x: nx, y: ny, hop: cur.hop + 1 });
+      }
+    }
+    frontier = next;
+  }
+  return true; // every reachable tile within MAX_HOPS hops is in the blast
 }
 
+// AI driver: walk along the planned intent, one tile at a time. The
+// step model handles the animation; this function just decides when to
+// initiate the next step.
 function aiMove(p, want, dt, bot) {
-  const speed = (BASE_SPEED + p.speedTier * SPEED_STEP) * TILE;
+  advanceStep(p, dt);
+  if (p.step) return;
+  if (!want || want.dir == null) return;
   let dx = 0, dy = 0;
   if (want.dir === 0) dy = -1;
   else if (want.dir === 1) dx = 1;
   else if (want.dir === 2) dy = 1;
   else if (want.dir === 3) dx = -1;
-  if (dx === 0 && dy === 0) { p.vx = p.vy = 0; return; }
-  const tileX = Math.floor(p.x / TILE), tileY = Math.floor(p.y / TILE);
-  const ahead = !isSolid(tileX + dx, tileY + dy);
-  if (!ahead) { p.vx = p.vy = 0; return; }
-  // snap cross axis
-  if (dx !== 0) {
-    const center = (Math.floor(p.y / TILE) + 0.5) * TILE;
-    const off = p.y - center;
-    if (Math.abs(off) > 0.5) p.y -= Math.sign(off) * Math.min(Math.abs(off), speed * dt * 0.85);
-    p.x += dx * speed * dt;
-    p.dir = dx > 0 ? 1 : 3;
-    p.vx = dx * speed; p.vy = 0;
-  } else {
-    const center = (Math.floor(p.x / TILE) + 0.5) * TILE;
-    const off = p.x - center;
-    if (Math.abs(off) > 0.5) p.x -= Math.sign(off) * Math.min(Math.abs(off), speed * dt * 0.85);
-    p.y += dy * speed * dt;
-    p.dir = dy > 0 ? 2 : 0;
-    p.vy = dy * speed; p.vx = 0;
-  }
+  if (!dx && !dy) return;
+  startStep(p, dx, dy);
 }
 
 // In solo mode, the rematch button restarts with fresh seed & roster.
