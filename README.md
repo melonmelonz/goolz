@@ -49,7 +49,7 @@ folded into goolz in May 2026. Old `/games/pwf3` paths 301 to
 ```
 ✦ haunted-tower palette        violet · sage · candle · bone
 ✦ original chiptune            D-Phrygian, Web Audio API, no files
-✦ AI ghosts (solo mode)        wisp · wraith · banshee  (3 difficulties)
+✦ AI ghosts (solo mode)        wraith · banshee · phantom (one tuned planner)
 ✦ mobile virtual D-pad         pointer:coarse → on-screen controls
 ✦ deeplinks + reconnect        ?room=CODE auto-joins; rejoin hint cached
 ✦ sudden-death tempo nudge     last seconds tighten the chiptune loop
@@ -63,8 +63,8 @@ folded into goolz in May 2026. Old `/games/pwf3` paths 301 to
 
 The same game ships as a native Win95 app window (`#win-pwg`,
 desktop icon `GOOLZ.exe`, candle glyph). Lighter reskin — palette
-+ copy + glyph swap; no chat, no mobile D-pad, no AI roster. Speaks
-the same relay.
++ copy + glyph swap; no chat, no mobile D-pad. Solo-vs-AI uses the
+same planner as the standalone client. Speaks the same relay.
 
 **Server (`pwg-rooms` Worker)** — Durable Object per room, hardened:
 
@@ -93,6 +93,165 @@ on powerup drops without trusting any peer. The DO only gates seat
 changes, stamps sender id, and broadcasts AI roster entries. AI
 movement runs on the host client (or the solo player) and is not
 networked.
+
+---
+
+## ░░ BOT AI DESIGN ░░
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  full-blown survival-first Bomberman planner                         │
+│  · timed threat windows · time-aware BFS · two hard invariants       │
+│  · same code path lives in /games/pwg AND embedded GOOLZ.exe         │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+The earlier bots had a fatal flaw: they'd reach a barrel, drop a candle,
+and walk straight into their own blast. The fix isn't "smarter heuristics" —
+the heuristics were fine. The fix is making *survival a structural
+invariant* of the planner, not a side effect.
+
+### Why naive Bomberman bots die
+
+A simple "is this tile in some bomb's blast?" check is **spatial only**.
+It treats a fuse 0.1 s away the same as one 2.3 s away, and it can't
+distinguish "I'll walk into this lane and out before it goes off" from
+"the fire arrives the moment I step in." Worse, when the bot is *standing
+on its own bomb*, every cardinal neighbour is in the blast — so the
+spatial flee-check returns no escape and the bot defaults to its prior
+intent (which was to drop the bomb in the first place). Suicide.
+
+The whole-world fix is to **plan in time**, not just space. Bomberman is
+a small game; the search is cheap.
+
+### Threat model
+
+For each bomb `b`:
+- Detonation time:  `t_det(b) = b.fuseUntil`
+- Blast tiles:      `aiBlastSet(b)` — cardinals out to `b.power`,
+                    stopping at the **first wall or barrel** (this is
+                    the bug the old embedded planner had — it stopped
+                    only at walls and so over-counted real danger).
+- Threat window on each blast tile:  `[t_det(b), t_det(b) + FIRE_TIME]`
+
+**Chain reactions** are simulated to fixpoint. If bomb A's blast covers
+bomb B's tile and `t_det(A) < t_det(B)`, then bomb B detonates at A's
+time. Iterate until nothing changes (≤ 8 passes — `MAX_BOMBS = 9`).
+
+**Active fires** already on the floor contribute `[0, f.until]`.
+
+A **hypothetical bomb** the planner is considering dropping adds
+`[now + BOMB_FUSE, now + BOMB_FUSE + FIRE_TIME]` *to its own tile* and
+the propagated set. This is what lets the bot ask "if I drop here,
+can I still survive?" before committing.
+
+### Time-aware BFS
+
+Every search is over the state space `(tile, hop)`:
+
+```
+arrival(h)   = now + h * tileTime
+occupancy(h) = [arrival(h), arrival(h+1)]      ← bot is in tile during this
+tileTime     = 1 / (BASE_SPEED + speedTier * SPEED_STEP)
+```
+
+Two predicates do all the work:
+
+```
+aiTileSafeAtHop(t, h)        no threat window on t overlaps occupancy(h)
+aiTileFinallySafe(t, h)      every threat window on t has ended by arrival(h)
+```
+
+`SafeAtHop` controls **edges** (can the bot move into this tile at this
+hop?). `FinallySafe` controls **goals** (can the bot stop on this tile
+forever and live?). The escape BFS terminates only on a `FinallySafe`
+node, which is what makes "I escaped" mean what it should.
+
+### Two hard invariants
+
+```
+I1  Step gate     A bot will not step into a tile unsafe at hop 1.
+                  Enforced both at planner edges and at aiTick/aiMove
+                  before the actual movement vector is applied.
+
+I2  Bomb gate     A bot will not drop a bomb unless aiTimedEscape with
+                  the hypothetical bomb included finds a finally-safe
+                  tile reachable in time.  Suicide-bombs become
+                  structurally impossible — there is no code path that
+                  drops a bomb without first proving an escape exists.
+```
+
+These two invariants are why the bots stopped killing themselves.
+Everything else is just routing.
+
+### The seven priorities
+
+The planner walks them in order and returns the first match:
+
+```
+1.  in danger now           →  step toward nearest finally-safe tile
+2.  powerup nearby          →  walk to it via timed-safe BFS
+3.  enemy in bomb-line      →  if aiCanBomb, drop
+4.  adjacent barrel         →  if aiCanBomb, drop
+5.  nearest barrel          →  walk to it via timed-safe BFS
+6.  nearest enemy           →  walk to it via timed-safe BFS
+7.  none of the above       →  stand still (idling beats dying)
+```
+
+Idle as the *terminal* fallthrough is intentional. The previous version
+fell back on "any open neighbour," which was a great way to walk into a
+firelane the planner hadn't considered.
+
+### Tunables
+
+```
+AI_THINK_INTERVAL = 0.18 s    (180 ms in the embedded build)
+AI_ESCAPE_HOPS    = 12        deep enough to clear a 2-tile blast through
+                              corridor geometry on a 15×11 map
+AI_NAV_HOPS       = 30        long-haul barrel/enemy nav
+```
+
+Faster re-planning is the single biggest quality lever. At 180 ms a bot
+re-decides about five times per tile-step — fast enough that "the lane
+just got dangerous" becomes "flee" before the bot commits.
+
+### Why the same code lives in two files
+
+`/games/pwg/index.html` uses **discrete tile-step movement** (logical
+`tileX/tileY` plus an animated step state) — the planner returns a
+`{dir, bomb}` and the step engine walks one tile at a time.
+
+The embedded `GOOLZ.exe` inside `/next-chapter` uses **continuous pixel
+movement** (`p.x/p.y`) inherited from the older NCD build. The planner
+returns `{dx, dy, drop}` and the bot's pixel-level step gate snaps the
+cross-axis to the tile centre while moving along the planned axis.
+
+Both files import the same five primitives in spirit:
+
+```
+aiBlastSet · aiBuildThreats · aiTileSafeAtHop · aiTileFinallySafe ·
+aiTimedEscape  +  aiSafeNavStep  +  aiCanBomb  +  aiPlan(Intent)
+```
+
+Diverging the two implementations would be a regression. If you change
+one, change the other.
+
+### Things deliberately left out
+
+- **Difficulty levels.** The previous build had wisp/wraith/banshee
+  tiers that mostly tuned think rate. With a planner that can prove its
+  own survival, "easy mode" amounts to making it slower at thinking,
+  which makes it *die more* — the opposite of what a casual player wants.
+  One tuned planner, three named ghosts (wraith, banshee, phantom).
+- **Predicting humans.** Bots reason about *bombs*, not future enemy
+  positions. Predicting a human's path adds complexity for a game where
+  bombs already make the future legible enough.
+- **Powerup hoarding.** Priority 2 grabs *the nearest* safe powerup; the
+  bot doesn't strategise about which kind. Bomberman powerups all
+  compound, so greed beats picking.
+- **Co-op AI.** Multiple AI bots in the same room don't coordinate.
+  They each plan independently. Their survival invariants prevent them
+  from bombing each other into a corner, which is enough.
 
 ---
 

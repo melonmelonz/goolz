@@ -381,11 +381,6 @@
     <div class="roomcode" id="roomcode" title="click to copy">------</div>
     <div class="row" style="margin:4px 0">
       <button id="btn-copylink" class="alt" style="padding:6px 14px;font-size:11px">COPY LINK</button>
-      <select id="ai-difficulty" style="font:inherit;background:var(--ink);color:var(--fg);border:1px solid var(--panel2);border-radius:6px;padding:6px 10px">
-        <option value="0">wisp · easy</option>
-        <option value="1" selected>wraith · normal</option>
-        <option value="2">banshee · hard</option>
-      </select>
       <button id="btn-add-ai" class="alt" style="padding:6px 14px;font-size:11px">+ ADD GHOST</button>
     </div>
     <div class="hint" id="copyhint">click code to copy</div>
@@ -1545,8 +1540,7 @@ document.getElementById('btn-copylink').addEventListener('click', copyRoomLink);
 document.getElementById('btn-add-ai').addEventListener('click', () => {
   if (!me.host) { setStatus('only the host can summon ghosts'); return; }
   if (started) return;
-  const diff = parseInt(document.getElementById('ai-difficulty').value, 10) | 0;
-  netSend({ t: 'ai_add', difficulty: diff });
+  netSend({ t: 'ai_add' });
 });
 
 function showRoom(code) {
@@ -1878,13 +1872,12 @@ function startSolo() {
   me.id = 'me';
   me.host = true;
   me.slot = 0;
-  // Build a roster: human in seat 0, three wraith-difficulty bots in 1/2/3.
-  const diff = parseInt(document.getElementById('ai-difficulty')?.value || '1', 10) | 0;
+  // Three named ghosts. No difficulty levels — one tuned planner.
   const roster = [
     { id: 'me', name: me.name, color: me.color, slot: 0 },
-    { id: 'ai1', name: 'wraith·a', color: 1, slot: 1, ai: true, difficulty: diff },
-    { id: 'ai2', name: 'wraith·b', color: 2, slot: 2, ai: true, difficulty: diff },
-    { id: 'ai3', name: 'wraith·c', color: 3, slot: 3, ai: true, difficulty: diff },
+    { id: 'ai1', name: 'wraith', color: 1, slot: 1, ai: true },
+    { id: 'ai2', name: 'banshee', color: 2, slot: 2, ai: true },
+    { id: 'ai3', name: 'phantom', color: 3, slot: 3, ai: true },
   ];
   for (const r of roster) peers.set(r.id, r);
   aiBots = roster.filter(r => r.ai).map(r => ({ ...r, _think: 0, _intent: null }));
@@ -1905,152 +1898,109 @@ update = function(dt, t) {
   }
 };
 
-// AI: pick a target tile each ~0.6s (depending on difficulty), avoid imminent
-// fire, drop candles when adjacent to a gravestone OR an enemy.
+// ═══════════════════════════════════════════════════════════════════
+// Solo AI — full-blown survival-first Bomberman bot.
+//
+// Design (see README "Bot AI design" for the long version):
+//
+//   THREAT MODEL. Each existing bomb b will detonate at time t_det = b.fuseUntil
+//   and produce fire on aiBlastSet(b) for FIRE_TIME seconds. So each tile
+//   covered by b's blast carries a *threat window* [t_det, t_det + FIRE_TIME].
+//   Chain reactions are simulated to fixpoint: if bomb A's blast covers
+//   bomb B's tile and t_det(A) < t_det(B), then B detonates at A's time.
+//   Active fires already on the floor add windows [0, f.until]. A
+//   hypothetical bomb (the one we're considering dropping) adds another
+//   window with t_det = now + BOMB_FUSE.
+//
+//   TIME-AWARE BFS. State = (tile, hop). Bot occupies hop-h tile during
+//   [now + h*tileTime, now + (h+1)*tileTime] where tileTime depends on
+//   the bot's speed tier. A tile is "enterable at hop h" iff none of
+//   its threat windows overlap that occupancy interval. A tile is
+//   "finally safe at hop h" iff every threat window on it has already
+//   ended by arrival — meaning the bot can sit there forever.
+//
+//   TWO HARD INVARIANTS the bot will not violate:
+//     I1. It never STEPS into a tile whose hop-1 occupancy intersects
+//         any threat window (planner via aiTileSafeAtHop, hard gate in aiTick).
+//     I2. It never DROPS a bomb unless aiTimedEscape(hypoBomb) finds a
+//         finally-safe tile reachable in time. So suicide-bombs are
+//         structurally impossible.
+//
+//   PRIORITIES the planner walks, in order:
+//     1. flee (in danger now)        → step toward finally-safe tile
+//     2. powerup nearby              → take it via timed-safe BFS
+//     3. enemy in bomb-line + escape → drop a bomb
+//     4. adjacent barrel + escape    → drop a bomb
+//     5. nearest barrel              → walk to it via timed-safe BFS
+//     6. nearest enemy               → walk to it via timed-safe BFS
+//     7. otherwise                   → stand still (idling beats dying)
+// ═══════════════════════════════════════════════════════════════════
+const AI_THINK_INTERVAL = 0.18;   // seconds between re-plans
+const AI_ESCAPE_HOPS    = 12;     // BFS depth for escape / nav
+const AI_NAV_HOPS       = 30;     // BFS depth for long-haul barrel/enemy nav
+
 function aiTick(p, bot, dt, t) {
-  // Always advance the in-flight step so the bot reaches its next tile.
-  // Re-plan only when at rest on a tile.
+  // Always advance an in-flight step so the bot reaches its next tile.
   if (p.step) { advanceStep(p, dt); return; }
   bot._think -= dt;
-  // Re-plan whenever we land on a fresh tile, or after the think interval.
   const reachedNewTile = bot._lastTileX !== p.tileX || bot._lastTileY !== p.tileY;
   if (bot._think <= 0 || reachedNewTile || !bot._intent) {
-    bot._think = bot.difficulty === 0 ? 0.9 : bot.difficulty === 1 ? 0.55 : 0.32;
-    bot._intent = aiPlanIntent(p, bot);
+    bot._think = AI_THINK_INTERVAL;
+    bot._intent = aiPlanIntent(p);
     bot._lastTileX = p.tileX; bot._lastTileY = p.tileY;
   }
   const tx = p.tileX, ty = p.tileY;
-  let want = bot._intent || { dir: null };
-  // Always run from danger first.
-  if (aiInDanger(tx, ty)) {
-    const flee = aiFleeDir(p);
-    if (flee) want = flee;
+  const want = bot._intent || { dir: null, bomb: false };
+  // Drop a candle FIRST (before stepping off this tile) — but only if
+  // the planner already verified a timed escape exists (Invariant I2).
+  if (want.bomb && p.bombsActive < p.bombs && tileAt(tx, ty) === T_EMPTY && !bombAt(tx, ty)) {
+    spawnBomb(p.id, tx, ty, p.power, performance.now() / 1000);
+    want.bomb = false;
+    // Force an immediate re-plan so the bot heads down its escape route.
+    bot._think = 0;
+    return;
   }
-  // Maybe place a candle FIRST (before stepping off the tile).
-  if (bot._intent?.bomb && p.bombsActive < p.bombs && tileAt(tx, ty) === T_EMPTY && !bombAt(tx, ty)) {
-    if (!aiBombSelfTrap(p, tx, ty)) {
-      spawnBomb(p.id, tx, ty, p.power, performance.now() / 1000);
-      bot._intent.bomb = false;
+  // Hard gate (Invariant I1): never step into a tile that's unsafe at hop 1.
+  if (want.dir != null) {
+    const [dx, dy] = aiDirVec(want.dir);
+    if (dx || dy) {
+      const ctx = aiBuildThreats(null);
+      if (!aiTileSafeAtHop(p.tileX + dx, p.tileY + dy, 1, ctx, aiTileTime(p))) {
+        bot._think = 0;
+        return;
+      }
+      if (isSolid(p.tileX + dx, p.tileY + dy, bombAt(p.tileX, p.tileY))) {
+        bot._think = 0;
+        return;
+      }
     }
   }
-  // Initiate the next step.
   aiMove(p, want, dt, bot);
 }
 
-function aiPlanIntent(p, bot) {
-  const tx = p.tileX, ty = p.tileY;
-  // Find nearest barrel OR enemy via BFS.
-  const targets = [];
-  for (const id in players) {
-    const e = players[id];
-    if (!e.alive || e.id === p.id) continue;
-    targets.push({ x: e.tileX, y: e.tileY, enemy: true });
-  }
-  for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
-    if (tiles[yy * W + xx] === T_BARREL) targets.push({ x: xx, y: yy, enemy: false });
-  }
-  if (targets.length === 0) return { dir: null, bomb: false };
-  const path = aiBFS(tx, ty, targets);
-  let dir = null;
-  if (path && path.length > 1) {
-    const next = path[1];
-    if (next.x > tx) dir = 1;
-    else if (next.x < tx) dir = 3;
-    else if (next.y > ty) dir = 2;
-    else if (next.y < ty) dir = 0;
-  }
-  // Bomb if next-to a barrel or an enemy and (we've planned an escape).
-  let shouldBomb = false;
-  for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-    const tt = tileAt(tx + dx, ty + dy);
-    if (tt === T_BARREL) shouldBomb = true;
-    for (const tgt of targets) if (tgt.enemy && tgt.x === tx + dx && tgt.y === ty + dy) shouldBomb = true;
-  }
-  // wisp difficulty bombs less aggressively
-  if (bot.difficulty === 0 && Math.random() < 0.5) shouldBomb = false;
-  // If we want to bomb, the next step should be away from the bomb (escape).
-  // The flee logic in aiTick handles that — once bomb is placed, aiInDanger
-  // will be true and aiFleeDir picks a non-blast direction.
-  return { dir, bomb: shouldBomb };
+function aiDirVec(d) {
+  if (d === 0) return [0, -1];
+  if (d === 1) return [1, 0];
+  if (d === 2) return [0, 1];
+  if (d === 3) return [-1, 0];
+  return [0, 0];
 }
-
-function aiBFS(sx, sy, targets) {
-  const visited = new Uint8Array(W * H);
-  const parent = new Int32Array(W * H).fill(-1);
-  const q = [sy * W + sx];
-  visited[sy * W + sx] = 1;
-  const isTarget = (x, y) => targets.some(t => t.x === x && t.y === y);
-  while (q.length) {
-    const i = q.shift();
-    const x = i % W, y = (i / W) | 0;
-    if (isTarget(x, y) && !(x === sx && y === sy)) {
-      const out = [];
-      let cur = i;
-      while (cur !== -1) { out.push({ x: cur % W, y: (cur / W) | 0 }); cur = parent[cur]; }
-      return out.reverse();
-    }
-    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-      const nx = x + dx, ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
-      const ni = ny * W + nx;
-      if (visited[ni]) continue;
-      const t = tiles[ni];
-      // BFS treats gravestones as walkable (so we can target them); blocking only WALL
-      if (t === T_WALL) continue;
-      visited[ni] = 1;
-      parent[ni] = i;
-      q.push(ni);
-    }
-  }
+function aiVecToDir(dx, dy) {
+  if (dx > 0) return 1;
+  if (dx < 0) return 3;
+  if (dy > 0) return 2;
+  if (dy < 0) return 0;
   return null;
 }
 
-function aiInDanger(tx, ty) {
-  // Imminent: same row/col as a fused bomb within its power range, no wall between
-  for (const b of bombs) {
-    if (b.tx === tx && b.ty === ty) return true;
-    if (b.tx === tx) {
-      const lo = Math.min(b.ty, ty), hi = Math.max(b.ty, ty);
-      if (hi - lo <= b.power) {
-        let blocked = false;
-        for (let y = lo + 1; y < hi; y++) if (tileAt(tx, y) === T_WALL) { blocked = true; break; }
-        if (!blocked) return true;
-      }
-    }
-    if (b.ty === ty) {
-      const lo = Math.min(b.tx, tx), hi = Math.max(b.tx, tx);
-      if (hi - lo <= b.power) {
-        let blocked = false;
-        for (let x = lo + 1; x < hi; x++) if (tileAt(x, ty) === T_WALL) { blocked = true; break; }
-        if (!blocked) return true;
-      }
-    }
-  }
-  for (const f of fires) if (f.tx === tx && f.ty === ty) return true;
-  return false;
-}
-
-function aiFleeDir(p) {
-  const tx = Math.floor(p.x / TILE), ty = Math.floor(p.y / TILE);
-  const opts = [[1,0,1],[-1,0,3],[0,1,2],[0,-1,0]];
-  for (const [dx, dy, d] of opts) {
-    if (!isSolid(tx + dx, ty + dy) && !aiInDanger(tx + dx, ty + dy)) return { dir: d, bomb: false };
-  }
-  return null;
-}
-
-// Self-trap check: if we drop a bomb at (tx,ty), BFS up to N tile-steps
-// looking for any tile not in the prospective blast pattern. Bot only
-// dares to bomb if such an escape exists. N is generous because the fuse
-// gives plenty of time to step away.
-function aiBombSelfTrap(p, tx, ty) {
-  const power = p.power;
-  // Tiles touched by a bomb at (tx,ty) with this power, accounting for walls.
+// Set of tile keys (y*W+x) burned by a bomb at (bx,by,power); blast
+// stops at the first wall/barrel in each cardinal direction.
+function aiBlastSet(bx, by, power) {
   const blast = new Set();
-  blast.add(ty * W + tx);
+  blast.add(by * W + bx);
   for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
     for (let i = 1; i <= power; i++) {
-      const x = tx + dx * i, y = ty + dy * i;
+      const x = bx + dx * i, y = by + dy * i;
       if (x < 0 || y < 0 || x >= W || y >= H) break;
       const t = tileAt(x, y);
       if (t === T_WALL) break;
@@ -2058,31 +2008,243 @@ function aiBombSelfTrap(p, tx, ty) {
       if (t === T_BARREL) break;
     }
   }
-  // BFS from (tx,ty) up to MAX_HOPS, treating the bomb's own tile as blocked
-  // for re-entry, walking only on non-solid tiles, looking for a tile not in blast.
-  const MAX_HOPS = 5;
-  const visited = new Uint8Array(W * H);
-  const startKey = ty * W + tx;
-  visited[startKey] = 1;
-  let frontier = [{ x: tx, y: ty, hop: 0 }];
-  while (frontier.length) {
+  return blast;
+}
+
+// Build a threat map: tileKey -> array of [t0,t1] danger windows.
+// Folds in: existing fused bombs (with chain-reaction propagation),
+// active fires, and an optional hypothetical bomb the planner is
+// considering. `hypoBomb` is {tx,ty,power} | null.
+function aiBuildThreats(hypoBomb) {
+  const now = performance.now() / 1000;
+  const list = bombs.map(b => ({ tx: b.tx, ty: b.ty, power: b.power, t: b.fuseUntil }));
+  if (hypoBomb) list.push({ tx: hypoBomb.tx, ty: hypoBomb.ty, power: hypoBomb.power, t: now + BOMB_FUSE });
+  // Chain reaction: bomb whose blast covers another bomb's tile pulls
+  // that other bomb's detonation time down. Iterate to fixpoint.
+  let changed = true, guard = 0;
+  while (changed && guard++ < 8) {
+    changed = false;
+    for (const b of list) {
+      const blast = aiBlastSet(b.tx, b.ty, b.power);
+      for (const c of list) {
+        if (c === b) continue;
+        if (blast.has(c.ty * W + c.tx) && c.t > b.t + 1e-4) {
+          c.t = b.t;
+          changed = true;
+        }
+      }
+    }
+  }
+  const threats = new Map();
+  const add = (k, t0, t1) => {
+    let arr = threats.get(k);
+    if (!arr) { arr = []; threats.set(k, arr); }
+    arr.push([t0, t1]);
+  };
+  for (const b of list) {
+    const blast = aiBlastSet(b.tx, b.ty, b.power);
+    for (const k of blast) add(k, b.t, b.t + FIRE_TIME);
+  }
+  for (const f of fires) add(f.ty * W + f.tx, 0, f.until);
+  return { threats, now };
+}
+
+function aiTileTime(p) { return 1 / (BASE_SPEED + p.speedTier * SPEED_STEP); }
+
+// Is (tx,ty) safe to OCCUPY at hop h? (occupancy = [arrival, arrival+tileTime])
+function aiTileSafeAtHop(tx, ty, hop, ctx, tileTime) {
+  const wins = ctx.threats.get(ty * W + tx);
+  if (!wins) return true;
+  const a = ctx.now + hop * tileTime;
+  const b = ctx.now + (hop + 1) * tileTime;
+  for (const w of wins) {
+    if (!(b <= w[0] || a >= w[1])) return false;
+  }
+  return true;
+}
+
+// Is (tx,ty) "finally safe" — i.e., after arrival no future threat
+// will cover it, so the bot can stop there and live?
+function aiTileFinallySafe(tx, ty, hop, ctx, tileTime) {
+  const wins = ctx.threats.get(ty * W + tx);
+  if (!wins) return true;
+  const arrival = ctx.now + hop * tileTime;
+  for (const w of wins) {
+    if (w[1] > arrival + 1e-4) return false;
+  }
+  return true;
+}
+
+// Time-aware escape BFS. Returns {dir} of the first step on the path
+// to the nearest tile that's finally-safe, or null if no escape exists
+// within maxHops. If `hypoBomb` is provided, threats include it.
+function aiTimedEscape(p, hypoBomb, maxHops) {
+  const ctx = aiBuildThreats(hypoBomb);
+  const tileTime = aiTileTime(p);
+  const ig = bombAt(p.tileX, p.tileY);
+  const startK = p.tileY * W + p.tileX;
+  const seen = new Uint8Array(W * H);
+  seen[startK] = 1;
+  let frontier = [{ k: startK, hop: 0, firstDir: -1 }];
+  let depth = 0;
+  while (frontier.length && depth < maxHops) {
     const next = [];
-    for (const cur of frontier) {
-      if (cur.hop >= MAX_HOPS) continue;
-      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        const nx = cur.x + dx, ny = cur.y + dy;
+    for (const node of frontier) {
+      const x = node.k % W, y = (node.k / W) | 0;
+      if (node.firstDir >= 0 && aiTileFinallySafe(x, y, node.hop, ctx, tileTime)) {
+        return { dir: node.firstDir };
+      }
+      for (let d = 0; d < 4; d++) {
+        const v = aiDirVec(d);
+        const nx = x + v[0], ny = y + v[1];
         if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
-        const k = ny * W + nx;
-        if (visited[k]) continue;
-        if (isSolid(nx, ny)) continue;
-        visited[k] = 1;
-        if (!blast.has(k)) return false; // escape route exists
-        next.push({ x: nx, y: ny, hop: cur.hop + 1 });
+        if (isSolid(nx, ny, ig)) continue;
+        const nk = ny * W + nx;
+        if (seen[nk]) continue;
+        if (!aiTileSafeAtHop(nx, ny, node.hop + 1, ctx, tileTime)) continue;
+        seen[nk] = 1;
+        next.push({ k: nk, hop: node.hop + 1, firstDir: node.firstDir < 0 ? d : node.firstDir });
       }
     }
     frontier = next;
+    depth++;
   }
-  return true; // every reachable tile within MAX_HOPS hops is in the blast
+  return null;
+}
+
+// Verify: if we drop a bomb HERE right now, can we still escape?
+function aiCanBomb(p) {
+  return aiTimedEscape(p, { tx: p.tileX, ty: p.tileY, power: p.power }, AI_ESCAPE_HOPS) != null;
+}
+
+// Are we in immediate danger? (current tile occupied during a threat window)
+function aiInDangerNow(p) {
+  const ctx = aiBuildThreats(null);
+  return !aiTileSafeAtHop(p.tileX, p.tileY, 0, ctx, aiTileTime(p));
+}
+
+// Time-aware navigation: BFS for first step toward any tile satisfying
+// goalFn(x,y), refusing to enter tiles unsafe at the corresponding hop.
+function aiSafeNavStep(p, goalFn, maxHops) {
+  const ctx = aiBuildThreats(null);
+  const tileTime = aiTileTime(p);
+  const ig = bombAt(p.tileX, p.tileY);
+  const startK = p.tileY * W + p.tileX;
+  const seen = new Uint8Array(W * H);
+  seen[startK] = 1;
+  let frontier = [{ k: startK, hop: 0, firstDir: -1 }];
+  let depth = 0;
+  while (frontier.length && depth < maxHops) {
+    const next = [];
+    for (const node of frontier) {
+      const x = node.k % W, y = (node.k / W) | 0;
+      if (node.firstDir >= 0 && goalFn(x, y)) return { dir: node.firstDir };
+      for (let d = 0; d < 4; d++) {
+        const v = aiDirVec(d);
+        const nx = x + v[0], ny = y + v[1];
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        if (isSolid(nx, ny, ig)) continue;
+        const nk = ny * W + nx;
+        if (seen[nk]) continue;
+        if (!aiTileSafeAtHop(nx, ny, node.hop + 1, ctx, tileTime)) continue;
+        seen[nk] = 1;
+        next.push({ k: nk, hop: node.hop + 1, firstDir: node.firstDir < 0 ? d : node.firstDir });
+      }
+    }
+    frontier = next;
+    depth++;
+  }
+  return null;
+}
+
+function aiPlanIntent(p) {
+  const tx = p.tileX, ty = p.tileY;
+
+  // 1. In danger? Run.
+  if (aiInDangerNow(p)) {
+    const flee = aiTimedEscape(p, null, AI_ESCAPE_HOPS);
+    if (flee && flee.dir != null) return { dir: flee.dir, bomb: false };
+    // Truly cornered — twitch into any open neighbour rather than freeze.
+    for (let d = 0; d < 4; d++) {
+      const v = aiDirVec(d);
+      if (!isSolid(tx + v[0], ty + v[1], bombAt(tx, ty))) return { dir: d, bomb: false };
+    }
+    return { dir: null, bomb: false };
+  }
+
+  // 2. Powerup within reach via a safe path → grab it.
+  if (powerups.length) {
+    const toPow = aiSafeNavStep(p, (x, y) => {
+      for (const pu of powerups) if (pu.tx === x && pu.ty === y) return true;
+      return false;
+    }, AI_NAV_HOPS);
+    if (toPow) return { dir: toPow.dir, bomb: false };
+  }
+
+  // 3. Enemy in bomb-line + verified escape → bomb.
+  if (p.bombsActive < p.bombs) {
+    for (const id in players) {
+      const e = players[id];
+      if (!e.alive || e.id === p.id) continue;
+      const ex = e.tileX, ey = e.tileY;
+      if (ex === tx && ey === ty) continue;
+      if (ex !== tx && ey !== ty) continue;
+      const dist = Math.abs(ex - tx) + Math.abs(ey - ty);
+      if (dist > p.power) continue;
+      let blocked = false;
+      if (ex === tx) {
+        const a = Math.min(ey, ty), c = Math.max(ey, ty);
+        for (let yy = a + 1; yy < c; yy++) {
+          const t2 = tileAt(tx, yy);
+          if (t2 === T_WALL || t2 === T_BARREL) { blocked = true; break; }
+        }
+      } else {
+        const a = Math.min(ex, tx), c = Math.max(ex, tx);
+        for (let xx = a + 1; xx < c; xx++) {
+          const t2 = tileAt(xx, ty);
+          if (t2 === T_WALL || t2 === T_BARREL) { blocked = true; break; }
+        }
+      }
+      if (!blocked && aiCanBomb(p)) return { dir: null, bomb: true };
+    }
+  }
+
+  // 4. Adjacent barrel + verified escape → bomb.
+  if (p.bombsActive < p.bombs) {
+    let touching = false;
+    for (let d = 0; d < 4; d++) {
+      const v = aiDirVec(d);
+      if (tileAt(tx + v[0], ty + v[1]) === T_BARREL) { touching = true; break; }
+    }
+    if (touching && aiCanBomb(p)) return { dir: null, bomb: true };
+  }
+
+  // 5. Walk toward the nearest barrel-adjacent tile via safe path.
+  const toBarrel = aiSafeNavStep(p, (x, y) => {
+    for (let d = 0; d < 4; d++) {
+      const v = aiDirVec(d);
+      if (tileAt(x + v[0], y + v[1]) === T_BARREL) return true;
+    }
+    return false;
+  }, AI_NAV_HOPS);
+  if (toBarrel) return { dir: toBarrel.dir, bomb: false };
+
+  // 6. Walk toward nearest enemy via safe path.
+  const enemies = [];
+  for (const id in players) {
+    const e = players[id];
+    if (e.alive && e.id !== p.id) enemies.push(e);
+  }
+  if (enemies.length) {
+    const toEnemy = aiSafeNavStep(p, (x, y) => {
+      for (const e of enemies) if (e.tileX === x && e.tileY === y) return true;
+      return false;
+    }, AI_NAV_HOPS);
+    if (toEnemy) return { dir: toEnemy.dir, bomb: false };
+  }
+
+  // 7. Idle.
+  return { dir: null, bomb: false };
 }
 
 // AI driver: walk along the planned intent, one tile at a time. The

@@ -2454,12 +2454,6 @@ Features needed:
             </div>
             <div class="pwg-row">
               <button class="pwg-btn" id="pwg-solo" title="play offline against AI ghosts">Play Solo</button>
-              <label style="margin-left:8px;font-size:11px">vs:</label>
-              <select class="pwg-input" id="pwg-ai-diff" style="min-width:0;letter-spacing:0;text-transform:none">
-                <option value="0">wisp · easy</option>
-                <option value="1" selected>wraith · normal</option>
-                <option value="2">banshee · hard</option>
-              </select>
             </div>
             <div class="pwg-status" id="pwg-status">Enter your name and create or join a room — or play solo.</div>
           </fieldset>
@@ -4871,9 +4865,10 @@ const _PWG = (function(){
   const peers=new Map(), keys={};
   let canvas, ctx, wired=false;
   // Solo (offline-vs-AI) state. When soloMode is true, ws is null and the
-  // game loop drives non-human players locally. Difficulty 0=easy, 1=normal,
-  // 2=hard. Higher difficulty = shorter think interval + more aggressive.
-  let soloMode=false, soloDiff=1;
+  // game loop drives non-human players locally with a timed-blast-aware
+  // planner (see "// solo / AI" section below — same design as standalone
+  // /games/pwg, adapted to this build's pixel-coordinate movement).
+  let soloMode=false;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -5039,153 +5034,320 @@ const _PWG = (function(){
     else if(k===PU_SPEED)p.speedTier=Math.min(5,p.speedTier+1);
   }
 
-  // ── solo / AI (only used when soloMode is true) ──
-  // Lightweight bots: re-plan a single-step intent every ~200-400ms via BFS.
-  // Priorities: flee bombs → blast adjacent enemy → blast adjacent barrel →
-  // walk toward nearest barrel → chase nearest enemy. Difficulty mostly
-  // affects think rate.
-  function inBlast(tx, ty, horizon){
-    const now = performance.now()/1000;
-    for (const b of bombs) {
-      const dt = b.fuseUntil - now;
-      if (dt < 0 || dt > horizon) continue;
-      if (b.tx === tx && b.ty === ty) return true;
-      if (b.tx === tx) {
-        let blocked = false;
-        const a = Math.min(b.ty, ty), c = Math.max(b.ty, ty);
-        for (let yy = a+1; yy < c; yy++) if (tileAt(b.tx, yy) === T_WALL) { blocked = true; break; }
-        if (!blocked && Math.abs(b.ty - ty) <= b.power) return true;
-      } else if (b.ty === ty) {
-        let blocked = false;
-        const a = Math.min(b.tx, tx), c = Math.max(b.tx, tx);
-        for (let xx = a+1; xx < c; xx++) if (tileAt(xx, b.ty) === T_WALL) { blocked = true; break; }
-        if (!blocked && Math.abs(b.tx - tx) <= b.power) return true;
+  // ═════════════════════════════════════════════════════════════════
+  // Solo AI — full-blown survival-first Bomberman bot.
+  // Same planner as /games/pwg standalone; adapted for this build's
+  // pixel-coordinate movement (player has p.x/p.y in pixels rather
+  // than tileX/tileY + step state). See README "Bot AI design" for
+  // the full design notes.
+  //
+  // Threat model: each bomb b covers aiBlastSet(b) tiles during the
+  // window [b.fuseUntil, b.fuseUntil + FIRE_TIME]. Chain reactions
+  // are simulated to fixpoint. Active fires contribute [0, f.until].
+  // A hypothetical bomb adds [now+BOMB_FUSE, now+BOMB_FUSE+FIRE_TIME].
+  //
+  // Time-aware BFS: state = (tile, hop). Bot occupies hop-h tile
+  // during [now+h*tileTime, now+(h+1)*tileTime]. A tile is enterable
+  // at hop h iff no threat window overlaps that occupancy. A tile is
+  // "finally safe" at hop h iff all its threat windows have ended.
+  //
+  // Two hard invariants:
+  //   I1. Never STEP into a tile unsafe at hop 1 (gate in aiMove).
+  //   I2. Never DROP a bomb unless aiTimedEscape(hypoBomb) succeeds.
+  // ═════════════════════════════════════════════════════════════════
+  const AI_THINK_INTERVAL = 180;     // ms between re-plans
+  const AI_ESCAPE_HOPS    = 12;
+  const AI_NAV_HOPS       = 30;
+
+  function aiBlastSet(bx, by, power) {
+    const blast = new Set();
+    blast.add(by * W + bx);
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      for (let i = 1; i <= power; i++) {
+        const x = bx + dx*i, y = by + dy*i;
+        if (x < 0 || y < 0 || x >= W || y >= H) break;
+        const t = tileAt(x, y);
+        if (t === T_WALL) break;
+        blast.add(y * W + x);
+        if (t === T_BARREL) break;
       }
     }
-    for (const f of fires) if (f.tx === tx && f.ty === ty) return true;
-    return false;
+    return blast;
   }
-  // Find first step on shortest path to any tile where goalFn(x,y) is true.
-  function bfsFirstStep(sx, sy, goalFn) {
-    const seen = new Uint8Array(W*H);
-    const parent = new Int32Array(W*H).fill(-1);
-    const start = sy*W + sx;
-    seen[start] = 1;
-    const q = [start];
-    while (q.length) {
-      const i = q.shift();
-      const x = i % W, y = (i / W) | 0;
-      if (i !== start && goalFn(x, y)) {
-        let cur = i;
-        while (parent[cur] !== start) cur = parent[cur];
-        const nx = cur % W, ny = (cur / W) | 0;
-        return { dx: nx - sx, dy: ny - sy };
+
+  function aiBuildThreats(hypoBomb) {
+    const now = performance.now() / 1000;
+    const list = bombs.map(b => ({ tx: b.tx, ty: b.ty, power: b.power, t: b.fuseUntil }));
+    if (hypoBomb) list.push({ tx: hypoBomb.tx, ty: hypoBomb.ty, power: hypoBomb.power, t: now + BOMB_FUSE });
+    let changed = true, guard = 0;
+    while (changed && guard++ < 8) {
+      changed = false;
+      for (const b of list) {
+        const blast = aiBlastSet(b.tx, b.ty, b.power);
+        for (const c of list) {
+          if (c === b) continue;
+          if (blast.has(c.ty * W + c.tx) && c.t > b.t + 1e-4) { c.t = b.t; changed = true; }
+        }
       }
-      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        const nx = x + dx, ny = y + dy;
-        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
-        const ni = ny*W + nx;
-        if (seen[ni]) continue;
-        if (isSolid(nx, ny)) continue;
-        seen[ni] = 1; parent[ni] = i;
-        q.push(ni);
+    }
+    const threats = new Map();
+    const add = (k, t0, t1) => {
+      let arr = threats.get(k);
+      if (!arr) { arr = []; threats.set(k, arr); }
+      arr.push([t0, t1]);
+    };
+    for (const b of list) {
+      const blast = aiBlastSet(b.tx, b.ty, b.power);
+      for (const k of blast) add(k, b.t, b.t + FIRE_TIME);
+    }
+    for (const f of fires) add(f.ty * W + f.tx, 0, f.until);
+    return { threats, now };
+  }
+
+  const aiTileTime = p => 1 / (BASE_SPEED + p.speedTier * SPEED_STEP);
+
+  function aiTileSafeAtHop(tx, ty, hop, ctx, tileTime) {
+    const wins = ctx.threats.get(ty * W + tx);
+    if (!wins) return true;
+    const a = ctx.now + hop * tileTime;
+    const b = ctx.now + (hop + 1) * tileTime;
+    for (const w of wins) if (!(b <= w[0] || a >= w[1])) return false;
+    return true;
+  }
+  function aiTileFinallySafe(tx, ty, hop, ctx, tileTime) {
+    const wins = ctx.threats.get(ty * W + tx);
+    if (!wins) return true;
+    const arrival = ctx.now + hop * tileTime;
+    for (const w of wins) if (w[1] > arrival + 1e-4) return false;
+    return true;
+  }
+
+  function aiTimedEscape(p, hypoBomb, maxHops) {
+    const px = Math.floor(p.x / TILE), py = Math.floor(p.y / TILE);
+    const ctx = aiBuildThreats(hypoBomb);
+    const tileTime = aiTileTime(p);
+    const ig = bombAt(px, py);
+    const startK = py * W + px;
+    const seen = new Uint8Array(W * H);
+    seen[startK] = 1;
+    let frontier = [{ k: startK, hop: 0, firstDx: 0, firstDy: 0, hasFirst: false }];
+    let depth = 0;
+    while (frontier.length && depth < maxHops) {
+      const next = [];
+      for (const node of frontier) {
+        const x = node.k % W, y = (node.k / W) | 0;
+        if (node.hasFirst && aiTileFinallySafe(x, y, node.hop, ctx, tileTime)) {
+          return { dx: node.firstDx, dy: node.firstDy };
+        }
+        for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+          if (isSolid(nx, ny, ig)) continue;
+          const nk = ny * W + nx;
+          if (seen[nk]) continue;
+          if (!aiTileSafeAtHop(nx, ny, node.hop + 1, ctx, tileTime)) continue;
+          seen[nk] = 1;
+          next.push({
+            k: nk, hop: node.hop + 1,
+            firstDx: node.hasFirst ? node.firstDx : dx,
+            firstDy: node.hasFirst ? node.firstDy : dy,
+            hasFirst: true,
+          });
+        }
       }
+      frontier = next;
+      depth++;
     }
     return null;
   }
-  function aiPlan(p) {
-    const px = Math.floor(p.x/TILE), py = Math.floor(p.y/TILE);
-    // 1. Flee.
-    if (inBlast(px, py, 2.4)) {
-      const safe = bfsFirstStep(px, py, (x,y) => !inBlast(x, y, 2.5));
-      if (safe) return { dx: safe.dx, dy: safe.dy, drop: false };
+
+  function aiCanBomb(p) {
+    const px = Math.floor(p.x / TILE), py = Math.floor(p.y / TILE);
+    return aiTimedEscape(p, { tx: px, ty: py, power: p.power }, AI_ESCAPE_HOPS) != null;
+  }
+
+  function aiInDangerNow(p) {
+    const px = Math.floor(p.x / TILE), py = Math.floor(p.y / TILE);
+    const ctx = aiBuildThreats(null);
+    return !aiTileSafeAtHop(px, py, 0, ctx, aiTileTime(p));
+  }
+
+  function aiSafeNavStep(p, goalFn, maxHops) {
+    const px = Math.floor(p.x / TILE), py = Math.floor(p.y / TILE);
+    const ctx = aiBuildThreats(null);
+    const tileTime = aiTileTime(p);
+    const ig = bombAt(px, py);
+    const startK = py * W + px;
+    const seen = new Uint8Array(W * H);
+    seen[startK] = 1;
+    let frontier = [{ k: startK, hop: 0, firstDx: 0, firstDy: 0, hasFirst: false }];
+    let depth = 0;
+    while (frontier.length && depth < maxHops) {
+      const next = [];
+      for (const node of frontier) {
+        const x = node.k % W, y = (node.k / W) | 0;
+        if (node.hasFirst && goalFn(x, y)) return { dx: node.firstDx, dy: node.firstDy };
+        for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+          if (isSolid(nx, ny, ig)) continue;
+          const nk = ny * W + nx;
+          if (seen[nk]) continue;
+          if (!aiTileSafeAtHop(nx, ny, node.hop + 1, ctx, tileTime)) continue;
+          seen[nk] = 1;
+          next.push({
+            k: nk, hop: node.hop + 1,
+            firstDx: node.hasFirst ? node.firstDx : dx,
+            firstDy: node.hasFirst ? node.firstDy : dy,
+            hasFirst: true,
+          });
+        }
+      }
+      frontier = next;
+      depth++;
     }
-    // 2. Blast adjacent enemy in line of sight (within power).
-    const enemies = Object.values(players).filter(o => o.alive && o.id !== p.id);
+    return null;
+  }
+
+  function aiPlan(p) {
+    const px = Math.floor(p.x / TILE), py = Math.floor(p.y / TILE);
+
+    // 1. In danger? Run.
+    if (aiInDangerNow(p)) {
+      const flee = aiTimedEscape(p, null, AI_ESCAPE_HOPS);
+      if (flee) return { dx: flee.dx, dy: flee.dy, drop: false };
+      // Truly cornered — pick any non-solid neighbour rather than freeze.
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        if (!isSolid(px + dx, py + dy, bombAt(px, py))) return { dx, dy, drop: false };
+      }
+      return { dx: 0, dy: 0, drop: false };
+    }
+
+    // 2. Powerup nearby via safe path.
+    if (powerups.length) {
+      const toPow = aiSafeNavStep(p, (x, y) => {
+        for (const pu of powerups) if (pu.tx === x && pu.ty === y) return true;
+        return false;
+      }, AI_NAV_HOPS);
+      if (toPow) return { dx: toPow.dx, dy: toPow.dy, drop: false };
+    }
+
+    // 3. Enemy in bomb-line + verified escape → drop.
+    const enemies = [];
+    for (const id in players) {
+      const e = players[id];
+      if (e.alive && e.id !== p.id) enemies.push(e);
+    }
     if (p.bombsActive < p.bombs) {
       for (const e of enemies) {
-        const ex = Math.floor(e.x/TILE), ey = Math.floor(e.y/TILE);
+        const ex = Math.floor(e.x / TILE), ey = Math.floor(e.y / TILE);
         if (ex === px && ey === py) continue;
-        const dxAbs = Math.abs(ex-px), dyAbs = Math.abs(ey-py);
-        if ((ex === px || ey === py) && (dxAbs + dyAbs) <= p.power) {
-          // verify line is unblocked by walls
-          let blocked = false;
-          if (ex === px) {
-            const a = Math.min(ey, py), c = Math.max(ey, py);
-            for (let yy = a+1; yy < c; yy++) if (tileAt(px, yy) === T_WALL) { blocked = true; break; }
-          } else {
-            const a = Math.min(ex, px), c = Math.max(ex, px);
-            for (let xx = a+1; xx < c; xx++) if (tileAt(xx, py) === T_WALL) { blocked = true; break; }
+        if (ex !== px && ey !== py) continue;
+        const dist = Math.abs(ex - px) + Math.abs(ey - py);
+        if (dist > p.power) continue;
+        let blocked = false;
+        if (ex === px) {
+          const a = Math.min(ey, py), c = Math.max(ey, py);
+          for (let yy = a + 1; yy < c; yy++) {
+            const t = tileAt(px, yy);
+            if (t === T_WALL || t === T_BARREL) { blocked = true; break; }
           }
-          if (!blocked) return { dx: 0, dy: 0, drop: true };
+        } else {
+          const a = Math.min(ex, px), c = Math.max(ex, px);
+          for (let xx = a + 1; xx < c; xx++) {
+            const t = tileAt(xx, py);
+            if (t === T_WALL || t === T_BARREL) { blocked = true; break; }
+          }
         }
+        if (!blocked && aiCanBomb(p)) return { dx: 0, dy: 0, drop: true };
       }
     }
-    // 3. Blast adjacent barrel.
+
+    // 4. Adjacent barrel + verified escape → drop.
     if (p.bombsActive < p.bombs) {
+      let touching = false;
       for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        if (tileAt(px+dx, py+dy) === T_BARREL) {
-          return { dx: 0, dy: 0, drop: true };
-        }
+        if (tileAt(px + dx, py + dy) === T_BARREL) { touching = true; break; }
       }
+      if (touching && aiCanBomb(p)) return { dx: 0, dy: 0, drop: true };
     }
-    // 4. Path toward nearest tile next to a barrel.
-    const toBarrel = bfsFirstStep(px, py, (x,y) => {
+
+    // 5. Walk toward nearest barrel-adjacent tile via safe path.
+    const toBarrel = aiSafeNavStep(p, (x, y) => {
       for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        if (tileAt(x+dx, y+dy) === T_BARREL) return true;
+        if (tileAt(x + dx, y + dy) === T_BARREL) return true;
       }
       return false;
-    });
+    }, AI_NAV_HOPS);
     if (toBarrel) return { dx: toBarrel.dx, dy: toBarrel.dy, drop: false };
-    // 5. Chase nearest enemy.
-    const toEnemy = bfsFirstStep(px, py, (x,y) =>
-      enemies.some(e => Math.floor(e.x/TILE) === x && Math.floor(e.y/TILE) === y)
-    );
-    if (toEnemy) return { dx: toEnemy.dx, dy: toEnemy.dy, drop: false };
+
+    // 6. Walk toward nearest enemy via safe path.
+    if (enemies.length) {
+      const toEnemy = aiSafeNavStep(p, (x, y) => {
+        for (const e of enemies) if (Math.floor(e.x / TILE) === x && Math.floor(e.y / TILE) === y) return true;
+        return false;
+      }, AI_NAV_HOPS);
+      if (toEnemy) return { dx: toEnemy.dx, dy: toEnemy.dy, drop: false };
+    }
+
+    // 7. Idle.
     return { dx: 0, dy: 0, drop: false };
   }
-  // Drive an AI bot — re-plan periodically, drop a bomb if intent says so,
-  // and step in the planned direction with cross-axis tile-center snap.
+
+  // Drive an AI bot — re-plan periodically, drop a bomb if intent says
+  // so, and step in the planned direction with cross-axis tile-center
+  // snap. Hard gate (Invariant I1) prevents stepping into a tile that
+  // would be unsafe at hop 1.
   function aiMove(p, dt) {
     const now = performance.now();
-    if (!p._ai) p._ai = { nextThink: 0, intent: { dx:0, dy:0, drop:false }, lastBomb: 0 };
-    const interval = soloDiff === 0 ? 420 : soloDiff === 1 ? 260 : 160;
+    if (!p._ai) p._ai = { nextThink: 0, intent: { dx: 0, dy: 0, drop: false }, lastBomb: 0 };
     if (now >= p._ai.nextThink) {
       p._ai.intent = aiPlan(p);
-      p._ai.nextThink = now + interval + Math.random()*60;
+      p._ai.nextThink = now + AI_THINK_INTERVAL + Math.random() * 40;
     }
     const it = p._ai.intent;
-    // Drop bomb (rate-limited so a bot doesn't spam empty bombs).
-    if (it.drop && p.bombsActive < p.bombs && (now - p._ai.lastBomb) > 600) {
-      const tx = Math.floor(p.x/TILE), ty = Math.floor(p.y/TILE);
-      if (!bombAt(tx, ty) && tileAt(tx, ty) === T_EMPTY) {
-        spawnBomb(p.id, tx, ty, p.power, performance.now()/1000);
+    const px = Math.floor(p.x / TILE), py = Math.floor(p.y / TILE);
+
+    // Drop a bomb (planner already verified escape). Rate-limit so a
+    // re-fire doesn't double-tap on the same tile.
+    if (it.drop && p.bombsActive < p.bombs && (now - p._ai.lastBomb) > 350) {
+      if (!bombAt(px, py) && tileAt(px, py) === T_EMPTY) {
+        spawnBomb(p.id, px, py, p.power, performance.now() / 1000);
         p._ai.lastBomb = now;
-        // After dropping, force a re-plan so the bot looks for an escape.
-        p._ai.nextThink = 0;
+        p._ai.nextThink = 0; // re-plan immediately to find escape
       }
     }
+
     const dx = it.dx, dy = it.dy;
     if (dx === 0 && dy === 0) { p.vx = p.vy = 0; return; }
+
+    // Hard gate: refuse to step into a tile that's unsafe at hop 1.
+    const ctx = aiBuildThreats(null);
+    const tileTime = aiTileTime(p);
+    if (!aiTileSafeAtHop(px + dx, py + dy, 1, ctx, tileTime)) {
+      p.vx = p.vy = 0;
+      p._ai.nextThink = 0;
+      return;
+    }
+
     const speed = (BASE_SPEED + p.speedTier * SPEED_STEP) * TILE;
-    const tileX = Math.floor(p.x/TILE), tileY = Math.floor(p.y/TILE);
-    const ig = bombAt(tileX, tileY);
-    if (isSolid(tileX + dx, tileY + dy, ig)) { p.vx = p.vy = 0; p._ai.nextThink = 0; return; }
+    const ig = bombAt(px, py);
+    if (isSolid(px + dx, py + dy, ig)) { p.vx = p.vy = 0; p._ai.nextThink = 0; return; }
     if (dx !== 0) {
-      // snap cross axis (y) to tile center
-      const center = (tileY + 0.5) * TILE;
+      const center = (py + 0.5) * TILE;
       const off = p.y - center;
-      if (Math.abs(off) > 0.5) p.y -= Math.sign(off) * Math.min(Math.abs(off), speed*dt*0.85);
+      if (Math.abs(off) > 0.5) p.y -= Math.sign(off) * Math.min(Math.abs(off), speed * dt * 0.85);
       p.x += dx * speed * dt;
       p.dir = dx > 0 ? 1 : 3;
     } else {
-      const center = (tileX + 0.5) * TILE;
+      const center = (px + 0.5) * TILE;
       const off = p.x - center;
-      if (Math.abs(off) > 0.5) p.x -= Math.sign(off) * Math.min(Math.abs(off), speed*dt*0.85);
+      if (Math.abs(off) > 0.5) p.x -= Math.sign(off) * Math.min(Math.abs(off), speed * dt * 0.85);
       p.y += dy * speed * dt;
       p.dir = dy > 0 ? 2 : 0;
     }
   }
+
   function soloStart() {
     if (looping && scene === 'game') return;
     me.id = 'me';
@@ -5193,21 +5355,20 @@ const _PWG = (function(){
     me.slot = 0;
     me.name = ($('pwg-name').value.trim()) || 'player';
     soloMode = true;
-    soloDiff = parseInt($('pwg-ai-diff').value, 10) || 1;
     const roster = [
       { id: me.id, slot: 0, name: me.name, color: me.color },
     ];
     const aiNames = ['Pip','Mote','Drift','Pall','Whisp','Hush'];
     const usedColors = new Set([me.color]);
-    let nameIdx = Math.floor(Math.random()*aiNames.length);
+    let nameIdx = Math.floor(Math.random() * aiNames.length);
     for (let s = 1; s < 4; s++) {
       let c = 0;
       for (let k = 0; k < 4; k++) if (!usedColors.has(k)) { c = k; break; }
       usedColors.add(c);
-      roster.push({ id: 'ai'+s, slot: s, name: aiNames[(nameIdx + s) % aiNames.length], color: c });
+      roster.push({ id: 'ai' + s, slot: s, name: aiNames[(nameIdx + s) % aiNames.length], color: c });
     }
-    initGame((Math.random()*0xfffffff)|0, roster);
-    setStatus('solo · vs ' + ['easy','normal','hard'][soloDiff] + ' ghosts');
+    initGame((Math.random() * 0xfffffff) | 0, roster);
+    setStatus('solo · vs three ghosts');
   }
 
   // ── game loop ──
