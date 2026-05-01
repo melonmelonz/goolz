@@ -1066,7 +1066,7 @@
       <div class="icon-img">🖥️</div>
       <div class="icon-label">My Computer</div>
     </div>
-    <div class="icon" tabindex="0" title="Course Files" ondblclick="openWindow('win-home')">
+    <div class="icon" tabindex="0" title="Course Files" ondblclick="openWindow('win-home')" hidden style="display:none">
       <div class="icon-img">📚</div>
       <div class="icon-label">Course Files</div>
     </div>
@@ -1114,7 +1114,7 @@
   <div id="desktop-docs"></div>
 
   <!-- ═══ WINDOW: Home / Course Materials ═══ -->
-  <div class="window active" id="win-home" style="width:360px; top:60px; left:calc(50% - 180px);">
+  <div class="window hidden" id="win-home" style="width:360px; top:60px; left:calc(50% - 180px);">
     <div class="title-bar">
       <span class="title-bar-icon">📚</span>
       <span class="title-bar-text">Course Materials</span>
@@ -2602,10 +2602,10 @@ Features needed:
       <span class="si-label"><strong>Programs</strong></span>
       <span class="si-arrow">▶</span>
       <div class="submenu">
-        <div class="submenu-item" onclick="openWindow('win-day1')">📄 Week 1 Day 1</div>
-        <div class="submenu-item" onclick="openWindow('win-day2')">📄 Week 1 Day 2</div>
-        <div class="submenu-item" onclick="openWindow('win-day3')">📄 Week 1 Day 3</div>
-        <div class="submenu-item" onclick="openWindow('win-day4')">📄 Week 1 Day 4</div>
+        <div class="submenu-item" onclick="openWindow('win-day1')" style="display:none">📄 Week 1 Day 1</div>
+        <div class="submenu-item" onclick="openWindow('win-day2')" style="display:none">📄 Week 1 Day 2</div>
+        <div class="submenu-item" onclick="openWindow('win-day3')" style="display:none">📄 Week 1 Day 3</div>
+        <div class="submenu-item" onclick="openWindow('win-day4')" style="display:none">📄 Week 1 Day 4</div>
         <div class="submenu-item" onclick="openWindow('win-calc')">🖩 Calculator</div>
         <div class="submenu-item" onclick="openWindow('win-ie')">🌐 Internet Explorer</div>
         <div class="submenu-item" onclick="openWindow('win-notepad')">📝 Notepad</div>
@@ -2809,9 +2809,9 @@ function initDesktop() {
   // Any element with `class="window"` and a `.title-bar` is auto-enabled —
   // no per-window registration needed.
   document.querySelectorAll('.window').forEach(_initWindowChrome);
-  const home = document.getElementById('win-home');
-  addTaskBtn('win-home');
-  activateWindow(home);
+  // Course Materials hidden — desktop boots with no active window so Clippy
+  // can be the focal point. Window markup is preserved (display:none on icon
+  // and start-menu entries) so it can be restored later without churn.
 
   startClock();
   initStartMenuSubmenus();
