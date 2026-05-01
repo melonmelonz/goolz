@@ -25,13 +25,23 @@ jobs:
         with:
           node-version: '24'
 
+      # Cloudflare Pages cannot define Durable Objects inline. The Room DO
+      # lives in the pwg-rooms Worker; Pages binds to it via script_name.
+      # We must deploy the Worker first so the binding resolves at Pages
+      # deploy time.
+      - name: Deploy pwg-rooms Worker (Durable Object)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4'
+          workingDirectory: pwg-rooms
+          command: deploy
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # wrangler 4.x is needed for Pages Functions that export a Durable
-          # Object class (Room) declared inline. The auto-fallback to 3.90 in
-          # earlier runs rejected the [[migrations]] / inline DO binding.
           wranglerVersion: '4'
           command: pages deploy . --project-name=goolz --branch=main --commit-dirty=true

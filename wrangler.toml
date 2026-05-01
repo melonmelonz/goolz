@@ -13,15 +13,11 @@ binding = "NOTEPAD_DOCS"
 id = "2d8ce6ac0309462bbc2ff3934f2a33c1"
 
 # ── Durable Object: Playing With Goolz multiplayer rooms ──
-# Class is exported from functions/api/pwg/ws/[code].js. Pages Functions
-# auto-bundles all function exports into the dispatched worker, so this
-# binding picks the class up at deploy time. SQLite-backed (free-plan
-# requirement). Each room (game lobby) maps to one DO instance keyed by
-# the upper-cased room code.
+# Pages projects can't define DOs inline. The Room class is exported
+# from the `pwg-rooms` Worker (see ../pwg-rooms/wrangler.toml). This
+# binding consumes it via `script_name`. The Worker must be deployed
+# before this Pages project can deploy successfully.
 [[durable_objects.bindings]]
 name = "ROOMS"
 class_name = "Room"
-
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["Room"]
+script_name = "pwg-rooms"
