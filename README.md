@@ -622,6 +622,11 @@ deploy never has to compile Rust. `target/` is gitignored.
 ┌────────┬────────────┬────────────────────────────────────────────────┐
 │ DATE   │ CHANGE                                                      │
 ├────────┼────────────┼────────────────────────────────────────────────┤
+│ 2026-05-01 │ AI hardening — BFS now treats live bodies as walls; nav │
+│            │   targets bomb-line tiles (not enemy tile); bomb-line   │
+│            │   check blocks on bodies; I1 gate stalls instead of     │
+│            │   force-replan (kills the juke-into-fire loop); host    │
+│            │   broadcasts AI kill claims so victims ratify deaths    │
 │ 2026-05-01 │ GOOLZ.exe → same-origin iframe of /games/pwg/ — single  │
 │            │   source of truth · embedded duplicate (~975 LOC) gone  │
 │ 2026-05-01 │ AI rework — survival-first time-aware planner; ghosts   │

@@ -637,6 +637,24 @@ function isSolid(tx, ty, ignoreBomb) {
   if (b && b !== ignoreBomb) return true;
   return false;
 }
+// True iff a living non-self player is currently resting on (tx,ty). Used
+// by AI BFS so the bot doesn't plan paths through allies/enemies — those
+// paths look fine to a wall-only check but startStep refuses them, leaving
+// the bot juking in place next to a hazard.
+function livePlayerAt(tx, ty, excludeId) {
+  for (const id in players) {
+    if (id === excludeId) continue;
+    const o = players[id];
+    if (!o || !o.alive) continue;
+    if (o.tileX === tx && o.tileY === ty) return true;
+  }
+  return false;
+}
+// AI-flavored solid: walls/barrels/foreign-bombs OR a living non-self body.
+function aiBfsBlocked(tx, ty, ignoreBomb, selfId) {
+  if (isSolid(tx, ty, ignoreBomb)) return true;
+  return livePlayerAt(tx, ty, selfId);
+}
 
 // ───────────────────────────────────────────────────────────────────────
 // Local player input + simulation
@@ -818,7 +836,12 @@ function explodeBomb(b) {
   // immediately, so death animations + the win screen propagate in
   // realtime regardless of fuse-timing desync. Self-death (line 600
   // below) still fires as a redundant path.
-  if (b.ownerId === me.id && burned.length) {
+  // Authoritative kill claim — fires for any locally-owned bomb (mine OR
+  // a host-driven AI's). Without this branch, AI bombs explode visually
+  // on every peer but no one ratifies the kills, so victims walk through
+  // their own corpses until the next round-end check trips.
+  const ownedLocally = b.ownerId === me.id || isLocalAi(b.ownerId);
+  if (ownedLocally && burned.length) {
     let anyKilled = false;
     for (const id in players) {
       const p = players[id];
@@ -829,9 +852,14 @@ function explodeBomb(b) {
       p.alive = false;
       anyKilled = true;
       if (id === me.id) {
-        // I blew myself up — broadcast as a regular death.
+        // I (or my bomb) blew me up — broadcast as a regular death.
         netSend({ t: 'death' });
+      } else if (isLocalAi(id)) {
+        // A locally-driven AI just died (own bomb or other). Broadcast on
+        // its behalf so the worker re-stamps id with aiId.
+        netSend({ t: 'death', aiId: id });
       } else {
+        // Remote victim — claim the kill so their peer ratifies death.
         netSend({ t: 'kill', target: id });
       }
     }
@@ -876,6 +904,11 @@ function update(dt, t) {
   if (!soloMode) {
     for (const id in players) {
       if (id === me.id) continue;
+      // Host drives its locally-mounted AI bots authoritatively. Lerping
+      // them toward their last broadcast (tx,ty) would drag them back onto
+      // stale snapshots and through hazards. Other peers DO lerp toward
+      // those broadcasts — only the owner skips.
+      if (isLocalAi(id)) continue;
       const p = players[id];
       p.x += (p.tx - p.x) * Math.min(1, dt * 12);
       p.y += (p.ty - p.y) * Math.min(1, dt * 12);
@@ -2053,17 +2086,22 @@ function aiTick(p, bot, dt, t) {
     bot._think = 0;
     return;
   }
-  // Hard gate (Invariant I1): never step into a tile that's unsafe at hop 1.
+  // Hard gate (Invariant I1): never step into a tile that's unsafe at hop 1
+  // OR blocked by a wall/barrel/bomb/live body. Old code reset bot._think
+  // to 0, which forced an instant re-plan that often returned the SAME
+  // blocked direction — bot juked in place every frame and the crowd of
+  // adjacent threats walked over it. New behavior: clear intent so the bot
+  // stands still until the next regular think tick (AI_THINK_INTERVAL),
+  // by which point either threats or bodies have moved.
   if (want.dir != null) {
     const [dx, dy] = aiDirVec(want.dir);
     if (dx || dy) {
       const ctx = aiBuildThreats(null);
-      if (!aiTileSafeAtHop(p.tileX + dx, p.tileY + dy, 1, ctx, aiTileTime(p))) {
-        bot._think = 0;
-        return;
-      }
-      if (isSolid(p.tileX + dx, p.tileY + dy, bombAt(p.tileX, p.tileY))) {
-        bot._think = 0;
+      const nx = p.tileX + dx, ny = p.tileY + dy;
+      const unsafe = !aiTileSafeAtHop(nx, ny, 1, ctx, aiTileTime(p));
+      const blocked = aiBfsBlocked(nx, ny, bombAt(p.tileX, p.tileY), p.id);
+      if (unsafe || blocked) {
+        bot._intent = { dir: null, bomb: false };
         return;
       }
     }
@@ -2194,7 +2232,10 @@ function aiTimedEscape(p, hypoBomb, maxHops) {
         const v = aiDirVec(d);
         const nx = x + v[0], ny = y + v[1];
         if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
-        if (isSolid(nx, ny, ig)) continue;
+        // Treat live players as walls — startStep refuses to walk into a
+        // resting body, so a path through one would stall and re-plan,
+        // and the bot ends up juking adjacent to its own bomb's blast.
+        if (aiBfsBlocked(nx, ny, ig, p.id)) continue;
         const nk = ny * W + nx;
         if (seen[nk]) continue;
         if (!aiTileSafeAtHop(nx, ny, node.hop + 1, ctx, tileTime)) continue;
@@ -2254,7 +2295,10 @@ function aiSafeNavStep(p, goalFn, maxHops) {
         const v = aiDirVec(d);
         const nx = x + v[0], ny = y + v[1];
         if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
-        if (isSolid(nx, ny, ig)) continue;
+        // Live bodies block nav — see aiTimedEscape note. The bot will
+        // route around allies/enemies instead of standing in a doorway
+        // failing startStep against them.
+        if (aiBfsBlocked(nx, ny, ig, p.id)) continue;
         const nk = ny * W + nx;
         if (seen[nk]) continue;
         if (!aiTileFinallySafe(nx, ny, node.hop + 1, ctx, tileTime)) continue;
@@ -2308,12 +2352,16 @@ function aiPlanIntent(p) {
         for (let yy = a + 1; yy < c; yy++) {
           const t2 = tileAt(tx, yy);
           if (t2 === T_WALL || t2 === T_BARREL) { blocked = true; break; }
+          // A living body in the line eats the blast before it reaches
+          // the intended target. Don't bomb thinking the line is clear.
+          if (livePlayerAt(tx, yy, p.id)) { blocked = true; break; }
         }
       } else {
         const a = Math.min(ex, tx), c = Math.max(ex, tx);
         for (let xx = a + 1; xx < c; xx++) {
           const t2 = tileAt(xx, ty);
           if (t2 === T_WALL || t2 === T_BARREL) { blocked = true; break; }
+          if (livePlayerAt(xx, ty, p.id)) { blocked = true; break; }
         }
       }
       if (!blocked && aiCanBomb(p)) return { dir: null, bomb: true };
@@ -2340,18 +2388,54 @@ function aiPlanIntent(p) {
   }, AI_NAV_HOPS);
   if (toBarrel) return { dir: toBarrel.dir, bomb: false };
 
-  // 6. Walk toward nearest enemy via safe path.
+  // 6. Walk to a tile we can BOMB from — a clear cardinal line within our
+  // power, NOT the enemy's own tile (startStep refuses live-player tiles
+  // anyway, and the old "stand on enemy" goal made bots juke into corners).
   const enemies = [];
   for (const id in players) {
     const e = players[id];
     if (e.alive && e.id !== p.id) enemies.push(e);
   }
   if (enemies.length) {
-    const toEnemy = aiSafeNavStep(p, (x, y) => {
-      for (const e of enemies) if (e.tileX === x && e.tileY === y) return true;
+    const toBombSpot = aiSafeNavStep(p, (x, y) => {
+      for (const e of enemies) {
+        const ex = e.tileX, ey = e.tileY;
+        if (ex === x && ey === y) continue;
+        if (ex !== x && ey !== y) continue;
+        const dist = Math.abs(ex - x) + Math.abs(ey - y);
+        if (dist === 0 || dist > p.power) continue;
+        let blocked = false;
+        if (ex === x) {
+          const a = Math.min(ey, y), c = Math.max(ey, y);
+          for (let yy = a + 1; yy < c; yy++) {
+            const t2 = tileAt(x, yy);
+            if (t2 === T_WALL || t2 === T_BARREL) { blocked = true; break; }
+            if (livePlayerAt(x, yy, p.id)) { blocked = true; break; }
+          }
+        } else {
+          const a = Math.min(ex, x), c = Math.max(ex, x);
+          for (let xx = a + 1; xx < c; xx++) {
+            const t2 = tileAt(xx, y);
+            if (t2 === T_WALL || t2 === T_BARREL) { blocked = true; break; }
+            if (livePlayerAt(xx, y, p.id)) { blocked = true; break; }
+          }
+        }
+        if (!blocked) return true;
+      }
       return false;
     }, AI_NAV_HOPS);
-    if (toEnemy) return { dir: toEnemy.dir, bomb: false };
+    if (toBombSpot) return { dir: toBombSpot.dir, bomb: false };
+
+    // 6b. Fallback: walk to a tile orthogonally adjacent to an enemy.
+    // From there, priority 4 will drop a bomb next tick if the escape
+    // verifies. This avoids targeting the enemy's tile directly.
+    const toAdj = aiSafeNavStep(p, (x, y) => {
+      for (const e of enemies) {
+        if (Math.abs(e.tileX - x) + Math.abs(e.tileY - y) === 1) return true;
+      }
+      return false;
+    }, AI_NAV_HOPS);
+    if (toAdj) return { dir: toAdj.dir, bomb: false };
   }
 
   // 7. Idle.
