@@ -30,4 +30,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # wrangler 4.x is needed for Pages Functions that export a Durable
+          # Object class (Room) declared inline. The auto-fallback to 3.90 in
+          # earlier runs rejected the [[migrations]] / inline DO binding.
+          wranglerVersion: '4'
           command: pages deploy . --project-name=goolz --branch=main --commit-dirty=true
