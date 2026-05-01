@@ -1,0 +1,260 @@
+/* ───────────────────────────────────────────────
+   THE GOOLZ SOCIETY · est. 1893 (allegedly)
+   minimal · retro · cream paper · forest green
+   ─────────────────────────────────────────────── */
+
+@font-face { font-family: 'sys'; src: local('Courier New'), local('Courier'), monospace; }
+
+* { box-sizing: border-box; }
+
+/* ── Visible focus rings everywhere ─────────────────────── */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #1b3a1f;
+  outline-offset: 2px;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f4eeda;
+  color: #1b3a1f;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+body {
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(27,58,31,0.05) 31px 32px);
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
+}
+
+/* ── Header banner ────────────────────────────── */
+.banner {
+  border: 2px solid #1b3a1f;
+  background: #e8dfb8;
+  padding: 10px 14px;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.banner h1 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 28px;
+  letter-spacing: 4px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.banner .sub {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #4a6b3a;
+  text-transform: uppercase;
+}
+
+.ascii {
+  font-family: 'Courier New', monospace;
+  white-space: pre;
+  font-size: 12px;
+  line-height: 1.1;
+  color: #1b3a1f;
+}
+
+.ascii.center { text-align: center; }
+.ascii.big { font-size: 14px; }
+
+/* ── Nav: webring style ───────────────────────── */
+nav.top {
+  border-top: 1px dashed #1b3a1f;
+  border-bottom: 1px dashed #1b3a1f;
+  padding: 6px 0;
+  margin: 14px 0 24px;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+nav.top a {
+  color: #1b3a1f;
+  text-decoration: none;
+  margin: 0 4px;
+  padding: 4px 6px;
+  display: inline-block;     /* taller tap target on mobile */
+  border-bottom: 1px dotted #1b3a1f;
+}
+
+nav.top a:hover,
+nav.top a:focus-visible {
+  background: #1b3a1f; color: #f4eeda; border-bottom-color: transparent;
+}
+nav.top a[aria-current="page"] {
+  background: #1b3a1f; color: #f4eeda;
+  border-bottom-color: transparent;
+}
+
+a { color: #1b3a1f; }
+a:visited { color: #4a6b3a; }
+
+/* ── Headings ─────────────────────────────────── */
+h2 {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-bottom: 2px solid #1b3a1f;
+  padding-bottom: 4px;
+  margin-top: 32px;
+}
+
+h3 {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 22px;
+  margin-bottom: 6px;
+}
+
+/* ── Cards / Entries ──────────────────────────── */
+.entry {
+  border: 1px solid #1b3a1f;
+  background: #fdf9e8;
+  padding: 10px 14px;
+  margin: 12px 0;
+}
+
+.entry .meta {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #4a6b3a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stats {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: #e8dfb8;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border-left: 3px solid #1b3a1f;
+}
+
+/* ── Footer / hit counter ─────────────────────── */
+footer {
+  margin-top: 60px;
+  padding-top: 14px;
+  border-top: 1px dashed #1b3a1f;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  text-align: center;
+  color: #4a6b3a;
+}
+
+footer .count {
+  display: inline-block;
+  background: #1b3a1f;
+  color: #c9f0a0;
+  padding: 2px 8px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  border: 1px outset #1b3a1f;
+}
+
+/* ── Misc retro accents ───────────────────────── */
+hr.fancy {
+  border: 0;
+  height: 0;
+  text-align: center;
+  margin: 24px 0;
+}
+hr.fancy::before {
+  content: "≈≈≈ ◉ ≈≈≈";
+  font-family: 'Courier New', monospace;
+  letter-spacing: 4px;
+  color: #4a6b3a;
+}
+
+.under-construction {
+  display: inline-block;
+  background: #fffac0;
+  border: 1px dashed #b08000;
+  color: #6b4400;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  padding: 2px 8px;
+  letter-spacing: 1px;
+}
+
+.warn {
+  background: #fff8d5;
+  border-left: 4px solid #b08000;
+  padding: 8px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  margin: 12px 0;
+}
+
+ul.plain { list-style: none; padding-left: 0; }
+ul.plain li::before { content: "▪ "; color: #4a6b3a; font-weight: bold; }
+
+table.field {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  margin: 10px 0;
+}
+table.field td, table.field th {
+  border: 1px solid #1b3a1f;
+  padding: 4px 8px;
+  text-align: left;
+}
+table.field th { background: #e8dfb8; }
+
+.spook {
+  color: #4a6b3a;
+  font-style: italic;
+}
+
+/* ── Wiggly gool that follows scroll ──────────── */
+@keyframes wobble {
+  0%   { transform: translateY(0) rotate(-2deg); }
+  50%  { transform: translateY(-3px) rotate(2deg); }
+  100% { transform: translateY(0) rotate(-2deg); }
+}
+.wobble { display: inline-block; animation: wobble 2.5s ease-in-out infinite; }
+
+/* ── Mobile tightening ──────────────────────────────────── */
+@media (max-width: 480px) {
+  .page { padding: 16px 14px 60px; }
+  .banner h1 { font-size: 22px; letter-spacing: 2px; }
+  .banner .sub { font-size: 10px; }
+  nav.top { font-size: 12px; }
+  nav.top a { margin: 2px 2px; padding: 6px 8px; }   /* roomier taps */
+  h2 { font-size: 16px; margin-top: 24px; }
+  .ascii { font-size: 10px; }
+  .ascii.big { font-size: 12px; }
+  pre, code { font-size: 12px; word-break: break-word; }
+  table.field { font-size: 11px; }
+}
+
+/* ── Honor reduced-motion preference ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .wobble { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

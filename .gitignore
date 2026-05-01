@@ -1,0 +1,13 @@
+# Rust build outputs
+**/target/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
+
+# Wrangler local state
+.wrangler/
+
+# Node (for occasional npx wrangler runs)
+node_modules/

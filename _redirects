@@ -1,0 +1,4 @@
+# Old PWF3 paths → new Playing With Goolz paths
+/games/pwf3        /games/pwg/        301
+/games/pwf3/       /games/pwg/        301
+/games/pwf3/*      /games/pwg/:splat  301

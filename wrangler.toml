@@ -1,0 +1,27 @@
+name = "goolz"
+compatibility_date = "2024-09-01"
+pages_build_output_dir = "."
+
+# ── KV: visitor counter (goolz) ──────────────────────────
+[[kv_namespaces]]
+binding = "GOOLZ_KV"
+id = "d329b89f482c41eda425aa955d1ca494"
+
+# ── KV: notepad docs (next-chapter app) ──────────────────
+[[kv_namespaces]]
+binding = "NOTEPAD_DOCS"
+id = "2d8ce6ac0309462bbc2ff3934f2a33c1"
+
+# ── Durable Object: Playing With Goolz multiplayer rooms ──
+# Class is exported from functions/api/pwg/ws/[code].js. Pages Functions
+# auto-bundles all function exports into the dispatched worker, so this
+# binding picks the class up at deploy time. SQLite-backed (free-plan
+# requirement). Each room (game lobby) maps to one DO instance keyed by
+# the upper-cased room code.
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
