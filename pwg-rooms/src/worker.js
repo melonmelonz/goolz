@@ -203,7 +203,14 @@ export class Room {
     const safe = {};
     const allow = ['t', 'x', 'y', 'tx', 'ty', 'dir', 'alive', 'kind', 'power', 't0', 'target'];
     for (const k of allow) if (m[k] !== undefined) safe[k] = m[k];
-    safe.id = me.id;
+    // The host runs the AI ghosts and may relay their actions on their
+    // behalf. m.aiId, when present and registered, overrides the stamped
+    // sender id so other clients treat the message as coming from the bot.
+    if (me.id === this.hostId && typeof m.aiId === 'string' && this.aiBots.has(m.aiId)) {
+      safe.id = m.aiId;
+    } else {
+      safe.id = me.id;
+    }
     this.broadcast(safe, ws);
   }
 

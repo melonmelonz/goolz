@@ -61,10 +61,18 @@ folded into goolz in May 2026. Old `/games/pwf3` paths 301 to
 
 **Embedded version** — inside `goolz.org/next-chapter`
 
-The same game ships as a native Win95 app window (`#win-pwg`,
-desktop icon `GOOLZ.exe`, candle glyph). Lighter reskin — palette
-+ copy + glyph swap; no chat, no mobile D-pad. Solo-vs-AI uses the
-same planner as the standalone client. Speaks the same relay.
+`GOOLZ.exe` (the candle glyph in the Win95 desktop) is a same-origin
+**iframe** of `/games/pwg/`. Same client, same logic, same AI, same
+relay — just framed inside Win95 chrome instead of the GBA-style
+full-page treatment. The standalone detects `window.parent !== window`
+and strips its own page chrome (fullscreen toggle, oversized canvas)
+so it fits a 660×540 desktop window. One source of truth; two skins.
+
+Why an iframe rather than two ports of the same game? Because the
+embedded version used to *be* a separately maintained second port —
+~975 lines of duplicated planner / netcode / renderer that quietly
+drifted out of sync with the standalone. Iframing means a fix to
+`/games/pwg/index.html` ships to both surfaces with one deploy.
 
 **Server (`pwg-rooms` Worker)** — Durable Object per room, hardened:
 
@@ -91,8 +99,10 @@ are rejected at deploy time. So the `Room` DO lives in
 barrel loot stay seed-based (xmur3 + mulberry32) so all clients agree
 on powerup drops without trusting any peer. The DO only gates seat
 changes, stamps sender id, and broadcasts AI roster entries. AI
-movement runs on the host client (or the solo player) and is not
-networked.
+movement runs on the host client (or the solo player); in network
+play the host relays bot pos/bomb/pickup/death messages with an
+`aiId` field, which the DO validates against the registered bot list
+and re-stamps as that bot's id before broadcasting.
 
 ---
 
@@ -215,26 +225,28 @@ Faster re-planning is the single biggest quality lever. At 180 ms a bot
 re-decides about five times per tile-step — fast enough that "the lane
 just got dangerous" becomes "flee" before the bot commits.
 
-### Why the same code lives in two files
+### One implementation, two surfaces
 
-`/games/pwg/index.html` uses **discrete tile-step movement** (logical
-`tileX/tileY` plus an animated step state) — the planner returns a
-`{dir, bomb}` and the step engine walks one tile at a time.
+The planner lives only in `/games/pwg/index.html`. The standalone uses
+**discrete tile-step movement** (logical `tileX/tileY` plus an animated
+step state); the planner returns a `{dir, bomb}` and the step engine
+walks one tile at a time. `GOOLZ.exe` inside `/next-chapter` is a
+same-origin iframe of that same client — there is no second port to
+keep in sync.
 
-The embedded `GOOLZ.exe` inside `/next-chapter` uses **continuous pixel
-movement** (`p.x/p.y`) inherited from the older NCD build. The planner
-returns `{dx, dy, drop}` and the bot's pixel-level step gate snaps the
-cross-axis to the tile centre while moving along the planned axis.
-
-Both files import the same five primitives in spirit:
+The five primitives that do all the work:
 
 ```
 aiBlastSet · aiBuildThreats · aiTileSafeAtHop · aiTileFinallySafe ·
 aiTimedEscape  +  aiSafeNavStep  +  aiCanBomb  +  aiPlan(Intent)
 ```
 
-Diverging the two implementations would be a regression. If you change
-one, change the other.
+`AI_SPEED_FACTOR = 0.62` scales bot dt + step duration so ghosts move
+at 62% of player speed without disturbing the timing math the planner
+relies on (`aiTileTime` is rescaled in lockstep). Both `aiInDangerNow`
+and `aiSafeNavStep` evaluate edges with `aiTileFinallySafe`, which is
+why bots no longer juke after dropping a bomb or step back into their
+own fire trail.
 
 ### Things deliberately left out
 
@@ -379,9 +391,11 @@ three apps (Demo, Minesweeper, the old PWF3 iframe) leaving timers
 and RAF loops running after their windows closed. Sessions bricking
 after ~10 minutes — fixed.
 
-PWG's embedded version (`#win-pwg`) honours the same lifecycle: the
-WebSocket and game RAF tear down on window close, so leaving the app
-doesn't leave a socket open in the background.
+PWG's embedded version (`#win-pwg`) honours the same lifecycle by
+*removing the iframe from the DOM* on close. That single act tears
+down the standalone's WebSocket, RAF loop, AudioContext, and event
+listeners in one shot — no per-app teardown helpers to keep in sync.
+Reopening creates a fresh iframe and a fresh game.
 
 ---
 
@@ -542,6 +556,8 @@ analytics, no ad networks, no Google fonts.
 ✓  Notepad save guarded against double-POST race
 ✓  Window registry prevents double-init re-entrance
 ✓  All timers + RAF loops torn down on window close
+✓  X-Frame-Options: SAMEORIGIN + frame-ancestors 'self' — Win95
+   GOOLZ.exe iframes /games/pwg/ same-origin; no third-party embed
 ✓  JSON imports validated against prototype pollution
 ```
 
@@ -606,6 +622,12 @@ deploy never has to compile Rust. `target/` is gitignored.
 ┌────────┬────────────┬────────────────────────────────────────────────┐
 │ DATE   │ CHANGE                                                      │
 ├────────┼────────────┼────────────────────────────────────────────────┤
+│ 2026-05-01 │ GOOLZ.exe → same-origin iframe of /games/pwg/ — single  │
+│            │   source of truth · embedded duplicate (~975 LOC) gone  │
+│ 2026-05-01 │ AI rework — survival-first time-aware planner; ghosts   │
+│            │   walk only via finally-safe tiles; AI_SPEED_FACTOR     │
+│            │   slows bots to 62%; ghosts now drive in network rooms  │
+│            │   (host relays via aiId, host-only "BOOT" button)       │
 │ 2026-05-01 │ pwg-rooms Worker split out — fix CF Pages DO deploy     │
 │ 2026-05-01 │ Reset history; clean main; OG image; F-key fullscreen   │
 │ 2026-05-01 │ Playing With Goolz reskin (violet/sage/candle/bone)     │

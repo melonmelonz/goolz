@@ -55,6 +55,32 @@
       repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);
   }
 
+  /* When framed inside the Win95 GOOLZ.exe window we drop page chrome
+     that doesn't make sense in an embedded context: the floating
+     fullscreen button (the host page can pop the standalone in a tab)
+     and oversized canvases.  body.embed is set early in the inline
+     script when window.parent !== window. */
+  body.embed { padding: 0; }
+  body.embed #fs-toggle { display: none; }
+  body.embed #lobby {
+    width: 96%;
+    max-width: 100%;
+    box-shadow: 0 0 0 0 transparent;
+    border-width: 2px;
+    padding: 12px 14px;
+  }
+  body.embed canvas {
+    width: auto;
+    max-width: calc(100vw - 8px);
+    max-height: calc(100vh - 110px);
+    height: min(calc(100vh - 110px), calc((100vw - 8px) * 11 / 15));
+    aspect-ratio: 15 / 11;
+    border-width: 2px;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  body.embed #hud { width: 100%; max-width: 100%; gap: 2px; }
+  body.embed .pcard { min-width: 0; padding: 2px 4px; font-size: 9px; }
+
   h1 {
     margin: 0; font-size: 22px; letter-spacing: 3px;
     color: var(--fg);
@@ -435,6 +461,16 @@
 
 <script>
 'use strict';
+
+// ───────────────────────────────────────────────────────────────────────
+// Embed detection — when framed inside the Win95 desktop's GOOLZ.exe
+// window we strip the page chrome (floating fullscreen button + outer
+// drop-shadow + oversized canvas) so the lobby and game fit a 660×500
+// window.  Same-origin iframe so window.parent access is allowed.
+// ───────────────────────────────────────────────────────────────────────
+try {
+  if (window.parent !== window) document.body.classList.add('embed');
+} catch (_) { /* cross-origin (shouldn't happen) — render full chrome */ }
 
 // ───────────────────────────────────────────────────────────────────────
 // Constants & state
@@ -856,17 +892,26 @@ function update(dt, t) {
     if (fires[i].until <= now) fires.splice(i, 1);
   }
 
-  // Pickups + soloMode AI bot pickups too. With discrete movement,
-  // pickups trigger when an entity arrives on a tile (= step ended).
+  // Pickups + locally-driven AI bot pickups (solo player + network host).
+  // With discrete movement, pickups trigger when an entity arrives on a
+  // tile (= step ended).
   for (const id in players) {
     const p = players[id];
     if (!p || !p.alive) continue;
-    if (id !== me.id && !soloMode) continue; // only local + solo bots
+    const localAi = isLocalAi(id);
+    if (id !== me.id && !localAi) continue; // only local + locally-driven bots
     const pu = powerupAt(p.tileX, p.tileY);
     if (pu) {
       applyPowerup(p, pu.kind);
       powerups.splice(powerups.indexOf(pu), 1);
-      if (id === me.id) { netSend({ t: 'pickup', tx: p.tileX, ty: p.tileY, kind: pu.kind }); rebuildHud(); }
+      if (id === me.id) {
+        netSend({ t: 'pickup', tx: p.tileX, ty: p.tileY, kind: pu.kind });
+        rebuildHud();
+      } else if (localAi && !soloMode) {
+        // Host relays AI pickup; the worker re-stamps id with aiId so
+        // the other clients apply the same powerup to the same bot.
+        netSend({ t: 'pickup', aiId: id, tx: p.tileX, ty: p.tileY, kind: pu.kind });
+      }
     }
   }
 
@@ -881,9 +926,11 @@ function update(dt, t) {
         netSend({ t: 'death' });
         rebuildHud();
         checkEnd();
-      } else if (soloMode) {
-        // Solo: AI bots have no network, claim death locally.
+      } else if (isLocalAi(id)) {
+        // Solo or host-driven AI bot: claim death locally; in network
+        // mode broadcast it with aiId so other clients agree.
         p.alive = false;
+        if (!soloMode) netSend({ t: 'death', aiId: id });
         rebuildHud();
         checkEnd();
       }
@@ -891,10 +938,17 @@ function update(dt, t) {
     }
   }
 
-  // Network heartbeat: send pos at ~18Hz
+  // Network heartbeat: send my pos at ~18Hz, plus any AI bots I host.
   if (me_p && (t - lastNetSend) > (1 / 18)) {
     lastNetSend = t;
     netSend({ t: 'pos', x: Math.round(me_p.x), y: Math.round(me_p.y), dir: me_p.dir, alive: me_p.alive ? 1 : 0 });
+    if (!soloMode) {
+      for (const bot of aiBots) {
+        const bp = players[bot.id];
+        if (!bp) continue;
+        netSend({ t: 'pos', aiId: bot.id, x: Math.round(bp.x), y: Math.round(bp.y), dir: bp.dir, alive: bp.alive ? 1 : 0 });
+      }
+    }
   }
 }
 
@@ -1325,11 +1379,20 @@ function onNetMessage(data) {
     return;
   }
   if (m.t === 'start') {
+    // The host drives the AI ghosts; non-host clients leave aiBots empty
+    // and just render incoming pos/bomb/pickup/death messages stamped
+    // server-side with each bot's id.
+    if (me.host) {
+      aiBots = m.roster.filter(r => r.ai).map(r => ({ ...r, _think: 0, _intent: null }));
+    } else {
+      aiBots = [];
+    }
     initGame(m.seed, m.roster);
     return;
   }
   if (m.t === 'reset') {
     started = false;
+    aiBots = [];
     backToRoom();
     return;
   }
@@ -1402,6 +1465,12 @@ function renderRoster(list, hostId) {
         const b = document.createElement('button');
         b.className = 'slotbtn unclaim'; b.textContent = 'STAND';
         b.onclick = () => netSend({ t: 'unclaim' });
+        s.appendChild(b);
+      } else if (isAi && me.host && canChange) {
+        // Host can dismiss summoned ghosts before the match starts.
+        const b = document.createElement('button');
+        b.className = 'slotbtn unclaim'; b.textContent = 'BOOT';
+        b.onclick = () => netSend({ t: 'ai_remove', aiId: r.id });
         s.appendChild(b);
       }
     } else {
@@ -1861,6 +1930,15 @@ tryDropBomb = function() {
 let soloMode = false;
 let aiBots = []; // [{id, slot, color, difficulty, ...controller state}]
 
+// True when this client is responsible for ticking the bot with this id —
+// either we're the solo player, or we're the network host that summoned
+// the bot via 'ai_add'. Non-host clients always return false (their
+// aiBots list is empty), so they passively render incoming bot updates.
+function isLocalAi(id) {
+  for (const b of aiBots) if (b.id === id) return true;
+  return false;
+}
+
 document.getElementById('btn-solo').addEventListener('click', () => {
   me.name = (document.querySelector('input[name=name]').value.trim() || 'player');
   localStorage.setItem('pwg_name', me.name);
@@ -1885,12 +1963,14 @@ function startSolo() {
   initGame(seed, roster);
 }
 
-// In solo mode, drive the AI bots from the same loop. Stamp their actions
-// the way the network would have stamped them.
+// Drive the AI bots from the same update loop. aiBots is populated only
+// for the solo player and the network host, so non-host clients skip
+// this loop naturally — they render incoming pos/bomb/pickup messages
+// the worker stamps with each bot's id.
 const _origUpdate = update;
 update = function(dt, t) {
   _origUpdate(dt, t);
-  if (!soloMode || endResult) return;
+  if (endResult) return;
   for (const bot of aiBots) {
     const p = players[bot.id];
     if (!p || !p.alive) continue;
@@ -1938,10 +2018,17 @@ update = function(dt, t) {
 const AI_THINK_INTERVAL = 0.18;   // seconds between re-plans
 const AI_ESCAPE_HOPS    = 12;     // BFS depth for escape / nav
 const AI_NAV_HOPS       = 30;     // BFS depth for long-haul barrel/enemy nav
+const AI_SPEED_FACTOR   = 0.62;   // bots move at 62% of player speed —
+                                  // slower bots are easier to play against
+                                  // AND give the planner more re-plan
+                                  // ticks per tile-step (less commitment-
+                                  // to-stale-plans during the juke window).
 
 function aiTick(p, bot, dt, t) {
   // Always advance an in-flight step so the bot reaches its next tile.
-  if (p.step) { advanceStep(p, dt); return; }
+  // dt is scaled by AI_SPEED_FACTOR so bots animate slower than the
+  // human player without changing the global step model.
+  if (p.step) { advanceStep(p, dt * AI_SPEED_FACTOR); return; }
   bot._think -= dt;
   const reachedNewTile = bot._lastTileX !== p.tileX || bot._lastTileY !== p.tileY;
   if (bot._think <= 0 || reachedNewTile || !bot._intent) {
@@ -1955,6 +2042,9 @@ function aiTick(p, bot, dt, t) {
   // the planner already verified a timed escape exists (Invariant I2).
   if (want.bomb && p.bombsActive < p.bombs && tileAt(tx, ty) === T_EMPTY && !bombAt(tx, ty)) {
     spawnBomb(p.id, tx, ty, p.power, performance.now() / 1000);
+    // In network mode the host relays the bomb on the bot's behalf so
+    // the other clients explode it on the same fuse.
+    if (!soloMode) netSend({ t: 'bomb', aiId: bot.id, tx, ty, power: p.power, t0: Date.now() });
     want.bomb = false;
     // Force an immediate re-plan so the bot heads down its escape route.
     bot._think = 0;
@@ -2049,7 +2139,10 @@ function aiBuildThreats(hypoBomb) {
   return { threats, now };
 }
 
-function aiTileTime(p) { return 1 / (BASE_SPEED + p.speedTier * SPEED_STEP); }
+// tileTime for the planner — must match the *actual* bot crossing time
+// (player tilesPerSec × AI_SPEED_FACTOR), or the time-aware safety
+// math drifts and the bot starts mis-judging escapes.
+function aiTileTime(p) { return 1 / ((BASE_SPEED + p.speedTier * SPEED_STEP) * AI_SPEED_FACTOR); }
 
 // Is (tx,ty) safe to OCCUPY at hop h? (occupancy = [arrival, arrival+tileTime])
 function aiTileSafeAtHop(tx, ty, hop, ctx, tileTime) {
@@ -2117,14 +2210,29 @@ function aiCanBomb(p) {
   return aiTimedEscape(p, { tx: p.tileX, ty: p.tileY, power: p.power }, AI_ESCAPE_HOPS) != null;
 }
 
-// Are we in immediate danger? (current tile occupied during a threat window)
+// Are we in danger? Now or pending. We use *finally-safe* (not just
+// safe-at-hop-0) so the bot keeps fleeing while ANY future threat
+// covers its current tile — this is what kills the post-bomb juke,
+// where the bot would step out of immediate occupancy overlap and
+// then immediately re-plan a barrel-chase that walked back through
+// the bomb's blast.
 function aiInDangerNow(p) {
   const ctx = aiBuildThreats(null);
-  return !aiTileSafeAtHop(p.tileX, p.tileY, 0, ctx, aiTileTime(p));
+  return !aiTileFinallySafe(p.tileX, p.tileY, 0, ctx, aiTileTime(p));
 }
 
 // Time-aware navigation: BFS for first step toward any tile satisfying
-// goalFn(x,y), refusing to enter tiles unsafe at the corresponding hop.
+// goalFn(x,y). The non-obvious bit is the safety filter — we only step
+// through *finally-safe* tiles (no future threat at all), not just tiles
+// "safe right now." Allowing transient passage created the post-bomb
+// juke: the bot would walk back through its own bomb's blast because
+// "right now" the lane is fine, but by the time the bot's next re-plan
+// fired, fire was overlapping the chosen tile.
+//
+// Trade-off: when a barrel/enemy is reachable only across a transient
+// blast, the bot waits the fire out instead of dancing on its edge.
+// In a Bomberman-shaped map that's the right call — the alternative
+// is suicide.
 function aiSafeNavStep(p, goalFn, maxHops) {
   const ctx = aiBuildThreats(null);
   const tileTime = aiTileTime(p);
@@ -2146,7 +2254,7 @@ function aiSafeNavStep(p, goalFn, maxHops) {
         if (isSolid(nx, ny, ig)) continue;
         const nk = ny * W + nx;
         if (seen[nk]) continue;
-        if (!aiTileSafeAtHop(nx, ny, node.hop + 1, ctx, tileTime)) continue;
+        if (!aiTileFinallySafe(nx, ny, node.hop + 1, ctx, tileTime)) continue;
         seen[nk] = 1;
         next.push({ k: nk, hop: node.hop + 1, firstDir: node.firstDir < 0 ? d : node.firstDir });
       }
@@ -2249,9 +2357,11 @@ function aiPlanIntent(p) {
 
 // AI driver: walk along the planned intent, one tile at a time. The
 // step model handles the animation; this function just decides when to
-// initiate the next step.
+// initiate the next step. Animation dt is scaled by AI_SPEED_FACTOR so
+// bots move slower than the human, and we extend the step duration on
+// the bot's brand-new step to match.
 function aiMove(p, want, dt, bot) {
-  advanceStep(p, dt);
+  advanceStep(p, dt * AI_SPEED_FACTOR);
   if (p.step) return;
   if (!want || want.dir == null) return;
   let dx = 0, dy = 0;
@@ -2260,7 +2370,14 @@ function aiMove(p, want, dt, bot) {
   else if (want.dir === 2) dy = 1;
   else if (want.dir === 3) dx = -1;
   if (!dx && !dy) return;
-  startStep(p, dx, dy);
+  if (startStep(p, dx, dy) && p.step) {
+    // Slow the freshly-started step so the bot crosses the tile at
+    // AI_SPEED_FACTOR × player speed (used by both the renderer and
+    // the planner via aiTileTime).
+    p.step.duration = p.step.duration / AI_SPEED_FACTOR;
+    p.vx *= AI_SPEED_FACTOR;
+    p.vy *= AI_SPEED_FACTOR;
+  }
 }
 
 // In solo mode, the rematch button restarts with fresh seed & roster.
