@@ -2452,7 +2452,16 @@ Features needed:
               <input type="text" class="pwg-input code" id="pwg-code" maxlength="6" placeholder="CODE">
               <button class="pwg-btn" id="pwg-join">Join</button>
             </div>
-            <div class="pwg-status" id="pwg-status">Enter your name and create or join a room.</div>
+            <div class="pwg-row">
+              <button class="pwg-btn" id="pwg-solo" title="play offline against AI ghosts">Play Solo</button>
+              <label style="margin-left:8px;font-size:11px">vs:</label>
+              <select class="pwg-input" id="pwg-ai-diff" style="min-width:0;letter-spacing:0;text-transform:none">
+                <option value="0">wisp · easy</option>
+                <option value="1" selected>wraith · normal</option>
+                <option value="2">banshee · hard</option>
+              </select>
+            </div>
+            <div class="pwg-status" id="pwg-status">Enter your name and create or join a room — or play solo.</div>
           </fieldset>
           <div class="pwg-hint">Four wisps · last lantern drifts home · your own candle will douse you</div>
         </div>
@@ -4861,6 +4870,10 @@ const _PWG = (function(){
   let lastNet=0, lastFrame=0, roomCode='', looping=false;
   const peers=new Map(), keys={};
   let canvas, ctx, wired=false;
+  // Solo (offline-vs-AI) state. When soloMode is true, ws is null and the
+  // game loop drives non-human players locally. Difficulty 0=easy, 1=normal,
+  // 2=hard. Higher difficulty = shorter think interval + more aggressive.
+  let soloMode=false, soloDiff=1;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -5026,6 +5039,177 @@ const _PWG = (function(){
     else if(k===PU_SPEED)p.speedTier=Math.min(5,p.speedTier+1);
   }
 
+  // ── solo / AI (only used when soloMode is true) ──
+  // Lightweight bots: re-plan a single-step intent every ~200-400ms via BFS.
+  // Priorities: flee bombs → blast adjacent enemy → blast adjacent barrel →
+  // walk toward nearest barrel → chase nearest enemy. Difficulty mostly
+  // affects think rate.
+  function inBlast(tx, ty, horizon){
+    const now = performance.now()/1000;
+    for (const b of bombs) {
+      const dt = b.fuseUntil - now;
+      if (dt < 0 || dt > horizon) continue;
+      if (b.tx === tx && b.ty === ty) return true;
+      if (b.tx === tx) {
+        let blocked = false;
+        const a = Math.min(b.ty, ty), c = Math.max(b.ty, ty);
+        for (let yy = a+1; yy < c; yy++) if (tileAt(b.tx, yy) === T_WALL) { blocked = true; break; }
+        if (!blocked && Math.abs(b.ty - ty) <= b.power) return true;
+      } else if (b.ty === ty) {
+        let blocked = false;
+        const a = Math.min(b.tx, tx), c = Math.max(b.tx, tx);
+        for (let xx = a+1; xx < c; xx++) if (tileAt(xx, b.ty) === T_WALL) { blocked = true; break; }
+        if (!blocked && Math.abs(b.tx - tx) <= b.power) return true;
+      }
+    }
+    for (const f of fires) if (f.tx === tx && f.ty === ty) return true;
+    return false;
+  }
+  // Find first step on shortest path to any tile where goalFn(x,y) is true.
+  function bfsFirstStep(sx, sy, goalFn) {
+    const seen = new Uint8Array(W*H);
+    const parent = new Int32Array(W*H).fill(-1);
+    const start = sy*W + sx;
+    seen[start] = 1;
+    const q = [start];
+    while (q.length) {
+      const i = q.shift();
+      const x = i % W, y = (i / W) | 0;
+      if (i !== start && goalFn(x, y)) {
+        let cur = i;
+        while (parent[cur] !== start) cur = parent[cur];
+        const nx = cur % W, ny = (cur / W) | 0;
+        return { dx: nx - sx, dy: ny - sy };
+      }
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const ni = ny*W + nx;
+        if (seen[ni]) continue;
+        if (isSolid(nx, ny)) continue;
+        seen[ni] = 1; parent[ni] = i;
+        q.push(ni);
+      }
+    }
+    return null;
+  }
+  function aiPlan(p) {
+    const px = Math.floor(p.x/TILE), py = Math.floor(p.y/TILE);
+    // 1. Flee.
+    if (inBlast(px, py, 2.4)) {
+      const safe = bfsFirstStep(px, py, (x,y) => !inBlast(x, y, 2.5));
+      if (safe) return { dx: safe.dx, dy: safe.dy, drop: false };
+    }
+    // 2. Blast adjacent enemy in line of sight (within power).
+    const enemies = Object.values(players).filter(o => o.alive && o.id !== p.id);
+    if (p.bombsActive < p.bombs) {
+      for (const e of enemies) {
+        const ex = Math.floor(e.x/TILE), ey = Math.floor(e.y/TILE);
+        if (ex === px && ey === py) continue;
+        const dxAbs = Math.abs(ex-px), dyAbs = Math.abs(ey-py);
+        if ((ex === px || ey === py) && (dxAbs + dyAbs) <= p.power) {
+          // verify line is unblocked by walls
+          let blocked = false;
+          if (ex === px) {
+            const a = Math.min(ey, py), c = Math.max(ey, py);
+            for (let yy = a+1; yy < c; yy++) if (tileAt(px, yy) === T_WALL) { blocked = true; break; }
+          } else {
+            const a = Math.min(ex, px), c = Math.max(ex, px);
+            for (let xx = a+1; xx < c; xx++) if (tileAt(xx, py) === T_WALL) { blocked = true; break; }
+          }
+          if (!blocked) return { dx: 0, dy: 0, drop: true };
+        }
+      }
+    }
+    // 3. Blast adjacent barrel.
+    if (p.bombsActive < p.bombs) {
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        if (tileAt(px+dx, py+dy) === T_BARREL) {
+          return { dx: 0, dy: 0, drop: true };
+        }
+      }
+    }
+    // 4. Path toward nearest tile next to a barrel.
+    const toBarrel = bfsFirstStep(px, py, (x,y) => {
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        if (tileAt(x+dx, y+dy) === T_BARREL) return true;
+      }
+      return false;
+    });
+    if (toBarrel) return { dx: toBarrel.dx, dy: toBarrel.dy, drop: false };
+    // 5. Chase nearest enemy.
+    const toEnemy = bfsFirstStep(px, py, (x,y) =>
+      enemies.some(e => Math.floor(e.x/TILE) === x && Math.floor(e.y/TILE) === y)
+    );
+    if (toEnemy) return { dx: toEnemy.dx, dy: toEnemy.dy, drop: false };
+    return { dx: 0, dy: 0, drop: false };
+  }
+  // Drive an AI bot — re-plan periodically, drop a bomb if intent says so,
+  // and step in the planned direction with cross-axis tile-center snap.
+  function aiMove(p, dt) {
+    const now = performance.now();
+    if (!p._ai) p._ai = { nextThink: 0, intent: { dx:0, dy:0, drop:false }, lastBomb: 0 };
+    const interval = soloDiff === 0 ? 420 : soloDiff === 1 ? 260 : 160;
+    if (now >= p._ai.nextThink) {
+      p._ai.intent = aiPlan(p);
+      p._ai.nextThink = now + interval + Math.random()*60;
+    }
+    const it = p._ai.intent;
+    // Drop bomb (rate-limited so a bot doesn't spam empty bombs).
+    if (it.drop && p.bombsActive < p.bombs && (now - p._ai.lastBomb) > 600) {
+      const tx = Math.floor(p.x/TILE), ty = Math.floor(p.y/TILE);
+      if (!bombAt(tx, ty) && tileAt(tx, ty) === T_EMPTY) {
+        spawnBomb(p.id, tx, ty, p.power, performance.now()/1000);
+        p._ai.lastBomb = now;
+        // After dropping, force a re-plan so the bot looks for an escape.
+        p._ai.nextThink = 0;
+      }
+    }
+    const dx = it.dx, dy = it.dy;
+    if (dx === 0 && dy === 0) { p.vx = p.vy = 0; return; }
+    const speed = (BASE_SPEED + p.speedTier * SPEED_STEP) * TILE;
+    const tileX = Math.floor(p.x/TILE), tileY = Math.floor(p.y/TILE);
+    const ig = bombAt(tileX, tileY);
+    if (isSolid(tileX + dx, tileY + dy, ig)) { p.vx = p.vy = 0; p._ai.nextThink = 0; return; }
+    if (dx !== 0) {
+      // snap cross axis (y) to tile center
+      const center = (tileY + 0.5) * TILE;
+      const off = p.y - center;
+      if (Math.abs(off) > 0.5) p.y -= Math.sign(off) * Math.min(Math.abs(off), speed*dt*0.85);
+      p.x += dx * speed * dt;
+      p.dir = dx > 0 ? 1 : 3;
+    } else {
+      const center = (tileX + 0.5) * TILE;
+      const off = p.x - center;
+      if (Math.abs(off) > 0.5) p.x -= Math.sign(off) * Math.min(Math.abs(off), speed*dt*0.85);
+      p.y += dy * speed * dt;
+      p.dir = dy > 0 ? 2 : 0;
+    }
+  }
+  function soloStart() {
+    if (looping && scene === 'game') return;
+    me.id = 'me';
+    me.host = true;
+    me.slot = 0;
+    me.name = ($('pwg-name').value.trim()) || 'player';
+    soloMode = true;
+    soloDiff = parseInt($('pwg-ai-diff').value, 10) || 1;
+    const roster = [
+      { id: me.id, slot: 0, name: me.name, color: me.color },
+    ];
+    const aiNames = ['Pip','Mote','Drift','Pall','Whisp','Hush'];
+    const usedColors = new Set([me.color]);
+    let nameIdx = Math.floor(Math.random()*aiNames.length);
+    for (let s = 1; s < 4; s++) {
+      let c = 0;
+      for (let k = 0; k < 4; k++) if (!usedColors.has(k)) { c = k; break; }
+      usedColors.add(c);
+      roster.push({ id: 'ai'+s, slot: s, name: aiNames[(nameIdx + s) % aiNames.length], color: c });
+    }
+    initGame((Math.random()*0xfffffff)|0, roster);
+    setStatus('solo · vs ' + ['easy','normal','hard'][soloDiff] + ' ghosts');
+  }
+
   // ── game loop ──
   function frame(ts){
     if(!looping)return;
@@ -5040,8 +5224,13 @@ const _PWG = (function(){
     for(const id in players){
       if(id===me.id)continue;
       const p=players[id];
-      p.x+=(p.tx-p.x)*Math.min(1,dt*12);
-      p.y+=(p.ty-p.y)*Math.min(1,dt*12);
+      if (soloMode) {
+        if (p.alive && !endResult) aiMove(p, dt);
+      } else {
+        // Networked: smooth toward last known peer position.
+        p.x+=(p.tx-p.x)*Math.min(1,dt*12);
+        p.y+=(p.ty-p.y)*Math.min(1,dt*12);
+      }
     }
     const now=performance.now()/1000;
     for(let i=bombs.length-1;i>=0;i--)if(bombs[i].fuseUntil<=now)explode(bombs[i]);
@@ -5051,12 +5240,24 @@ const _PWG = (function(){
       const pu=puAt(tx,ty);
       if(pu){applyPU(mp,pu.kind); powerups.splice(powerups.indexOf(pu),1); netSend({t:'pickup',tx,ty,kind:pu.kind}); rebuildHud();}
     }
+    // Solo: bots collect their own pickups locally.
+    if (soloMode) {
+      for (const id in players) {
+        if (id === me.id) continue;
+        const p = players[id];
+        if (!p.alive) continue;
+        const tx = Math.floor(p.x/TILE), ty = Math.floor(p.y/TILE);
+        const pu = puAt(tx, ty);
+        if (pu) { applyPU(p, pu.kind); powerups.splice(powerups.indexOf(pu), 1); rebuildHud(); }
+      }
+    }
     for(const id in players){
       const p=players[id];
       if(!p.alive)continue;
       const tx=Math.floor(p.x/TILE),ty=Math.floor(p.y/TILE);
       if(fires.some(f=>f.tx===tx&&f.ty===ty)){
         if(id===me.id){p.alive=false; netSend({t:'death'}); rebuildHud(); checkEnd();}
+        else if (soloMode) { p.alive = false; rebuildHud(); checkEnd(); }
       }
     }
     if(mp&&(t-lastNet)>(1/18)){lastNet=t; netSend({t:'pos',x:Math.round(mp.x),y:Math.round(mp.y),dir:mp.dir,alive:mp.alive?1:0});}
@@ -5321,7 +5522,7 @@ const _PWG = (function(){
   function backToConnect(){
     if(ws)try{ws.close();}catch{} ws=null; peers.clear();
     me.slot=-1; me.host=false; started=false; scene='connect'; endResult=null;
-    looping=false;
+    looping=false; soloMode=false;
     showView('pwg-v-connect');
   }
 
@@ -5382,7 +5583,18 @@ const _PWG = (function(){
     $('pwg-start').onclick=()=>{if(me.host)netSend({t:'start'});};
     $('pwg-leave').onclick=backToConnect;
     $('pwg-end-leave').onclick=backToConnect;
-    $('pwg-rematch').onclick=()=>netSend({t:'reset'});
+    $('pwg-rematch').onclick=()=>{
+      if (soloMode) { soloStart(); }
+      else netSend({t:'reset'});
+    };
+    $('pwg-solo').onclick=()=>{
+      me.name=$('pwg-name').value.trim()||'player';
+      localStorage.setItem('pwg_name',me.name);
+      // Cut any stale connection before starting a local match.
+      try { if (ws) ws.close(); } catch (e) {}
+      ws = null; peers.clear();
+      soloStart();
+    };
 
     $('pwg-copy').onclick=copyCode;
     $('pwg-roomcode').onclick=copyCode;
@@ -5431,6 +5643,7 @@ const _PWG = (function(){
     ws = null;
     if (peers && peers.clear) peers.clear();
     me.slot = -1; me.host = false; started = false; scene = 'connect'; endResult = null;
+    soloMode = false;
   }
   function onOpen(){
     // After a previous teardown we are in 'connect' state but the DOM may still

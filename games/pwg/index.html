@@ -11,16 +11,21 @@
 <meta property="og:type" content="website">
 <title>Playing With Goolz</title>
 <style>
+  /* ───────────────────────────────────────────────────────────────
+     GBA / 8-bit reskin — 4-color palette, hard pixels, no glow.
+     Lavender Town inspired: deep haunt-purple, bone, candleflame,
+     ghost-sage. No gradients, no border-radius, no blur, no
+     box-shadow softness — just stamp-like 2px outlines.
+     ─────────────────────────────────────────────────────────────── */
   :root {
-    --bg: #0c0a14;       /* midnight */
-    --bg2: #1a1430;      /* haunt */
-    --fg: #e8e6d0;       /* bone */
-    --accent: #b6a4dc;   /* candleflame violet */
-    --accent2: #b9d3a4;  /* faint ectoplasm */
-    --panel: #1a1530;
-    --panel2: #2a2244;
-    --ink: #0a0712;
-    --muted: #6e6585;
+    --bg:      #2a1840;   /* haunt purple background */
+    --bg-dk:   #1a0e2a;   /* deep crypt (panels + ink) */
+    --fg:      #f0e6d2;   /* bone foreground */
+    --accent:  #c094ff;   /* candleflame violet */
+    --accent2: #98d098;   /* ghost sage */
+    --warn:    #e8a878;   /* embers */
+    --muted:   #7a6a98;   /* faded shade */
+    --line:    #f0e6d2;   /* the only outline color, period */
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -28,202 +33,321 @@
   * { box-sizing: border-box; }
   html, body {
     margin: 0; height: 100%;
-    background: radial-gradient(ellipse at top, var(--bg2), var(--bg));
+    background: var(--bg);
     color: var(--fg);
-    font-family: 'Trebuchet MS', system-ui, sans-serif;
+    /* Pixel-bitmap feel via tight monospace + crisp rendering. No web font
+       (CSP would block it anyway), so we lean on the OS's fixed-width and
+       turn off antialiasing for that GBA look. */
+    font-family: 'Courier New', 'Lucida Console', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.3;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+    image-rendering: pixelated;
     overflow: hidden;
     user-select: none;
   }
-  body { display: flex; align-items: center; justify-content: center; }
-  /* Subtle CRT vignette over the whole page */
-  body::after {
-    content: ''; position: fixed; inset: 0; pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
-    z-index: 100;
+  body {
+    display: flex; align-items: center; justify-content: center;
+    /* Subtle scanline pattern instead of a vignette. */
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);
   }
-  h1 { margin: 0; font-size: 32px; letter-spacing: 4px;
-       text-shadow: 0 0 14px rgba(182,164,220,.55), 0 2px 0 #000;
-       font-weight: 700; }
-  h1 .accent { color: var(--accent2); text-shadow: 0 0 14px rgba(185,211,164,.55), 0 2px 0 #000; }
+
+  h1 {
+    margin: 0; font-size: 22px; letter-spacing: 3px;
+    color: var(--fg);
+    font-weight: 700;
+    text-transform: uppercase;
+    /* Hard 1px shadow stack for that bitmap stamp feel. */
+    text-shadow: 2px 2px 0 var(--bg-dk);
+  }
+  h1 .accent { color: var(--accent); text-shadow: 2px 2px 0 var(--bg-dk); }
+
+  /* All buttons: a chunky rectangular cartridge button. */
   button {
-    font: inherit;
-    background: linear-gradient(180deg, #2a2244, #1a1530);
-    color: var(--fg); border: 1px solid var(--accent);
-    padding: 10px 18px; border-radius: 8px;
-    cursor: pointer; font-weight: 600; letter-spacing: 2px;
-    box-shadow: 0 2px 0 var(--ink), inset 0 0 0 1px rgba(182,164,220,.15);
-    transition: transform .05s, box-shadow .12s, border-color .12s;
+    font: inherit; font-size: 11px;
+    background: var(--bg-dk);
+    color: var(--fg);
+    border: 2px solid var(--line);
+    border-radius: 0;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    /* Two-tone "pressed-into-cartridge" outline — no soft glow. */
+    box-shadow: 2px 2px 0 0 var(--bg-dk);
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
   }
-  button:hover { border-color: var(--accent2); box-shadow: 0 2px 0 var(--ink), 0 0 14px rgba(185,211,164,.18); }
-  button:active { transform: translateY(2px); box-shadow: 0 0 0 var(--ink); }
+  button:hover { background: var(--accent); color: var(--bg-dk); }
+  button:active { transform: translate(2px, 2px); box-shadow: 0 0 0 0 var(--bg-dk); }
   button.alt { border-color: var(--accent2); }
-  button.alt:hover { border-color: var(--accent); box-shadow: 0 2px 0 var(--ink), 0 0 14px rgba(182,164,220,.18); }
-  button:disabled { filter: grayscale(.6) brightness(.7); cursor: not-allowed; }
-  input[type=text] {
-    font: inherit; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--panel2);
-    background: var(--ink); color: var(--fg); outline: none; min-width: 180px;
-    text-transform: uppercase; letter-spacing: 2px;
+  button.alt:hover { background: var(--accent2); color: var(--bg-dk); }
+  button:disabled { background: var(--bg-dk); color: var(--muted); border-color: var(--muted); cursor: not-allowed; }
+  button:disabled:hover { background: var(--bg-dk); color: var(--muted); }
+
+  input[type=text], select {
+    font: inherit; font-size: 12px;
+    padding: 6px 8px;
+    border: 2px solid var(--line);
+    border-radius: 0;
+    background: var(--bg-dk);
+    color: var(--fg);
+    outline: none;
+    min-width: 140px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    -webkit-font-smoothing: none;
   }
-  input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(182,164,220,.18); }
+  input[type=text]:focus, select:focus { border-color: var(--accent); }
   input[name=name] { text-transform: none; letter-spacing: 0; }
 
-  /* LOBBY */
+  /* ── LOBBY: a chunky bordered cartridge box ── */
   #lobby {
-    background: linear-gradient(180deg, var(--panel) 0%, var(--bg2) 100%);
-    border: 1px solid var(--panel2);
-    border-radius: 14px;
-    padding: 32px 40px 28px;
-    box-shadow: 0 0 60px rgba(182,164,220,.08), 0 12px 30px rgba(0,0,0,.6);
-    width: min(560px, 92vw);
+    background: var(--bg-dk);
+    border: 3px solid var(--line);
+    border-radius: 0;
+    padding: 18px 22px 16px;
+    width: min(540px, 94vw);
     text-align: center;
+    /* Outer "drop shadow" rendered as a hard offset block — pure pixel. */
+    box-shadow: 4px 4px 0 0 var(--accent);
   }
-  #lobby p.tag { margin: 8px 0 22px; font-size: 13px; opacity: .65; letter-spacing: 1px; font-style: italic; }
-  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
-  .roster { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 16px 0; }
+  #lobby p.tag {
+    margin: 6px 0 16px; font-size: 10px;
+    color: var(--accent2);
+    letter-spacing: 2px; text-transform: uppercase;
+    font-style: normal;
+  }
+  .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
+  .roster { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin: 10px 0; }
   .slot {
-    background: var(--ink); border: 1px solid var(--panel2); border-radius: 10px;
-    padding: 10px; min-height: 60px; display: flex; align-items: center; gap: 10px;
-    text-align: left; position: relative;
+    background: var(--bg);
+    border: 2px solid var(--line);
+    border-radius: 0;
+    padding: 6px 8px;
+    min-height: 44px;
+    display: flex; align-items: center; gap: 8px;
+    text-align: left;
+    position: relative;
+    font-size: 11px;
   }
-  .slot.host { border-color: var(--accent2); }
-  .slot.mine { border-color: var(--accent); box-shadow: 0 0 10px rgba(182,164,220,.25); }
-  .slot.ai { border-style: dashed; }
-  .swatch { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-            box-shadow: inset 0 -4px 0 rgba(0,0,0,.25), 0 0 8px currentColor; }
-  .slotname { font-weight: 600; font-size: 14px; }
-  .slotinfo { font-size: 11px; opacity: .65; font-style: italic; }
-  .empty .swatch { background: var(--panel2); opacity: .35; box-shadow: none; }
-  .empty .slotname { opacity: .4; font-style: italic; }
+  .slot.host { border-color: var(--warn); }
+  .slot.mine { border-color: var(--accent); }
+  /* Dashed border for AI = pixel-tick pattern done with image. */
+  .slot.ai {
+    border-style: solid;
+    border-color: var(--accent2);
+    background-image: repeating-linear-gradient(45deg, transparent 0 4px, rgba(152,208,152,.07) 4px 8px);
+  }
+  .swatch {
+    width: 14px; height: 14px; border-radius: 0; flex-shrink: 0;
+    border: 1px solid var(--line);
+    box-shadow: none;
+    image-rendering: pixelated;
+  }
+  .slotname { font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  .slotinfo { font-size: 9px; color: var(--muted); font-style: normal; letter-spacing: 1px; text-transform: uppercase; }
+  .empty .swatch {
+    background: transparent;
+    background-image: repeating-linear-gradient(45deg, transparent 0 2px, var(--muted) 2px 4px);
+    border-color: var(--muted);
+  }
+  .empty .slotname { color: var(--muted); }
   .slotbtn {
-    margin-left: auto; padding: 4px 10px; font-size: 11px; border-radius: 6px;
-    background: transparent; color: var(--fg); border: 1px solid var(--accent);
+    margin-left: auto; padding: 2px 6px; font-size: 9px;
+    background: transparent; color: var(--fg);
+    border: 1px solid var(--accent);
+    border-radius: 0;
     cursor: pointer; box-shadow: none; letter-spacing: 1px;
+    font-weight: 700; text-transform: uppercase;
   }
-  .slotbtn:hover { background: var(--accent); color: var(--ink); }
-  .slotbtn.unclaim { border-color: var(--accent2); }
-  .slotbtn.unclaim:hover { background: var(--accent2); color: var(--ink); }
+  .slotbtn:hover { background: var(--accent); color: var(--bg-dk); }
+  .slotbtn.unclaim { border-color: var(--warn); }
+  .slotbtn.unclaim:hover { background: var(--warn); color: var(--bg-dk); }
   .specrow {
-    margin-top: 8px; padding: 8px 12px; background: var(--ink);
-    border: 1px dashed var(--panel2); border-radius: 8px;
-    text-align: left; font-size: 12px; min-height: 36px;
+    margin-top: 6px; padding: 4px 6px;
+    background: var(--bg);
+    border: 1px solid var(--muted);
+    border-radius: 0;
+    text-align: left; font-size: 10px; min-height: 24px;
+    text-transform: uppercase; letter-spacing: 1px;
   }
-  .specrow .label { opacity: .5; font-weight: 600; letter-spacing: 2px; font-size: 10px; }
+  .specrow .label { color: var(--muted); font-weight: 700; letter-spacing: 1px; font-size: 9px; }
   .specchip {
-    display: inline-block; background: var(--panel2); padding: 3px 8px;
-    border-radius: 12px; margin: 2px 3px; font-size: 11px;
+    display: inline-block; background: var(--bg-dk);
+    border: 1px solid var(--muted);
+    padding: 1px 5px; border-radius: 0;
+    margin: 1px 2px; font-size: 9px;
   }
-  .specchip.me { background: var(--accent); color: var(--ink); }
-  .roomcode { font-size: 30px; font-weight: 700; letter-spacing: 8px; color: var(--accent2);
-              text-shadow: 0 0 12px rgba(185,211,164,.45); margin: 6px 0; cursor: pointer;
-              font-family: 'Courier New', monospace; }
-  .roomcode:hover { opacity: .85; }
-  .hint { font-size: 12px; opacity: .55; letter-spacing: 1px; }
-  #status { margin-top: 12px; min-height: 20px; font-size: 13px; color: var(--accent2); font-style: italic; }
-  /* small floating top-right buttons (audio + fullscreen) */
-  #audio-toggle, #fs-toggle {
-    position: fixed; top: 14px; z-index: 50;
-    width: 36px; height: 36px; border-radius: 50%; padding: 0;
-    border: 1px solid var(--panel2); background: var(--ink);
-    color: var(--accent); font-size: 16px; letter-spacing: 0;
-    box-shadow: 0 0 12px rgba(0,0,0,.5);
-    display: flex; align-items: center; justify-content: center;
+  .specchip.me { background: var(--accent); color: var(--bg-dk); border-color: var(--accent); }
+  .roomcode {
+    font-size: 22px; font-weight: 700; letter-spacing: 8px;
+    color: var(--accent);
+    text-shadow: 2px 2px 0 var(--bg-dk);
+    margin: 4px 0; cursor: pointer;
+    font-family: 'Courier New', monospace;
   }
-  #audio-toggle { right: 14px; }
-  #fs-toggle    { right: 58px; }
-  #audio-toggle.muted { color: var(--muted); }
-  #audio-toggle:hover, #fs-toggle:hover { border-color: var(--accent); }
+  .roomcode:hover { color: var(--accent2); }
+  .hint {
+    font-size: 9px; color: var(--muted); letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  #status {
+    margin-top: 8px; min-height: 16px; font-size: 10px;
+    color: var(--accent2);
+    text-transform: uppercase; letter-spacing: 1px;
+  }
 
-  /* Fullscreen mode: canvas grows to fit viewport while preserving 15:11 aspect.
-     Lobby is gone by then; HUD + controls-help collapse out of the way. */
-  :fullscreen body, :fullscreen #game {
-    background: #050310;
+  /* Floating audio/fullscreen — square little chiclets. */
+  #audio-toggle, #fs-toggle {
+    position: fixed; top: 10px; z-index: 50;
+    width: 28px; height: 28px;
+    border-radius: 0;
+    padding: 0;
+    border: 2px solid var(--line);
+    background: var(--bg-dk);
+    color: var(--accent);
+    font-size: 12px; letter-spacing: 0;
+    box-shadow: 2px 2px 0 0 var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: none;
   }
-  :fullscreen #game {
-    width: 100vw; height: 100vh;
-    justify-content: center;
-    gap: 6px;
-  }
-  :fullscreen #hud {
-    width: min(960px, 96vw);
-    margin-top: 4px;
-  }
+  #audio-toggle { right: 10px; }
+  #fs-toggle    { right: 46px; }
+  #audio-toggle.muted { color: var(--muted); }
+  #audio-toggle:hover, #fs-toggle:hover { background: var(--accent); color: var(--bg-dk); }
+
+  /* Fullscreen — canvas dominates, chrome shrinks. */
+  :fullscreen body, :fullscreen #game { background: var(--bg-dk); }
+  :fullscreen #game { width: 100vw; height: 100vh; justify-content: center; gap: 4px; }
+  :fullscreen #hud { width: min(960px, 96vw); margin-top: 2px; }
   :fullscreen canvas {
     width: auto;
-    height: min(calc(100vh - 110px), calc((100vw - 16px) * 11 / 15));
+    height: min(calc(100vh - 100px), calc((100vw - 12px) * 11 / 15));
     aspect-ratio: 15 / 11;
-    max-width: calc(100vw - 16px);
-    max-height: calc(100vh - 110px);
+    max-width: calc(100vw - 12px);
+    max-height: calc(100vh - 100px);
   }
-  :fullscreen .controls-help { font-size: 11px; opacity: .45; }
+  :fullscreen .controls-help { font-size: 9px; }
 
-  /* GAME */
-  #game { display: none; flex-direction: column; align-items: center; gap: 8px; }
+  /* ── GAME ── */
+  #game { display: none; flex-direction: column; align-items: center; gap: 6px; }
   #hud {
-    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;
     width: 960px; max-width: 96vw;
   }
   .pcard {
-    background: var(--panel); border: 1px solid var(--panel2); border-radius: 8px;
-    padding: 6px 10px; display: flex; align-items: center; gap: 8px; font-size: 13px;
-    min-width: 180px;
+    background: var(--bg-dk);
+    border: 2px solid var(--line);
+    border-radius: 0;
+    padding: 4px 6px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px;
+    min-width: 150px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
   }
-  .pcard.dead { opacity: .3; }
+  .pcard.dead { opacity: .35; }
   .pcard.dead .pname { text-decoration: line-through; }
-  .pcard.me { border-color: var(--accent2); box-shadow: 0 0 8px rgba(185,211,164,.25); }
-  .pswatch { width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
-  .stat { opacity: .8; font-variant-numeric: tabular-nums; }
+  .pcard.me { border-color: var(--accent); }
+  .pswatch {
+    width: 10px; height: 10px;
+    border-radius: 0;
+    border: 1px solid var(--line);
+    box-shadow: none;
+    image-rendering: pixelated;
+  }
+  .stat { color: var(--accent2); font-variant-numeric: tabular-nums; }
+  .pname { font-weight: 700; }
+
   canvas {
     background: #0a0814;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    width: 960px; height: 704px; max-width: 96vw; max-height: calc(100vh - 160px);
-    border: 1px solid var(--panel2);
-    border-radius: 6px;
-    box-shadow: 0 0 30px rgba(182,164,220,.12), inset 0 0 30px rgba(0,0,0,.5);
+    width: 960px; height: 704px;
+    max-width: 96vw; max-height: calc(100vh - 160px);
+    /* Hard 4px frame — no rounding, no glow. */
+    border: 4px solid var(--line);
+    border-radius: 0;
+    box-shadow: 4px 4px 0 0 var(--accent);
   }
+
   #overlay {
     position: fixed; inset: 0; display: none;
     align-items: center; justify-content: center;
-    background: rgba(10,4,18,.85); backdrop-filter: blur(6px);
+    background: rgba(26,14,42,.92);
     z-index: 10;
   }
   #overlay .card {
-    background: var(--panel); border: 1px solid var(--accent2); border-radius: 12px;
-    padding: 32px 48px; text-align: center;
-    box-shadow: 0 0 40px rgba(185,211,164,.18), 0 12px 30px rgba(0,0,0,.6);
+    background: var(--bg-dk);
+    border: 3px solid var(--line);
+    border-radius: 0;
+    padding: 22px 32px;
+    text-align: center;
+    box-shadow: 4px 4px 0 0 var(--accent2);
   }
-  #overlay h2 { margin: 0 0 16px; font-size: 28px; letter-spacing: 4px; font-weight: 600; }
+  #overlay h2 {
+    margin: 0 0 12px; font-size: 18px;
+    letter-spacing: 3px; font-weight: 700;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0 var(--bg);
+  }
+
   .controls-help {
-    font-size: 12px; opacity: .55; text-align: center; margin-top: 4px; letter-spacing: 1px;
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center; margin-top: 2px;
+    letter-spacing: 2px; text-transform: uppercase;
   }
   .controls-help kbd {
-    background: var(--ink); border: 1px solid var(--panel2);
-    border-radius: 4px; padding: 1px 5px; font-family: 'Courier New', monospace; font-size: 11px;
+    background: var(--bg-dk);
+    border: 1px solid var(--fg);
+    border-radius: 0;
+    padding: 0 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    color: var(--fg);
   }
-  /* Mobile virtual controls */
+
+  /* Mobile virtual D-pad — chunky GBA-style. */
   #mobile-pad { display: none; }
   body.mobile #mobile-pad {
-    display: grid; position: fixed; bottom: 18px; left: 18px;
-    grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); gap: 4px;
+    display: grid; position: fixed; bottom: 14px; left: 14px;
+    grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(3, 52px); gap: 2px;
     z-index: 20; touch-action: none;
   }
   body.mobile #mobile-bomb {
-    display: flex; position: fixed; bottom: 38px; right: 24px;
-    width: 92px; height: 92px; border-radius: 50%;
+    display: flex; position: fixed; bottom: 32px; right: 18px;
+    width: 76px; height: 76px;
+    border-radius: 0;
     align-items: center; justify-content: center;
-    background: radial-gradient(circle, var(--accent) 0%, var(--panel) 80%);
-    border: 1px solid var(--accent); color: var(--ink); font-weight: 700;
-    letter-spacing: 2px; font-size: 13px; z-index: 20;
-    box-shadow: 0 0 18px rgba(182,164,220,.35); touch-action: none;
+    background: var(--accent);
+    border: 3px solid var(--line);
+    color: var(--bg-dk);
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-size: 11px;
+    text-transform: uppercase;
+    z-index: 20;
+    box-shadow: 3px 3px 0 0 var(--bg-dk);
+    touch-action: none;
+    -webkit-font-smoothing: none;
   }
   #mobile-bomb { display: none; }
   .pad-btn {
-    background: rgba(26,21,48,.8); border: 1px solid var(--panel2);
-    border-radius: 8px; color: var(--fg); font-size: 18px;
+    background: var(--bg-dk);
+    border: 2px solid var(--line);
+    border-radius: 0;
+    color: var(--fg);
+    font-size: 16px;
     display: flex; align-items: center; justify-content: center;
     user-select: none;
   }
-  .pad-btn.active { background: var(--accent); color: var(--ink); }
+  .pad-btn.active { background: var(--accent); color: var(--bg-dk); }
   .pad-empty { visibility: hidden; }
 </style>
 </head>
