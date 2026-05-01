@@ -857,41 +857,17 @@ function drawTile(x, y, kind) {
       ctx.fillRect(px + 6, py + 6, 2, 2);
     }
   } else if (kind === T_BARREL) {
-    // Lit candle on a bone saucer. Warm cream + amber against the cool
-    // dark violet of T_WALL so the player can tell at a glance which
-    // blocks can be broken. Flame breathes per-tile to feel alive.
-    // saucer (bone)
-    ctx.fillStyle = '#dcd7c2';
-    ctx.fillRect(px + 4, py + TILE - 8, TILE - 8, 4);
-    ctx.fillStyle = '#b8b29c';
-    ctx.fillRect(px + 4, py + TILE - 5, TILE - 8, 1);
-    ctx.fillStyle = 'rgba(0,0,0,.45)';
-    ctx.fillRect(px + 4, py + TILE - 4, TILE - 8, 2);
-    // candle body (cream wax with amber rim-light)
-    ctx.fillStyle = '#e8e0c0';
-    ctx.fillRect(px + 9, py + 8, TILE - 18, TILE - 16);
-    ctx.fillStyle = '#f6ecc9';
-    ctx.fillRect(px + 10, py + 8, TILE - 20, TILE - 17);
-    ctx.fillStyle = '#a8987a';
-    ctx.fillRect(px + TILE - 10, py + 9, 1, TILE - 18);
-    // wax drip
-    ctx.fillStyle = '#cfc59f';
-    ctx.fillRect(px + 9, py + 9, 1, 4);
-    // wick
-    ctx.fillStyle = '#1a140a';
-    ctx.fillRect(px + (TILE >> 1) - 1, py + 5, 1, 4);
-    // flame — warm amber, breathes per tile
-    const flicker = (Math.sin((performance.now() / 220) + (x * 1.7 + y * 2.3)) * 0.5 + 0.5);
-    const fh = 4 + flicker * 2;
-    ctx.fillStyle = '#f7c97a';
-    ctx.fillRect(px + (TILE >> 1) - 2, py + 5 - fh, 4, fh);
-    ctx.fillStyle = 'rgba(255,228,140,.85)';
-    ctx.fillRect(px + (TILE >> 1) - 1, py + 4 - fh, 2, fh);
-    // tiny halo (cheap; only when motion is allowed)
-    if (!prefersReducedMotion) {
-      ctx.fillStyle = 'rgba(247,201,122,.18)';
-      ctx.fillRect(px + (TILE >> 1) - 4, py + 3 - (fh >> 1), 8, 4);
-    }
+    // Same gravestone shape as a wall block, just a lighter grey so
+    // it reads as breakable at a glance. Cool dark violet = stone you
+    // can't break; lighter grey = stone you can.
+    ctx.fillStyle = '#5a5470';
+    ctx.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
+    ctx.fillStyle = '#6e687f';
+    ctx.fillRect(px + 2, py + 2, TILE - 4, 3);
+    ctx.fillRect(px + 2, py + 2, 3, TILE - 4);
+    ctx.fillStyle = '#3a3450';
+    ctx.fillRect(px + 2, py + TILE - 5, TILE - 4, 3);
+    ctx.fillRect(px + TILE - 5, py + 2, 3, TILE - 4);
   }
 }
 
