@@ -723,12 +723,18 @@ function update(dt, t) {
   if (me_p && me_p.alive && !endResult) {
     moveLocal(me_p, dt);
   }
-  // Smooth remote players toward target pos
-  for (const id in players) {
-    if (id === me.id) continue;
-    const p = players[id];
-    p.x += (p.tx - p.x) * Math.min(1, dt * 12);
-    p.y += (p.ty - p.y) * Math.min(1, dt * 12);
+  // Smooth remote (networked) players toward their last reported target.
+  // In solo mode every entity is locally simulated, so this lerp must be
+  // skipped — otherwise it drags AI bots back toward their stale spawn
+  // tx/ty every frame, which made bots look frozen and perpetually
+  // mid-tile.
+  if (!soloMode) {
+    for (const id in players) {
+      if (id === me.id) continue;
+      const p = players[id];
+      p.x += (p.tx - p.x) * Math.min(1, dt * 12);
+      p.y += (p.ty - p.y) * Math.min(1, dt * 12);
+    }
   }
 
   // Detonate fused bombs
@@ -851,27 +857,41 @@ function drawTile(x, y, kind) {
       ctx.fillRect(px + 6, py + 6, 2, 2);
     }
   } else if (kind === T_BARREL) {
-    // gravestone marker (rounded top, faint inscription line).
-    ctx.fillStyle = '#1d1838';
-    ctx.fillRect(px + 4, py + 6, TILE - 8, TILE - 8);
-    ctx.fillStyle = '#2c2548';
-    ctx.fillRect(px + 5, py + 7, TILE - 10, TILE - 12);
-    // rounded shoulders
-    ctx.fillStyle = '#2c2548';
-    ctx.fillRect(px + 6, py + 4, TILE - 12, 3);
-    ctx.fillStyle = '#1d1838';
-    ctx.fillRect(px + 5, py + 5, 1, 2);
-    ctx.fillRect(px + TILE - 6, py + 5, 1, 2);
-    // top bevel
-    ctx.fillStyle = '#3d3458';
-    ctx.fillRect(px + 7, py + 5, TILE - 14, 1);
-    // inscription line
-    ctx.fillStyle = 'rgba(185,211,164,.18)';
-    ctx.fillRect(px + 8, py + 14, TILE - 16, 1);
-    ctx.fillRect(px + 9, py + 18, TILE - 18, 1);
-    // shadow at base
-    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    // Lit candle on a bone saucer. Warm cream + amber against the cool
+    // dark violet of T_WALL so the player can tell at a glance which
+    // blocks can be broken. Flame breathes per-tile to feel alive.
+    // saucer (bone)
+    ctx.fillStyle = '#dcd7c2';
+    ctx.fillRect(px + 4, py + TILE - 8, TILE - 8, 4);
+    ctx.fillStyle = '#b8b29c';
+    ctx.fillRect(px + 4, py + TILE - 5, TILE - 8, 1);
+    ctx.fillStyle = 'rgba(0,0,0,.45)';
     ctx.fillRect(px + 4, py + TILE - 4, TILE - 8, 2);
+    // candle body (cream wax with amber rim-light)
+    ctx.fillStyle = '#e8e0c0';
+    ctx.fillRect(px + 9, py + 8, TILE - 18, TILE - 16);
+    ctx.fillStyle = '#f6ecc9';
+    ctx.fillRect(px + 10, py + 8, TILE - 20, TILE - 17);
+    ctx.fillStyle = '#a8987a';
+    ctx.fillRect(px + TILE - 10, py + 9, 1, TILE - 18);
+    // wax drip
+    ctx.fillStyle = '#cfc59f';
+    ctx.fillRect(px + 9, py + 9, 1, 4);
+    // wick
+    ctx.fillStyle = '#1a140a';
+    ctx.fillRect(px + (TILE >> 1) - 1, py + 5, 1, 4);
+    // flame — warm amber, breathes per tile
+    const flicker = (Math.sin((performance.now() / 220) + (x * 1.7 + y * 2.3)) * 0.5 + 0.5);
+    const fh = 4 + flicker * 2;
+    ctx.fillStyle = '#f7c97a';
+    ctx.fillRect(px + (TILE >> 1) - 2, py + 5 - fh, 4, fh);
+    ctx.fillStyle = 'rgba(255,228,140,.85)';
+    ctx.fillRect(px + (TILE >> 1) - 1, py + 4 - fh, 2, fh);
+    // tiny halo (cheap; only when motion is allowed)
+    if (!prefersReducedMotion) {
+      ctx.fillStyle = 'rgba(247,201,122,.18)';
+      ctx.fillRect(px + (TILE >> 1) - 4, py + 3 - (fh >> 1), 8, 4);
+    }
   }
 }
 
