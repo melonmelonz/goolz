@@ -2026,9 +2026,12 @@ const AI_SPEED_FACTOR   = 0.62;   // bots move at 62% of player speed —
 
 function aiTick(p, bot, dt, t) {
   // Always advance an in-flight step so the bot reaches its next tile.
-  // dt is scaled by AI_SPEED_FACTOR so bots animate slower than the
-  // human player without changing the global step model.
-  if (p.step) { advanceStep(p, dt * AI_SPEED_FACTOR); return; }
+  // The step's duration was already lengthened by aiMove (see below)
+  // so passing real dt yields the correct real-time pace. Do NOT also
+  // scale dt — that double-slows the bot and the planner's aiTileTime
+  // (which assumes a single AI_SPEED_FACTOR) under-estimates escape
+  // time, causing bots to drop bombs they can't actually escape from.
+  if (p.step) { advanceStep(p, dt); return; }
   bot._think -= dt;
   const reachedNewTile = bot._lastTileX !== p.tileX || bot._lastTileY !== p.tileY;
   if (bot._think <= 0 || reachedNewTile || !bot._intent) {
@@ -2361,7 +2364,8 @@ function aiPlanIntent(p) {
 // bots move slower than the human, and we extend the step duration on
 // the bot's brand-new step to match.
 function aiMove(p, want, dt, bot) {
-  advanceStep(p, dt * AI_SPEED_FACTOR);
+  // Real dt — duration on the step is already lengthened to match.
+  advanceStep(p, dt);
   if (p.step) return;
   if (!want || want.dir == null) return;
   let dx = 0, dy = 0;
