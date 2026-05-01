@@ -622,6 +622,15 @@ deploy never has to compile Rust. `target/` is gitignored.
 ┌────────┬────────────┬────────────────────────────────────────────────┐
 │ DATE   │ CHANGE                                                      │
 ├────────┼────────────┼────────────────────────────────────────────────┤
+│ 2026-05-01 │ AI cautious-pass — fixed BFS off-by-one (startStep sets │
+│            │   p.tileX immediately so logical occupancy began one    │
+│            │   tileTime EARLIER than the planner thought; bots were  │
+│            │   walking onto fires that "should have just expired");  │
+│            │   AI_SAFETY_PAD widens every threat window by 0.20s;    │
+│            │   aiCanBomb requires escape in ≤6 hops (was 12); 1.20s  │
+│            │   bomb cooldown post-drop. Notepad list now optimistic- │
+│            │   merges just-saved names so the desktop icon appears   │
+│            │   instantly (KV list() has up to ~60s consistency lag). │
 │ 2026-05-01 │ AI hardening — BFS now treats live bodies as walls; nav │
 │            │   targets bomb-line tiles (not enemy tile); bomb-line   │
 │            │   check blocks on bodies; I1 gate stalls instead of     │

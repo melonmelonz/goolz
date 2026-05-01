@@ -4164,15 +4164,43 @@ let ndDirtyFlag   = false;
 let ndMenuOpen    = false;
 
 let _ndCache = null, _ndCacheAt = 0;
+// Cloudflare KV's list() has up to ~60s eventual consistency, so a
+// just-PUT doc isn't always visible in the next list() response. The
+// "pending" set stages locally-known names so the desktop icon appears
+// the instant Save succeeds; entries drop once LIST starts returning
+// them (or after a generous TTL, in case the user deletes from elsewhere).
+const _ndPending = new Map(); // name -> addedAt (ms)
+const _ndDeleted = new Map(); // name -> removedAt (ms) — hides ghosts that
+                              // KV list still returns briefly after delete.
+const _ND_PENDING_TTL = 90 * 1000;
+function _ndMergePending(serverList) {
+  const cutoff = Date.now() - _ND_PENDING_TTL;
+  const set = new Set(serverList);
+  for (const [name, t] of _ndPending) {
+    if (t < cutoff) _ndPending.delete(name);
+    else if (!set.has(name)) { set.add(name); }
+    else _ndPending.delete(name); // server caught up — drop local stub
+  }
+  for (const [name, t] of _ndDeleted) {
+    if (t < cutoff) _ndDeleted.delete(name);
+    else set.delete(name);
+  }
+  return [...set];
+}
 async function ndApiList() {
   if (_ndCache && Date.now() - _ndCacheAt < 5000) return _ndCache;
   try {
     const r = await fetch(ND_API);
     if (!r.ok) throw new Error();
-    _ndCache = (await r.json()).docs || [];
+    const docs = (await r.json()).docs || [];
+    _ndCache = _ndMergePending(docs);
     _ndCacheAt = Date.now();
     return _ndCache;
-  } catch { return []; }
+  } catch {
+    // Fall back to the local pending-set so a just-saved doc is at least
+    // findable while the network is wonky.
+    return _ndMergePending([]);
+  }
 }
 function ndInvalidateCache() { _ndCache = null; }
 
@@ -4192,6 +4220,12 @@ async function ndApiSave(name, content) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, content }),
     });
+    if (r.ok) {
+      // Stage locally so the desktop icon appears instantly even if
+      // KV list() hasn't caught up yet.
+      _ndPending.set(name, Date.now());
+      _ndDeleted.delete(name);
+    }
     return r.ok;
   } catch { return false; }
 }
@@ -4199,6 +4233,10 @@ async function ndApiSave(name, content) {
 async function ndApiDelete(name) {
   try {
     const r = await fetch(ND_API + '/' + encodeURIComponent(name), { method: 'DELETE' });
+    if (r.ok) {
+      _ndDeleted.set(name, Date.now());
+      _ndPending.delete(name);
+    }
     return r.ok;
   } catch { return false; }
 }

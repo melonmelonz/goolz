@@ -2025,12 +2025,18 @@ update = function(dt, t) {
 //   hypothetical bomb (the one we're considering dropping) adds another
 //   window with t_det = now + BOMB_FUSE.
 //
-//   TIME-AWARE BFS. State = (tile, hop). Bot occupies hop-h tile during
-//   [now + h*tileTime, now + (h+1)*tileTime] where tileTime depends on
-//   the bot's speed tier. A tile is "enterable at hop h" iff none of
-//   its threat windows overlap that occupancy interval. A tile is
-//   "finally safe at hop h" iff every threat window on it has already
-//   ended by arrival — meaning the bot can sit there forever.
+//   TIME-AWARE BFS. State = (tile, hop). Critical: startStep sets
+//   p.tileX/p.tileY to the destination THE INSTANT it fires — only the
+//   render position is animated. So the bot logically OCCUPIES the
+//   hop-h destination from [now + (h-1)*tileTime, now + h*tileTime],
+//   exposed to any threat on that tile from the moment the step starts.
+//   Earlier we used [h*tileTime, (h+1)*tileTime] (animation-completion
+//   timing) and bots walked into fires that "should have just expired"
+//   — the death check ran on logical position and they died on entry.
+//   A tile is "enterable at hop h" iff none of its threat windows
+//   overlap that occupancy interval. A tile is "finally safe at hop h"
+//   iff every threat window has already ended by logical arrival — bot
+//   can sit there forever after stepping in.
 //
 //   TWO HARD INVARIANTS the bot will not violate:
 //     I1. It never STEPS into a tile whose hop-1 occupancy intersects
@@ -2056,6 +2062,10 @@ const AI_SPEED_FACTOR   = 0.62;   // bots move at 62% of player speed —
                                   // AND give the planner more re-plan
                                   // ticks per tile-step (less commitment-
                                   // to-stale-plans during the juke window).
+const AI_BOMB_COOLDOWN  = 1.20;   // sec after a drop before considering
+                                  // another. Stops chain-suicide where a
+                                  // bot drops, escapes, then bombs again
+                                  // adjacent to its still-burning fire.
 
 function aiTick(p, bot, dt, t) {
   // Always advance an in-flight step so the bot reaches its next tile.
@@ -2067,32 +2077,32 @@ function aiTick(p, bot, dt, t) {
   if (p.step) { advanceStep(p, dt); return; }
   bot._think -= dt;
   const reachedNewTile = bot._lastTileX !== p.tileX || bot._lastTileY !== p.tileY;
+  const onCooldown = (bot._bombCooldownUntil || 0) > t;
   if (bot._think <= 0 || reachedNewTile || !bot._intent) {
     bot._think = AI_THINK_INTERVAL;
-    bot._intent = aiPlanIntent(p);
+    bot._intent = aiPlanIntent(p, onCooldown);
     bot._lastTileX = p.tileX; bot._lastTileY = p.tileY;
   }
   const tx = p.tileX, ty = p.tileY;
   const want = bot._intent || { dir: null, bomb: false };
   // Drop a candle FIRST (before stepping off this tile) — but only if
-  // the planner already verified a timed escape exists (Invariant I2).
-  if (want.bomb && p.bombsActive < p.bombs && tileAt(tx, ty) === T_EMPTY && !bombAt(tx, ty)) {
+  // the planner already verified a timed escape exists (Invariant I2)
+  // AND the bomb cooldown isn't in effect.
+  if (!onCooldown && want.bomb && p.bombsActive < p.bombs && tileAt(tx, ty) === T_EMPTY && !bombAt(tx, ty)) {
     spawnBomb(p.id, tx, ty, p.power, performance.now() / 1000);
     // In network mode the host relays the bomb on the bot's behalf so
     // the other clients explode it on the same fuse.
     if (!soloMode) netSend({ t: 'bomb', aiId: bot.id, tx, ty, power: p.power, t0: Date.now() });
     want.bomb = false;
+    bot._bombCooldownUntil = t + AI_BOMB_COOLDOWN;
     // Force an immediate re-plan so the bot heads down its escape route.
     bot._think = 0;
     return;
   }
-  // Hard gate (Invariant I1): never step into a tile that's unsafe at hop 1
-  // OR blocked by a wall/barrel/bomb/live body. Old code reset bot._think
-  // to 0, which forced an instant re-plan that often returned the SAME
-  // blocked direction — bot juked in place every frame and the crowd of
-  // adjacent threats walked over it. New behavior: clear intent so the bot
-  // stands still until the next regular think tick (AI_THINK_INTERVAL),
-  // by which point either threats or bodies have moved.
+  // Hard gate (Invariant I1): never step into a tile that's unsafe at
+  // hop 1 OR blocked by a wall/barrel/bomb/live body. Force a fresh
+  // re-plan if the gate fires — with body-aware BFS the planner won't
+  // re-pick the same blocked dir, so we don't infinite-loop.
   if (want.dir != null) {
     const [dx, dy] = aiDirVec(want.dir);
     if (dx || dy) {
@@ -2101,7 +2111,7 @@ function aiTick(p, bot, dt, t) {
       const unsafe = !aiTileSafeAtHop(nx, ny, 1, ctx, aiTileTime(p));
       const blocked = aiBfsBlocked(nx, ny, bombAt(p.tileX, p.tileY), p.id);
       if (unsafe || blocked) {
-        bot._intent = { dir: null, bomb: false };
+        bot._think = 0;
         return;
       }
     }
@@ -2185,26 +2195,46 @@ function aiBuildThreats(hypoBomb) {
 // math drifts and the bot starts mis-judging escapes.
 function aiTileTime(p) { return 1 / ((BASE_SPEED + p.speedTier * SPEED_STEP) * AI_SPEED_FACTOR); }
 
-// Is (tx,ty) safe to OCCUPY at hop h? (occupancy = [arrival, arrival+tileTime])
+// Caution buffer (seconds) added to threat windows. The bot acts as if
+// every fire lingers SAFETY_PAD longer and every bomb detonates
+// SAFETY_PAD earlier than reality. Trades aggression for survival —
+// users complained that aggressive bots end games in 5s and felt unfair.
+const AI_SAFETY_PAD = 0.20;
+
+// Is (tx,ty) safe to OCCUPY at hop h?
+// CRITICAL TIMING: startStep sets p.tileX/p.tileY to the destination
+// instantly (animation just lerps the render position). So the bot's
+// LOGICAL occupancy of the hop-h destination is
+//   [now + (h-1)*tileTime, now + h*tileTime]
+// not the [h*tileTime, (h+1)*tileTime] animation-completion window we
+// used to use. With the old window, bots cheerfully stepped into a fire
+// "expiring in 0.2s" — the BFS thought arrival would be 0.35s away, but
+// in reality the bot's logical position became the fire tile the instant
+// the step fired and the death check killed it.
 function aiTileSafeAtHop(tx, ty, hop, ctx, tileTime) {
   const wins = ctx.threats.get(ty * W + tx);
   if (!wins) return true;
-  const a = ctx.now + hop * tileTime;
-  const b = ctx.now + (hop + 1) * tileTime;
+  const a = ctx.now + (hop - 1) * tileTime;     // logical arrival
+  const b = ctx.now + hop * tileTime;            // earliest possible leave
   for (const w of wins) {
-    if (!(b <= w[0] || a >= w[1])) return false;
+    // Pad the window: bombs detonate AI_SAFETY_PAD earlier and fires
+    // linger AI_SAFETY_PAD longer, in the bot's mind.
+    const w0 = w[0] - AI_SAFETY_PAD;
+    const w1 = w[1] + AI_SAFETY_PAD;
+    if (!(b <= w0 || a >= w1)) return false;
   }
   return true;
 }
 
-// Is (tx,ty) "finally safe" — i.e., after arrival no future threat
-// will cover it, so the bot can stop there and live?
+// Is (tx,ty) "finally safe" at hop h — i.e., logically arriving at hop h,
+// no future threat will cover it, so the bot can stop there and live.
 function aiTileFinallySafe(tx, ty, hop, ctx, tileTime) {
   const wins = ctx.threats.get(ty * W + tx);
   if (!wins) return true;
-  const arrival = ctx.now + hop * tileTime;
+  const arrival = ctx.now + (hop - 1) * tileTime;
   for (const w of wins) {
-    if (w[1] > arrival + 1e-4) return false;
+    // Padded: pretend the threat lingers AI_SAFETY_PAD longer.
+    if (w[1] + AI_SAFETY_PAD > arrival + 1e-4) return false;
   }
   return true;
 }
@@ -2250,8 +2280,13 @@ function aiTimedEscape(p, hypoBomb, maxHops) {
 }
 
 // Verify: if we drop a bomb HERE right now, can we still escape?
+// Conservative: require an escape that uses fewer than half the available
+// hops, leaving slack for racing through tight blasts. Bots that "just
+// barely" escape on paper die when network jitter or other bots' bombs
+// shave even a tiny margin off the actual run.
 function aiCanBomb(p) {
-  return aiTimedEscape(p, { tx: p.tileX, ty: p.tileY, power: p.power }, AI_ESCAPE_HOPS) != null;
+  const hop = AI_ESCAPE_HOPS >> 1;
+  return aiTimedEscape(p, { tx: p.tileX, ty: p.tileY, power: p.power }, hop) != null;
 }
 
 // Are we in danger? Now or pending. We use *finally-safe* (not just
@@ -2312,7 +2347,7 @@ function aiSafeNavStep(p, goalFn, maxHops) {
   return null;
 }
 
-function aiPlanIntent(p) {
+function aiPlanIntent(p, onCooldown) {
   const tx = p.tileX, ty = p.tileY;
 
   // 1. In danger? Run.
@@ -2337,7 +2372,7 @@ function aiPlanIntent(p) {
   }
 
   // 3. Enemy in bomb-line + verified escape → bomb.
-  if (p.bombsActive < p.bombs) {
+  if (!onCooldown && p.bombsActive < p.bombs) {
     for (const id in players) {
       const e = players[id];
       if (!e.alive || e.id === p.id) continue;
@@ -2369,7 +2404,7 @@ function aiPlanIntent(p) {
   }
 
   // 4. Adjacent barrel + verified escape → bomb.
-  if (p.bombsActive < p.bombs) {
+  if (!onCooldown && p.bombsActive < p.bombs) {
     let touching = false;
     for (let d = 0; d < 4; d++) {
       const v = aiDirVec(d);
