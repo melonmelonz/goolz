@@ -62,6 +62,7 @@
      script when window.parent !== window. */
   body.embed { padding: 0; }
   body.embed #fs-toggle { display: none; }
+  body.embed #desktop-back { display: none; }
   body.embed #lobby {
     width: 96%;
     max-width: 100%;
@@ -246,6 +247,22 @@
   #fs-toggle    { right: 46px; }
   #audio-toggle.muted { color: var(--muted); }
   #audio-toggle:hover, #fs-toggle:hover { background: var(--accent); color: var(--bg-dk); }
+  /* "← back to desktop" — hidden when embedded inside the Win95 GOOLZ.exe
+     iframe (close the window instead). Top-left, same chiclet as audio/fs. */
+  #desktop-back {
+    position: fixed; top: 10px; left: 10px; z-index: 50;
+    height: 28px; padding: 0 10px;
+    border: 2px solid var(--line);
+    background: var(--bg-dk);
+    color: var(--accent);
+    font-family: inherit; font-size: 10px; letter-spacing: 1px;
+    text-decoration: none;
+    box-shadow: 2px 2px 0 0 var(--accent);
+    display: inline-flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: none;
+  }
+  #desktop-back:hover { background: var(--accent); color: var(--bg-dk); }
+  :fullscreen #desktop-back { display: none; }
 
   /* Fullscreen — canvas dominates, chrome shrinks. */
   :fullscreen body, :fullscreen #game { background: var(--bg-dk); }
@@ -379,6 +396,7 @@
 </head>
 <body>
 
+<a id="desktop-back" href="/next-chapter/" title="back to the desktop">← DESKTOP</a>
 <button id="audio-toggle" title="audio" aria-label="toggle audio">♪</button>
 <button id="fs-toggle" title="fullscreen" aria-label="toggle fullscreen">⛶</button>
 
@@ -400,6 +418,11 @@
 
   <div id="lobby-actions2" class="row">
     <button id="btn-solo" class="alt" title="play offline against AI">PLAY SOLO</button>
+    <label id="easy-toggle-wrap" title="easy mode: slower ghosts that don't hunt — only break barrels"
+           style="align-self:center;display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:var(--accent2)">
+      <input type="checkbox" id="easy-toggle" style="accent-color:var(--accent2);width:14px;height:14px">
+      easy mode
+    </label>
   </div>
 
   <div id="lobby-room" style="display:none">
@@ -576,6 +599,8 @@ function initGame(seed, roster) {
   for (const r of roster) {
     if (r.slot < 0 || r.slot > 3) continue;
     const [sx, sy] = SPAWNS[r.slot];
+    const isAi = !!r.ai;
+    const diff = isAi ? ((r.difficulty | 0) === AI_DIFF_EASY ? AI_DIFF_EASY : AI_DIFF_NORMAL) : AI_DIFF_NORMAL;
     players[r.id] = {
       id: r.id, name: r.name, color: r.color, slot: r.slot,
       // Logical tile (the source of truth for collision/bombs/pickups)
@@ -589,6 +614,10 @@ function initGame(seed, roster) {
       bombsActive: 0, alive: true,
       // Networked target (only meaningful for remote peers in netplay)
       tx: sx * TILE + TILE / 2, ty: sy * TILE + TILE / 2,
+      // AI tuning (only meaningful for ai players; planner reads these via
+      // aiTileTime + startStep so per-bot speed is honored).
+      _aiDifficulty: isAi ? diff : null,
+      _aiSpeed: isAi ? aiSpeedFor(diff) : null,
     };
   }
   scene = 'game';
@@ -1638,11 +1667,22 @@ function copyRoomLink() {
 document.getElementById('roomcode').addEventListener('click', copyRoomLink);
 document.getElementById('btn-copylink').addEventListener('click', copyRoomLink);
 
+// Difficulty toggle — persisted across sessions. Drives both solo bots
+// and ai_add requests. The worker accepts m.difficulty (clamped 0–2);
+// we only use 0 (easy) and 1 (normal).
+const _easyToggle = document.getElementById('easy-toggle');
+const _aiDiffStored = localStorage.getItem('pwg_easy') === '1' ? 1 : 0;
+_easyToggle.checked = !!_aiDiffStored;
+function aiSelectedDifficulty() { return _easyToggle.checked ? 0 : 1; }
+_easyToggle.addEventListener('change', () => {
+  localStorage.setItem('pwg_easy', _easyToggle.checked ? '1' : '0');
+});
+
 // "+ ADD GHOST" button — host only, requests server to add an AI to the next free seat.
 document.getElementById('btn-add-ai').addEventListener('click', () => {
   if (!me.host) { setStatus('only the host can summon ghosts'); return; }
   if (started) return;
-  netSend({ t: 'ai_add' });
+  netSend({ t: 'ai_add', difficulty: aiSelectedDifficulty() });
 });
 
 function showRoom(code) {
@@ -1983,12 +2023,15 @@ function startSolo() {
   me.id = 'me';
   me.host = true;
   me.slot = 0;
-  // Three named ghosts. No difficulty levels — one tuned planner.
+  // Three named ghosts. Difficulty 0 (easy) or 1 (normal) chosen via the
+  // lobby toggle and stamped on each bot — initGame reads .difficulty and
+  // configures per-bot speed/cooldown/hunt behavior.
+  const diff = aiSelectedDifficulty();
   const roster = [
     { id: 'me', name: me.name, color: me.color, slot: 0 },
-    { id: 'ai1', name: 'wraith', color: 1, slot: 1, ai: true },
-    { id: 'ai2', name: 'banshee', color: 2, slot: 2, ai: true },
-    { id: 'ai3', name: 'phantom', color: 3, slot: 3, ai: true },
+    { id: 'ai1', name: 'wraith',  color: 1, slot: 1, ai: true, difficulty: diff },
+    { id: 'ai2', name: 'banshee', color: 2, slot: 2, ai: true, difficulty: diff },
+    { id: 'ai3', name: 'phantom', color: 3, slot: 3, ai: true, difficulty: diff },
   ];
   for (const r of roster) peers.set(r.id, r);
   aiBots = roster.filter(r => r.ai).map(r => ({ ...r, _think: 0, _intent: null }));
@@ -2067,6 +2110,18 @@ const AI_BOMB_COOLDOWN  = 1.20;   // sec after a drop before considering
                                   // bot drops, escapes, then bombs again
                                   // adjacent to its still-burning fire.
 
+// Difficulty levels — read from bot.difficulty (server-supplied for network
+// rooms; set locally in solo). 0 = easy, 1 = normal. Easy bots are slower,
+// hold bombs longer, and do NOT hunt the player (priorities 3 and 6 are
+// skipped) — they only break barrels and flee from danger. The normal
+// constants above are tuned to "longer games" already; easy is a casual
+// step further down for new players or kids.
+const AI_DIFF_EASY   = 0;
+const AI_DIFF_NORMAL = 1;
+function aiSpeedFor(diff)        { return diff === AI_DIFF_EASY ? 0.45 : AI_SPEED_FACTOR; }
+function aiBombCooldownFor(diff) { return diff === AI_DIFF_EASY ? 2.40 : AI_BOMB_COOLDOWN; }
+function aiHuntsEnemies(diff)    { return diff !== AI_DIFF_EASY; }
+
 function aiTick(p, bot, dt, t) {
   // Always advance an in-flight step so the bot reaches its next tile.
   // The step's duration was already lengthened by aiMove (see below)
@@ -2094,7 +2149,7 @@ function aiTick(p, bot, dt, t) {
     // the other clients explode it on the same fuse.
     if (!soloMode) netSend({ t: 'bomb', aiId: bot.id, tx, ty, power: p.power, t0: Date.now() });
     want.bomb = false;
-    bot._bombCooldownUntil = t + AI_BOMB_COOLDOWN;
+    bot._bombCooldownUntil = t + aiBombCooldownFor(bot.difficulty | 0);
     // Force an immediate re-plan so the bot heads down its escape route.
     bot._think = 0;
     return;
@@ -2193,7 +2248,10 @@ function aiBuildThreats(hypoBomb) {
 // tileTime for the planner — must match the *actual* bot crossing time
 // (player tilesPerSec × AI_SPEED_FACTOR), or the time-aware safety
 // math drifts and the bot starts mis-judging escapes.
-function aiTileTime(p) { return 1 / ((BASE_SPEED + p.speedTier * SPEED_STEP) * AI_SPEED_FACTOR); }
+function aiTileTime(p) {
+  const sf = p._aiSpeed || AI_SPEED_FACTOR;
+  return 1 / ((BASE_SPEED + p.speedTier * SPEED_STEP) * sf);
+}
 
 // Caution buffer (seconds) added to threat windows. The bot acts as if
 // every fire lingers SAFETY_PAD longer and every bomb detonates
@@ -2349,6 +2407,10 @@ function aiSafeNavStep(p, goalFn, maxHops) {
 
 function aiPlanIntent(p, onCooldown) {
   const tx = p.tileX, ty = p.tileY;
+  // Easy bots never hunt the player — they only flee, grab powerups, and
+  // break adjacent barrels. Skip priorities 3 (bomb enemy in line) and
+  // 6 (nav-toward-enemy) when this returns false.
+  const hunts = aiHuntsEnemies(p._aiDifficulty | 0);
 
   // 1. In danger? Run.
   if (aiInDangerNow(p)) {
@@ -2371,8 +2433,8 @@ function aiPlanIntent(p, onCooldown) {
     if (toPow) return { dir: toPow.dir, bomb: false };
   }
 
-  // 3. Enemy in bomb-line + verified escape → bomb.
-  if (!onCooldown && p.bombsActive < p.bombs) {
+  // 3. Enemy in bomb-line + verified escape → bomb. (skipped on easy)
+  if (hunts && !onCooldown && p.bombsActive < p.bombs) {
     for (const id in players) {
       const e = players[id];
       if (!e.alive || e.id === p.id) continue;
@@ -2426,12 +2488,13 @@ function aiPlanIntent(p, onCooldown) {
   // 6. Walk to a tile we can BOMB from — a clear cardinal line within our
   // power, NOT the enemy's own tile (startStep refuses live-player tiles
   // anyway, and the old "stand on enemy" goal made bots juke into corners).
+  // Skipped on easy: easy bots never advance toward the player at all.
   const enemies = [];
   for (const id in players) {
     const e = players[id];
     if (e.alive && e.id !== p.id) enemies.push(e);
   }
-  if (enemies.length) {
+  if (hunts && enemies.length) {
     const toBombSpot = aiSafeNavStep(p, (x, y) => {
       for (const e of enemies) {
         const ex = e.tileX, ey = e.tileY;
@@ -2494,12 +2557,13 @@ function aiMove(p, want, dt, bot) {
   else if (want.dir === 3) dx = -1;
   if (!dx && !dy) return;
   if (startStep(p, dx, dy) && p.step) {
-    // Slow the freshly-started step so the bot crosses the tile at
-    // AI_SPEED_FACTOR × player speed (used by both the renderer and
-    // the planner via aiTileTime).
-    p.step.duration = p.step.duration / AI_SPEED_FACTOR;
-    p.vx *= AI_SPEED_FACTOR;
-    p.vy *= AI_SPEED_FACTOR;
+    // Slow the freshly-started step so the bot crosses the tile at its
+    // per-bot speed factor (used by both the renderer and the planner
+    // via aiTileTime). _aiSpeed is set in initGame from bot.difficulty.
+    const sf = p._aiSpeed || AI_SPEED_FACTOR;
+    p.step.duration = p.step.duration / sf;
+    p.vx *= sf;
+    p.vy *= sf;
   }
 }
 
