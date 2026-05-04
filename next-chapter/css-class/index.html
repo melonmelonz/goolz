@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Class — class.exe</title>
+  <meta name="description" content="A tiny intro to CSS — link a stylesheet, style elements, change colors and fonts, and lay things out with flexbox.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --gray: #c0c0c0;
+      --gray-dark: #808080;
+      --gray-darker: #404040;
+      --white: #fff;
+      --black: #000;
+      --navy: #000080;
+      --navy-light: #1084d0;
+      --teal: #008080;
+      --yellow: #ffeb3b;
+      --font: 'Tahoma', 'MS Sans Serif', Arial, sans-serif;
+      --mono: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+    }
+
+    html, body { min-height: 100%; }
+    body {
+      font-family: var(--font);
+      font-size: 13px;
+      background: var(--teal);
+      color: var(--black);
+      padding: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Window chrome ── */
+    .window {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: var(--gray);
+      border-top: 2px solid var(--white);
+      border-left: 2px solid var(--white);
+      border-right: 2px solid var(--gray-darker);
+      border-bottom: 2px solid var(--gray-darker);
+      box-shadow: 2px 2px 0 var(--black);
+    }
+    .title-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(to right, var(--navy), var(--navy-light));
+      padding: 4px 6px;
+      color: var(--white);
+      font-weight: bold;
+      font-size: 13px;
+    }
+    .title-bar .icon { font-size: 14px; }
+    .title-bar .text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .title-btn {
+      width: 18px; height: 16px;
+      background: var(--gray);
+      border-top: 1px solid var(--white);
+      border-left: 1px solid var(--white);
+      border-right: 1px solid var(--gray-darker);
+      border-bottom: 1px solid var(--gray-darker);
+      color: var(--black);
+      font-size: 11px; font-weight: bold;
+      font-family: var(--font);
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      text-decoration: none;
+      line-height: 1;
+    }
+    .title-btn:active {
+      border-top: 1px solid var(--gray-darker);
+      border-left: 1px solid var(--gray-darker);
+      border-right: 1px solid var(--white);
+      border-bottom: 1px solid var(--white);
+    }
+
+    /* ── Content layout ── */
+    .content { padding: 14px 16px 18px; }
+
+    .crumb {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-bottom: 12px;
+      font-size: 12px; color: var(--navy);
+      text-decoration: none;
+    }
+    .crumb:hover { text-decoration: underline; }
+
+    h1.lesson-title {
+      font-size: 22px;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    .lesson-sub {
+      color: var(--gray-darker);
+      margin-bottom: 14px;
+    }
+
+    /* ── Sunken panel (Win95 inset) ── */
+    .panel {
+      background: var(--white);
+      border-top: 1px solid var(--gray-darker);
+      border-left: 1px solid var(--gray-darker);
+      border-right: 1px solid var(--white);
+      border-bottom: 1px solid var(--white);
+      box-shadow: inset 1px 1px 0 var(--black), inset -1px -1px 0 var(--gray);
+      padding: 10px 12px;
+    }
+    .panel-title {
+      font-weight: bold;
+      font-size: 12px;
+      color: var(--navy);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Previews row ── */
+    .previews {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 14px 0;
+    }
+    .preview-card {
+      background: var(--gray);
+      border-top: 2px solid var(--white);
+      border-left: 2px solid var(--white);
+      border-right: 2px solid var(--gray-darker);
+      border-bottom: 2px solid var(--gray-darker);
+      padding: 6px;
+      display: flex; flex-direction: column;
+    }
+    .preview-card .label {
+      font-size: 11px; font-weight: bold;
+      background: var(--gray-darker); color: var(--white);
+      padding: 2px 6px; margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .preview-card .label.live {
+      background: var(--navy);
+    }
+    .preview-frame {
+      width: 100%;
+      height: 380px;
+      border: 1px solid var(--gray-darker);
+      background: var(--white);
+    }
+    .preview-controls {
+      display: flex; gap: 6px; margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Buttons (Win95 raised) ── */
+    .btn {
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 4px 12px;
+      background: var(--gray);
+      border-top: 2px solid var(--white);
+      border-left: 2px solid var(--white);
+      border-right: 2px solid var(--gray-darker);
+      border-bottom: 2px solid var(--gray-darker);
+      color: var(--black);
+      cursor: pointer;
+      min-width: 80px;
+    }
+    .btn:active,
+    .btn.is-on {
+      border-top: 2px solid var(--gray-darker);
+      border-left: 2px solid var(--gray-darker);
+      border-right: 2px solid var(--white);
+      border-bottom: 2px solid var(--white);
+    }
+    .btn.primary { font-weight: bold; }
+    .btn:focus { outline: 1px dotted var(--black); outline-offset: -4px; }
+
+    /* ── Steps ── */
+    .steps { display: grid; gap: 14px; margin-top: 16px; }
+    .step {
+      background: var(--gray);
+      border-top: 2px solid var(--white);
+      border-left: 2px solid var(--white);
+      border-right: 2px solid var(--gray-darker);
+      border-bottom: 2px solid var(--gray-darker);
+      padding: 12px 14px 14px;
+    }
+    .step-head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .step-num {
+      background: var(--navy); color: var(--white);
+      width: 26px; height: 26px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: bold;
+      border-top: 1px solid var(--gray-darker);
+      border-left: 1px solid var(--gray-darker);
+      border-right: 1px solid var(--white);
+      border-bottom: 1px solid var(--white);
+    }
+    .step-title { font-size: 15px; font-weight: bold; flex: 1; min-width: 200px; }
+    .step-body p { margin: 6px 0; }
+    .step-body p.hint {
+      font-size: 12px; color: var(--gray-darker); font-style: italic;
+    }
+    .step-body code { font-family: var(--mono); background: rgba(0,0,0,0.06); padding: 1px 4px; }
+    pre.code {
+      font-family: var(--mono);
+      background: var(--black);
+      color: #b8e0ff;
+      padding: 10px 12px;
+      margin: 8px 0;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      border-top: 1px solid var(--gray-darker);
+      border-left: 1px solid var(--gray-darker);
+      border-right: 1px solid var(--white);
+      border-bottom: 1px solid var(--white);
+    }
+    pre.code .sel { color: #ffb86c; }
+    pre.code .prop { color: #8be9fd; }
+    pre.code .val { color: #f1fa8c; }
+    pre.code .com { color: #6272a4; font-style: italic; }
+    pre.code .tag { color: #ff79c6; }
+
+    .step-controls { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .step.is-applied { box-shadow: inset 0 0 0 2px var(--navy); }
+    .step .badge {
+      display: none;
+      font-size: 11px; font-weight: bold;
+      background: var(--navy); color: var(--white);
+      padding: 1px 6px;
+    }
+    .step.is-applied .badge { display: inline-block; }
+
+    /* ── More / footer ── */
+    .more { margin-top: 18px; }
+    .more p { margin: 6px 0; }
+    .more a { color: var(--navy); }
+    .more a:hover { text-decoration: underline; }
+    footer {
+      margin-top: 18px; padding-top: 10px;
+      border-top: 1px solid var(--gray-dark);
+      font-size: 12px; color: var(--gray-darker);
+      display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    }
+    footer a { color: var(--navy); }
+
+    /* ── Sticky preview on wider screens (so live coding shows results without scrolling) ── */
+    @media (min-width: 900px) {
+      .previews { position: sticky; top: 8px; z-index: 5; }
+    }
+
+    /* ── Small screens ── */
+    @media (max-width: 720px) {
+      body { padding: 6px; font-size: 13px; }
+      .previews { grid-template-columns: 1fr; }
+      .preview-frame { height: 280px; }
+      h1.lesson-title { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="window" role="application" aria-label="CSS Class">
+    <div class="title-bar">
+      <span class="icon" aria-hidden="true">🎨</span>
+      <span class="text">CSS Class — class.exe</span>
+      <a class="title-btn" href="/next-chapter/" title="Back to Desktop" aria-label="Close — back to desktop">×</a>
+    </div>
+
+    <div class="content">
+      <a class="crumb" href="/next-chapter/">← Back to Desktop</a>
+
+      <h1 class="lesson-title">Welcome to CSS.</h1>
+      <p class="lesson-sub">HTML is the bones. CSS is the paint. Below is one plain HTML page on the left and the same page on the right — we'll get from one to the other in five tiny steps. Click <strong>Apply</strong> on each step to watch it land in the live preview.</p>
+
+      <!-- ── Live previews ── -->
+      <div class="previews" id="previews">
+        <div class="preview-card">
+          <div class="label">BEFORE — index.html (no CSS)</div>
+          <iframe id="frame-before" class="preview-frame" title="Page with no CSS"></iframe>
+        </div>
+        <div class="preview-card">
+          <div class="label live">AFTER — index.html + your CSS</div>
+          <iframe id="frame-after" class="preview-frame" title="Page with your CSS"></iframe>
+          <div class="preview-controls">
+            <button class="btn primary" id="apply-all">Apply all</button>
+            <button class="btn" id="reset-all">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Steps ── -->
+      <div class="steps">
+
+        <!-- STEP 1 -->
+        <article class="step" data-step="1">
+          <div class="step-head">
+            <span class="step-num">1</span>
+            <span class="step-title">Tell HTML where the CSS lives</span>
+            <span class="badge">Applied</span>
+          </div>
+          <div class="step-body">
+            <p>CSS usually lives in its own file (e.g. <code>styles.css</code>). You connect it to your HTML with one line inside the <code>&lt;head&gt;</code>:</p>
+<pre class="code"><span class="tag">&lt;link</span> <span class="prop">rel</span>=<span class="val">"stylesheet"</span> <span class="prop">href</span>=<span class="val">"styles.css"</span><span class="tag">&gt;</span></pre>
+            <p>Then anything you write in <code>styles.css</code> applies to your page. As a tiny first taste of what CSS does, let's make the page readable — set a sane font and add some breathing room:</p>
+<pre class="code"><span class="sel">body</span> {
+  <span class="prop">font-family</span>: <span class="val">Arial, sans-serif</span>;
+  <span class="prop">line-height</span>: <span class="val">1.6</span>;
+  <span class="prop">padding</span>: <span class="val">20px</span>;
+  <span class="prop">max-width</span>: <span class="val">640px</span>;
+  <span class="prop">margin</span>: <span class="val">0 auto</span>;
+}</pre>
+            <p class="hint">Hint: <code>body</code> means "every &lt;body&gt; element" — there's only one, so this styles the whole page.</p>
+          </div>
+          <div class="step-controls">
+            <button class="btn apply-btn" data-apply="1">Apply step 1</button>
+          </div>
+        </article>
+
+        <!-- STEP 2 -->
+        <article class="step" data-step="2">
+          <div class="step-head">
+            <span class="step-num">2</span>
+            <span class="step-title">Element selectors — paint by tag name</span>
+            <span class="badge">Applied</span>
+          </div>
+          <div class="step-body">
+            <p>The simplest CSS rule has a <em>selector</em> (who to style) and a <em>declaration block</em> (how to style them). Here we pick every <code>&lt;h1&gt;</code> on the page and color it:</p>
+<pre class="code"><span class="sel">h1</span> {
+  <span class="prop">color</span>: <span class="val">navy</span>;
+}
+
+<span class="sel">h2</span> {
+  <span class="prop">color</span>: <span class="val">teal</span>;
+  <span class="prop">border-bottom</span>: <span class="val">2px solid teal</span>;
+  <span class="prop">padding-bottom</span>: <span class="val">2px</span>;
+}</pre>
+            <p class="hint">You can also use <code>#some-id</code> for one element and <code>.some-class</code> for groups. We'll use a class in step 5.</p>
+          </div>
+          <div class="step-controls">
+            <button class="btn apply-btn" data-apply="2">Apply step 2</button>
+          </div>
+        </article>
+
+        <!-- STEP 3 -->
+        <article class="step" data-step="3">
+          <div class="step-head">
+            <span class="step-num">3</span>
+            <span class="step-title">Backgrounds &amp; colors</span>
+            <span class="badge">Applied</span>
+          </div>
+          <div class="step-body">
+            <p>Color isn't just for text. Anything visual has a <code>background</code> too. Let's give the page some warmth and turn the title into a banner:</p>
+<pre class="code"><span class="sel">body</span> {
+  <span class="prop">background</span>: <span class="val">#fffaf0</span>;  <span class="com">/* warm off-white */</span>
+}
+
+<span class="sel">h1</span> {
+  <span class="prop">background</span>: <span class="val">navy</span>;
+  <span class="prop">color</span>: <span class="val">white</span>;
+  <span class="prop">padding</span>: <span class="val">10px 14px</span>;
+}</pre>
+            <p class="hint">Colors can be names (<code>navy</code>), hex (<code>#fffaf0</code>), or <code>rgb()</code>. Pick what reads cleanest to you.</p>
+          </div>
+          <div class="step-controls">
+            <button class="btn apply-btn" data-apply="3">Apply step 3</button>
+          </div>
+        </article>
+
+        <!-- STEP 4 -->
+        <article class="step" data-step="4">
+          <div class="step-head">
+            <span class="step-num">4</span>
+            <span class="step-title">Fonts — change how text feels</span>
+            <span class="badge">Applied</span>
+          </div>
+          <div class="step-body">
+            <p>One <code>font-family</code> sets the default for everything. You can override it per element. Mixing a serif body with a sans-serif heading is a classic move:</p>
+<pre class="code"><span class="sel">body</span> {
+  <span class="prop">font-family</span>: <span class="val">Georgia, serif</span>;
+}
+
+<span class="sel">h1, h2</span> {
+  <span class="prop">font-family</span>: <span class="val">'Trebuchet MS', sans-serif</span>;
+  <span class="prop">letter-spacing</span>: <span class="val">0.5px</span>;
+}</pre>
+            <p class="hint">List multiple fonts in case the first one isn't installed — the browser falls back down the list.</p>
+          </div>
+          <div class="step-controls">
+            <button class="btn apply-btn" data-apply="4">Apply step 4</button>
+          </div>
+        </article>
+
+        <!-- STEP 5 -->
+        <article class="step" data-step="5">
+          <div class="step-head">
+            <span class="step-num">5</span>
+            <span class="step-title">Flexbox — line things up in a row</span>
+            <span class="badge">Applied</span>
+          </div>
+          <div class="step-body">
+            <p>By default, block elements stack vertically. To put them in a row, give their <em>parent</em> <code>display: flex</code>. Look at the three "friend" cards in the preview — they're stacked. One line of CSS lays them out side by side:</p>
+<pre class="code"><span class="com">/* The three cards live inside &lt;div class="row"&gt;…&lt;/div&gt; */</span>
+<span class="sel">.row</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">gap</span>: <span class="val">12px</span>;
+  <span class="prop">justify-content</span>: <span class="val">center</span>;
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
+}
+
+<span class="sel">.card</span> {
+  <span class="prop">background</span>: <span class="val">#ffeb3b</span>;
+  <span class="prop">padding</span>: <span class="val">10px 14px</span>;
+  <span class="prop">border</span>: <span class="val">2px solid #333</span>;
+  <span class="prop">border-radius</span>: <span class="val">6px</span>;
+  <span class="prop">font-weight</span>: <span class="val">bold</span>;
+}</pre>
+            <p>Three new ideas in one rule:</p>
+            <ul style="margin-left: 22px;">
+              <li><code>display: flex</code> — children sit in a row.</li>
+              <li><code>gap</code> — space between them (no margin math).</li>
+              <li><code>justify-content: center</code> — pushes the whole row to the middle.</li>
+            </ul>
+            <p class="hint">Flexbox can do <em>way</em> more than this — alignment, ordering, wrapping, growing, shrinking. The full guide is linked at the bottom of this page.</p>
+          </div>
+          <div class="step-controls">
+            <button class="btn apply-btn" data-apply="5">Apply step 5</button>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- ── More ── -->
+      <div class="more">
+        <div class="panel">
+          <div class="panel-title">Want more?</div>
+          <p>Flexbox barely got a hello. Bookmark this — it has every property explained with diagrams:</p>
+          <p><a href="https://css-tricks.com/snippets/css/a-guide-to-flexbox/" target="_blank" rel="noopener">CSS-Tricks — A Complete Guide to Flexbox →</a></p>
+          <p>And the page this lesson is based on, with longer explanations:</p>
+          <p><a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Your_first_website/Styling_the_content" target="_blank" rel="noopener">MDN — Styling the content →</a></p>
+        </div>
+      </div>
+
+      <footer>
+        <a href="/next-chapter/">← Back to Desktop</a>
+        <span>CSS Class · made for class today</span>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    // The page being styled — pure HTML, no styles to start with.
+    const BASE_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My First Page</title>
+  <style id="user-css">/*CSS*/</style>
+</head>
+<body>
+  <h1>Hello, the web!</h1>
+  <p>This is my first webpage. I made it in CSS class today.</p>
+
+  <h2>Three things I like</h2>
+  <ul>
+    <li>Pizza</li>
+    <li>Sleep</li>
+    <li>The color teal</li>
+  </ul>
+
+  <h2>A picture</h2>
+  <p>Here is a tiny sun:</p>
+  <img alt="A small yellow sun" width="80" height="80"
+       src="data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;circle cx='50' cy='50' r='28' fill='%23ffd24d' stroke='%23a86d00' stroke-width='3'/&gt;&lt;g stroke='%23a86d00' stroke-width='3' stroke-linecap='round'&gt;&lt;line x1='50' y1='6' x2='50' y2='18'/&gt;&lt;line x1='50' y1='82' x2='50' y2='94'/&gt;&lt;line x1='6' y1='50' x2='18' y2='50'/&gt;&lt;line x1='82' y1='50' x2='94' y2='50'/&gt;&lt;line x1='17' y1='17' x2='26' y2='26'/&gt;&lt;line x1='74' y1='74' x2='83' y2='83'/&gt;&lt;line x1='17' y1='83' x2='26' y2='74'/&gt;&lt;line x1='74' y1='26' x2='83' y2='17'/&gt;&lt;/g&gt;&lt;/svg&gt;">
+
+  <h2>Friends</h2>
+  <div class="row">
+    <div class="card">🐱 Cat</div>
+    <div class="card">🐶 Dog</div>
+    <div class="card">🦊 Fox</div>
+  </div>
+</body>
+</html>`;
+
+    // Each step's CSS, applied additively in order.
+    const STEPS = {
+      1: `body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  padding: 20px;
+  max-width: 640px;
+  margin: 0 auto;
+}`,
+      2: `h1 {
+  color: navy;
+}
+h2 {
+  color: teal;
+  border-bottom: 2px solid teal;
+  padding-bottom: 2px;
+}`,
+      3: `body {
+  background: #fffaf0;
+}
+h1 {
+  background: navy;
+  color: white;
+  padding: 10px 14px;
+}`,
+      4: `body {
+  font-family: Georgia, serif;
+}
+h1, h2 {
+  font-family: 'Trebuchet MS', sans-serif;
+  letter-spacing: 0.5px;
+}`,
+      5: `.row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.card {
+  background: #ffeb3b;
+  padding: 10px 14px;
+  border: 2px solid #333;
+  border-radius: 6px;
+  font-weight: bold;
+}`,
+    };
+
+    const applied = new Set();
+    const beforeFrame = document.getElementById('frame-before');
+    const afterFrame  = document.getElementById('frame-after');
+
+    function buildHTML(css) {
+      return BASE_HTML.replace('/*CSS*/', css || '');
+    }
+
+    function rebuild() {
+      const css = [...applied].sort((a, b) => a - b).map(n => STEPS[n]).join('\n\n');
+      afterFrame.srcdoc = buildHTML(css);
+      // Update step UI
+      document.querySelectorAll('.step').forEach(el => {
+        const n = +el.dataset.step;
+        const on = applied.has(n);
+        el.classList.toggle('is-applied', on);
+        const btn = el.querySelector('.apply-btn');
+        if (btn) {
+          btn.classList.toggle('is-on', on);
+          btn.textContent = on ? `✓ Step ${n} applied (click to undo)` : `Apply step ${n}`;
+        }
+      });
+    }
+
+    function toggleStep(n) {
+      if (applied.has(n)) applied.delete(n); else applied.add(n);
+      rebuild();
+    }
+
+    document.querySelectorAll('.apply-btn').forEach(btn => {
+      btn.addEventListener('click', () => toggleStep(+btn.dataset.apply));
+    });
+
+    document.getElementById('apply-all').addEventListener('click', () => {
+      [1,2,3,4,5].forEach(n => applied.add(n));
+      rebuild();
+    });
+    document.getElementById('reset-all').addEventListener('click', () => {
+      applied.clear();
+      rebuild();
+    });
+
+    // Initial render
+    beforeFrame.srcdoc = buildHTML('');
+    rebuild();
+  })();
+  </script>
+</body>
+</html>
