@@ -329,6 +329,99 @@
       margin-top: 6px; font-style: italic;
     }
 
+    /* ── STANDALONE FLEX LAB ─────────────────────────────────── */
+    .flex-lab .lab-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .flex-lab fieldset {
+      border: 1px solid var(--gray-darker);
+      box-shadow: var(--raise);
+      background: var(--gray);
+      padding: 6px 8px 8px;
+      display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+    }
+    .flex-lab legend {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      padding: 0 4px;
+      background: var(--gray);
+    }
+    .flex-lab legend .legend-hint {
+      color: var(--gray-darker);
+      font-style: italic;
+      font-size: 10px;
+    }
+    .flex-lab fieldset .btn.tiny {
+      font-size: 11px;
+      min-width: 0;
+    }
+    .flex-lab fieldset .btn.tiny.is-on {
+      background: var(--navy); color: var(--white);
+      box-shadow: var(--sink);
+    }
+
+    .flex-lab .lab-stage {
+      display: flex;
+      flex-direction: var(--lab-dir, row);
+      justify-content: var(--lab-justify, flex-start);
+      align-items: var(--lab-align, stretch);
+      flex-wrap: var(--lab-wrap, nowrap);
+      gap: var(--lab-gap, 0px);
+
+      background:
+        repeating-linear-gradient(45deg, var(--white) 0 8px, #f4f4ec 8px 16px);
+      border: 1px solid var(--gray-darker);
+      box-shadow: var(--sink);
+      padding: 14px;
+      min-height: 240px;
+      margin: 10px 0;
+      overflow: auto;
+      resize: vertical;
+    }
+    .flex-lab .lab-item {
+      background: var(--navy); color: var(--white);
+      padding: 12px 18px;
+      font-weight: bold;
+      font-family: var(--mono);
+      font-size: 14px;
+      border: 1px solid var(--black);
+      box-shadow: var(--shadow-out);
+      flex-shrink: 0;
+      transition: background 200ms, padding 200ms;
+    }
+    /* Vary item sizes so cross-axis alignment is visible */
+    .flex-lab .lab-item:nth-child(2) { background: var(--teal); padding: 22px 22px; font-size: 16px; }
+    .flex-lab .lab-item:nth-child(3) { background: var(--gold); color: var(--black); padding: 8px 14px; font-size: 12px; }
+    .flex-lab .lab-item:nth-child(4) { background: #b03060; padding: 28px 18px; font-size: 18px; }
+    .flex-lab .lab-item:nth-child(5) { background: #5a3a8a; padding: 10px 16px; }
+    .flex-lab .lab-item:nth-child(6) { background: #1b6f3b; padding: 18px 14px; font-size: 15px; }
+    .flex-lab .lab-item:nth-child(7) { background: #c47a00; padding: 14px 22px; }
+    .flex-lab .lab-item:nth-child(8) { background: #007a8a; padding: 24px 16px; font-size: 17px; }
+    .flex-lab .lab-item:nth-child(9) { background: #6b1b1b; padding: 12px 12px; }
+
+    /* Hide items beyond the chosen count via data attribute on stage */
+    .flex-lab .lab-stage[data-count="3"] .lab-item:nth-child(n+4),
+    .flex-lab .lab-stage[data-count="4"] .lab-item:nth-child(n+5),
+    .flex-lab .lab-stage[data-count="6"] .lab-item:nth-child(n+7) { display: none; }
+
+    .flex-lab .lab-output { position: relative; margin-top: 8px; }
+    .flex-lab .lab-output-tag {
+      position: absolute; top: 6px; right: 6px;
+      font-family: var(--mono); font-size: 10px;
+      background: var(--gold); color: var(--black);
+      padding: 1px 6px;
+      letter-spacing: 1px;
+      border: 1px solid var(--black);
+      z-index: 1;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .flex-lab .lab-item { transition: none; }
+    }
+
     /* ── MORE / FOOTER ───────────────────────────────────────── */
     .more { margin-top: 18px; }
     .more p { margin: 6px 0; }
@@ -942,6 +1035,92 @@
         </div>
       </div>
 
+      <!-- ── STANDALONE FLEXBOX LAB ────────────────────────────── -->
+      <div class="more">
+        <div class="panel flex-lab" id="flex-lab">
+          <div class="panel-title">🧪 Flexbox lab · click around (independent of the main preview)</div>
+          <p>Five flex properties, side-by-side buttons. Click any one and the box updates. The CSS at the bottom rewrites itself in real time so you can see the rule that matches what you're looking at.</p>
+
+          <div class="lab-controls">
+            <fieldset>
+              <legend>flex-direction</legend>
+              <button class="btn tiny" data-prop="dir" data-val="row">row</button>
+              <button class="btn tiny" data-prop="dir" data-val="row-reverse">row-reverse</button>
+              <button class="btn tiny" data-prop="dir" data-val="column">column</button>
+              <button class="btn tiny" data-prop="dir" data-val="column-reverse">column-reverse</button>
+            </fieldset>
+
+            <fieldset>
+              <legend>justify-content<span class="legend-hint"> · main axis</span></legend>
+              <button class="btn tiny" data-prop="justify" data-val="flex-start">flex-start</button>
+              <button class="btn tiny" data-prop="justify" data-val="center">center</button>
+              <button class="btn tiny" data-prop="justify" data-val="flex-end">flex-end</button>
+              <button class="btn tiny" data-prop="justify" data-val="space-between">space-between</button>
+              <button class="btn tiny" data-prop="justify" data-val="space-around">space-around</button>
+              <button class="btn tiny" data-prop="justify" data-val="space-evenly">space-evenly</button>
+            </fieldset>
+
+            <fieldset>
+              <legend>align-items<span class="legend-hint"> · cross axis</span></legend>
+              <button class="btn tiny" data-prop="align" data-val="stretch">stretch</button>
+              <button class="btn tiny" data-prop="align" data-val="flex-start">flex-start</button>
+              <button class="btn tiny" data-prop="align" data-val="center">center</button>
+              <button class="btn tiny" data-prop="align" data-val="flex-end">flex-end</button>
+              <button class="btn tiny" data-prop="align" data-val="baseline">baseline</button>
+            </fieldset>
+
+            <fieldset>
+              <legend>flex-wrap</legend>
+              <button class="btn tiny" data-prop="wrap" data-val="nowrap">nowrap</button>
+              <button class="btn tiny" data-prop="wrap" data-val="wrap">wrap</button>
+              <button class="btn tiny" data-prop="wrap" data-val="wrap-reverse">wrap-reverse</button>
+            </fieldset>
+
+            <fieldset>
+              <legend>gap</legend>
+              <button class="btn tiny" data-prop="gap" data-val="0">0</button>
+              <button class="btn tiny" data-prop="gap" data-val="8">8</button>
+              <button class="btn tiny" data-prop="gap" data-val="16">16</button>
+              <button class="btn tiny" data-prop="gap" data-val="32">32</button>
+            </fieldset>
+
+            <fieldset>
+              <legend>items <span class="legend-hint">· what's inside the container</span></legend>
+              <button class="btn tiny" data-prop="items" data-val="3">3 items</button>
+              <button class="btn tiny" data-prop="items" data-val="4">4 items</button>
+              <button class="btn tiny" data-prop="items" data-val="6">6 items</button>
+              <button class="btn tiny" data-prop="items" data-val="9">9 items</button>
+            </fieldset>
+          </div>
+
+          <div class="lab-stage" id="lab-stage">
+            <div class="lab-item">A</div>
+            <div class="lab-item">B</div>
+            <div class="lab-item">C</div>
+            <div class="lab-item">D</div>
+            <div class="lab-item">E</div>
+            <div class="lab-item">F</div>
+            <div class="lab-item">G</div>
+            <div class="lab-item">H</div>
+            <div class="lab-item">I</div>
+          </div>
+
+          <div class="lab-output">
+            <div class="lab-output-tag">live CSS</div>
+<pre class="code"><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val" id="out-dir">row</span>;
+  <span class="prop">justify-content</span>: <span class="val" id="out-justify">flex-start</span>;
+  <span class="prop">align-items</span>: <span class="val" id="out-align">stretch</span>;
+  <span class="prop">flex-wrap</span>: <span class="val" id="out-wrap">nowrap</span>;
+  <span class="prop">gap</span>: <span class="val" id="out-gap">0</span><span class="val">px</span>;
+}</pre>
+          </div>
+
+          <p class="hint">This whole panel is its own thing — no iframe, no main-preview side effects. Reload to reset.</p>
+        </div>
+      </div>
+
       <div class="more">
         <div class="panel">
           <div class="panel-title">Cheat sheet · keyboard shortcuts</div>
@@ -1302,6 +1481,61 @@ h1 {
       document.body.removeChild(ta);
       cb && cb();
     }
+
+    // ── Standalone Flexbox lab (independent of main preview) ─────
+    (function flexLab() {
+      const stage = document.getElementById('lab-stage');
+      if (!stage) return;
+      const VAR_MAP = {
+        dir:     '--lab-dir',
+        justify: '--lab-justify',
+        align:   '--lab-align',
+        wrap:    '--lab-wrap',
+      };
+      const OUT_MAP = {
+        dir:     'out-dir',
+        justify: 'out-justify',
+        align:   'out-align',
+        wrap:    'out-wrap',
+        gap:     'out-gap',
+      };
+      const DEFAULTS = {
+        dir: 'row', justify: 'flex-start', align: 'stretch',
+        wrap: 'nowrap', gap: '0', items: '4',
+      };
+
+      function setActive(prop, val) {
+        document
+          .querySelectorAll('.flex-lab fieldset')
+          .forEach(fs => {
+            fs.querySelectorAll(`button[data-prop="${prop}"]`).forEach(b => {
+              b.classList.toggle('is-on', b.dataset.val === val);
+              b.setAttribute('aria-pressed', b.dataset.val === val ? 'true' : 'false');
+            });
+          });
+      }
+
+      function apply(prop, val) {
+        if (prop === 'gap') {
+          stage.style.setProperty('--lab-gap', val + 'px');
+        } else if (prop === 'items') {
+          stage.dataset.count = val;
+        } else {
+          stage.style.setProperty(VAR_MAP[prop], val);
+        }
+        const out = document.getElementById(OUT_MAP[prop]);
+        if (out) out.textContent = val;
+        setActive(prop, val);
+      }
+
+      // Wire every lab button
+      document.querySelectorAll('.flex-lab button[data-prop]').forEach(btn => {
+        btn.addEventListener('click', () => apply(btn.dataset.prop, btn.dataset.val));
+      });
+
+      // Initial state — default values, default highlights
+      Object.entries(DEFAULTS).forEach(([prop, val]) => apply(prop, val));
+    })();
 
     // Initial render
     beforeFrames.forEach(f => { f.srcdoc = buildHTML(''); });

@@ -293,15 +293,59 @@
       transition: background 0s 0s;
     }
 
+    /* Clear-canvas toggle. The checkbox is hidden; a <label> styled as a
+       button drives it. When checked, every cell animates to transparent
+       (and hover painting is disabled until you click again to resume). */
+    .paint-clear-toggle {
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0; pointer-events: none;
+    }
+    .paint:has(#pc-clear:checked) .canvas i {
+      animation: paint-clear-fade 220ms ease forwards;
+    }
+    .paint:has(#pc-clear:checked) .canvas i:hover {
+      background: transparent;
+      transition: none;
+      animation: paint-clear-fade 220ms ease forwards;
+    }
+    @keyframes paint-clear-fade {
+      to { background: transparent; }
+    }
+
+    .paint-btn-clear, .paint-btn-reset {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font); font-size: 12px;
+      padding: 4px 10px;
+      background: var(--gray); box-shadow: var(--raise);
+      border: 1px solid var(--black);
+      cursor: pointer; user-select: none;
+      color: var(--black);
+    }
+    .paint-btn-clear:hover, .paint-btn-reset:hover { background: var(--gray-2); }
+    .paint-btn-clear .when-on { display: none; }
+    .paint:has(#pc-clear:checked) .paint-btn-clear .when-off { display: none; }
+    .paint:has(#pc-clear:checked) .paint-btn-clear .when-on  { display: inline; }
+    .paint:has(#pc-clear:checked) .paint-btn-clear {
+      box-shadow: var(--sink); background: var(--gold);
+    }
+    .paint-btn-clear:focus-within,
+    .paint-clear-toggle:focus-visible + .paint-btn-clear {
+      outline: 2px dotted var(--navy); outline-offset: 2px;
+    }
+
     .paint .tools {
       margin-top: 8px;
       display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
       font-family: var(--mono); font-size: 11px;
       color: var(--gray-darker);
     }
+    .paint .tools .help { flex: 1; min-width: 200px; }
 
     @media (prefers-reduced-motion: reduce) {
       .paint .palette label { transition: none; }
+      .paint:has(#pc-clear:checked) .canvas i,
+      .paint:has(#pc-clear:checked) .canvas i:hover { animation: none; background: transparent; }
     }
 
     /* ════════════════════════════════════════════════════════
@@ -777,9 +821,15 @@
               <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
             </div>
 
+            <input type="checkbox" id="pc-clear" class="paint-clear-toggle">
+
             <div class="tools">
-              <button type="reset" style="font-family: var(--font); padding: 4px 10px;">Reset palette</button>
-              <span>↺ Reset palette puts the picker back on Win95 blue. To clear cells, pick the Eraser ✖ and drag.</span>
+              <label for="pc-clear" class="paint-btn-clear" title="Click to clear the canvas. Click again to resume painting.">
+                <span class="when-off">🧹 Clear canvas</span>
+                <span class="when-on">⏸ Painting paused — click to resume</span>
+              </label>
+              <button type="reset" class="paint-btn-reset" title="Resets the color picker back to Win95 blue and re-enables painting (does not clear cells)">↺ Reset color</button>
+              <span class="help"><strong>Clear canvas</strong> wipes everything. <strong>Reset color</strong> puts the picker back on Win95 blue. The <strong>Eraser</strong> ✖ paints with the canvas color (subtle one-cell-at-a-time clear).</span>
             </div>
           </form>
 
@@ -800,6 +850,11 @@
   <span class="prop">transition</span>: <span class="val">background 0s 0s</span>;     <span class="com">/* no delay on the way in */</span>
 }
 <span class="sel">.paint:has(#pc-c6:checked)</span> { <span class="prop">--paint-color</span>: <span class="val">#ff0000</span>; }</pre>
+              <p style="margin-top:6px"><strong>Clear canvas</strong> uses one more trick — a hidden checkbox <code>#pc-clear</code> with a <code>&lt;label&gt;</code> styled as a button. When checked, <code>:has()</code> attaches a <code>@keyframes</code> animation to every cell that fades the background to transparent. While checked, the hover paint rule is also overridden, so painting is paused. Click the button again to uncheck and resume painting.</p>
+              <pre class="code"><span class="sel">.paint:has(#pc-clear:checked) .canvas i</span> {
+  <span class="prop">animation</span>: <span class="val">paint-clear-fade 220ms ease forwards</span>;
+}
+<span class="at">@keyframes</span> <span class="sel">paint-clear-fade</span> { <span class="sel">to</span> { <span class="prop">background</span>: <span class="val">transparent</span>; } }</pre>
               <p class="hint" style="margin-top:6px"><strong>Caveats:</strong> the cells aren't really "painted" — they just look that way. Reload and the canvas is blank. Eraser works because it just paints with the canvas background color. The classic limitation of clever CSS-only state.</p>
             </div>
           </details>
