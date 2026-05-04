@@ -329,6 +329,62 @@
       margin-top: 6px; font-style: italic;
     }
 
+    /* ── SELECTOR LAB (lives with step 2) ────────────────────── */
+    .selector-lab .lab-html {
+      background: var(--white);
+      border: 2px solid var(--gray-darker);
+      box-shadow: var(--sink);
+      padding: 10px 14px;
+      margin: 10px 0;
+      font-family: Georgia, serif;
+    }
+    .selector-lab .lab-html p {
+      margin: 4px 0;
+      padding: 4px 8px;
+      border: 2px solid transparent;
+      border-radius: 2px;
+      transition: border-color 180ms ease, background 180ms ease;
+    }
+    .selector-lab .lab-buttons {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin: 8px 0;
+    }
+    .selector-lab .lab-buttons .btn.tiny.is-on {
+      background: var(--navy);
+      color: var(--white);
+      box-shadow: var(--sink);
+    }
+    .selector-lab[data-pick="tag"] .lab-html p {
+      border-color: #c47a00; background: #fff7d6;
+    }
+    .selector-lab[data-pick="id"] .lab-html #demo-tagline {
+      border-color: #c47a00; background: #fff7d6;
+    }
+    .selector-lab[data-pick="class"] .lab-html .demo-warn {
+      border-color: #c47a00; background: #fff7d6;
+    }
+    .selector-lab .lab-rule {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 8px 12px;
+      font-family: var(--mono); font-size: 12px;
+      margin-top: 8px;
+      min-height: 1.5em;
+      border: 1px solid var(--black);
+    }
+    .selector-lab .lab-rule .sel-tok { color: #f9e2af; }
+    .selector-lab .lab-rule .prop-tok { color: #89b4fa; }
+    .selector-lab .lab-rule .val-tok { color: #a6e3a1; }
+    .selector-lab .lab-hits {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--gray-darker);
+      margin-top: 6px;
+      min-height: 1.2em;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .selector-lab .lab-html p { transition: none; }
+    }
+
     /* ── STANDALONE FLEX LAB ─────────────────────────────────── */
     .flex-lab .lab-controls {
       display: grid;
@@ -771,6 +827,29 @@
           </div>
         </article>
 
+        <!-- ── SELECTOR LAB (lives with step 2) ────────────────────── -->
+        <div class="more">
+          <div class="panel selector-lab" id="selector-lab">
+            <div class="panel-title">🧪 Selector lab · click a button, see what gets picked</div>
+            <p>Same little chunk of HTML. Click a selector button and watch which paragraphs light up:</p>
+            <div class="lab-html" aria-label="demo HTML">
+              <p>A regular paragraph.</p>
+              <p id="demo-tagline">The Goolz Society — est. 1893.</p>
+              <p class="demo-warn">Goolz are NOT ghouls.</p>
+              <p class="demo-warn">Please do not feed them.</p>
+            </div>
+            <div class="lab-buttons">
+              <button class="btn tiny" type="button" data-pick="tag">p <span class="helper">tag</span></button>
+              <button class="btn tiny" type="button" data-pick="id">#tagline <span class="helper">id</span></button>
+              <button class="btn tiny" type="button" data-pick="class">.warn <span class="helper">class</span></button>
+              <button class="btn tiny" type="button" data-pick="">clear</button>
+            </div>
+            <div class="lab-rule" id="selector-rule">— pick a selector to see the rule —</div>
+            <div class="lab-hits" id="selector-hits">&nbsp;</div>
+            <p class="hint"><strong>Tag</strong> grabs <em>every</em> matching element. <strong>Id</strong> grabs the one with that id. <strong>Class</strong> grabs every element wearing that class.</p>
+          </div>
+        </div>
+
         <!-- STEP 3 -->
         <article class="step" id="step-3" data-step="3">
           <div class="step-head">
@@ -884,6 +963,92 @@
             <span class="helper">or press <kbd>5</kbd> · the playground unlocks once applied</span>
           </div>
         </article>
+
+        <!-- ── STANDALONE FLEXBOX LAB (lives with step 5) ──────────── -->
+        <div class="more">
+          <div class="panel flex-lab" id="flex-lab">
+            <div class="panel-title">🧪 Flexbox lab · click around (independent of the main preview)</div>
+            <p>Five flex properties, side-by-side buttons. Click any one and the box updates. The CSS at the bottom rewrites itself in real time so you can see the rule that matches what you're looking at.</p>
+
+            <div class="lab-controls">
+              <fieldset>
+                <legend>flex-direction</legend>
+                <button class="btn tiny" data-prop="dir" data-val="row">row</button>
+                <button class="btn tiny" data-prop="dir" data-val="row-reverse">row-reverse</button>
+                <button class="btn tiny" data-prop="dir" data-val="column">column</button>
+                <button class="btn tiny" data-prop="dir" data-val="column-reverse">column-reverse</button>
+              </fieldset>
+
+              <fieldset>
+                <legend>justify-content<span class="legend-hint"> · main axis</span></legend>
+                <button class="btn tiny" data-prop="justify" data-val="flex-start">flex-start</button>
+                <button class="btn tiny" data-prop="justify" data-val="center">center</button>
+                <button class="btn tiny" data-prop="justify" data-val="flex-end">flex-end</button>
+                <button class="btn tiny" data-prop="justify" data-val="space-between">space-between</button>
+                <button class="btn tiny" data-prop="justify" data-val="space-around">space-around</button>
+                <button class="btn tiny" data-prop="justify" data-val="space-evenly">space-evenly</button>
+              </fieldset>
+
+              <fieldset>
+                <legend>align-items<span class="legend-hint"> · cross axis</span></legend>
+                <button class="btn tiny" data-prop="align" data-val="stretch">stretch</button>
+                <button class="btn tiny" data-prop="align" data-val="flex-start">flex-start</button>
+                <button class="btn tiny" data-prop="align" data-val="center">center</button>
+                <button class="btn tiny" data-prop="align" data-val="flex-end">flex-end</button>
+                <button class="btn tiny" data-prop="align" data-val="baseline">baseline</button>
+              </fieldset>
+
+              <fieldset>
+                <legend>flex-wrap</legend>
+                <button class="btn tiny" data-prop="wrap" data-val="nowrap">nowrap</button>
+                <button class="btn tiny" data-prop="wrap" data-val="wrap">wrap</button>
+                <button class="btn tiny" data-prop="wrap" data-val="wrap-reverse">wrap-reverse</button>
+              </fieldset>
+
+              <fieldset>
+                <legend>gap</legend>
+                <button class="btn tiny" data-prop="gap" data-val="0">0</button>
+                <button class="btn tiny" data-prop="gap" data-val="8">8</button>
+                <button class="btn tiny" data-prop="gap" data-val="16">16</button>
+                <button class="btn tiny" data-prop="gap" data-val="32">32</button>
+              </fieldset>
+
+              <fieldset>
+                <legend>items <span class="legend-hint">· what's inside the container</span></legend>
+                <button class="btn tiny" data-prop="items" data-val="3">3 items</button>
+                <button class="btn tiny" data-prop="items" data-val="4">4 items</button>
+                <button class="btn tiny" data-prop="items" data-val="6">6 items</button>
+                <button class="btn tiny" data-prop="items" data-val="9">9 items</button>
+              </fieldset>
+            </div>
+
+            <div class="lab-stage" id="lab-stage">
+              <div class="lab-item">A</div>
+              <div class="lab-item">B</div>
+              <div class="lab-item">C</div>
+              <div class="lab-item">D</div>
+              <div class="lab-item">E</div>
+              <div class="lab-item">F</div>
+              <div class="lab-item">G</div>
+              <div class="lab-item">H</div>
+              <div class="lab-item">I</div>
+            </div>
+
+            <div class="lab-output">
+              <div class="lab-output-tag">live CSS</div>
+<pre class="code"><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val" id="out-dir">row</span>;
+  <span class="prop">justify-content</span>: <span class="val" id="out-justify">flex-start</span>;
+  <span class="prop">align-items</span>: <span class="val" id="out-align">stretch</span>;
+  <span class="prop">flex-wrap</span>: <span class="val" id="out-wrap">nowrap</span>;
+  <span class="prop">gap</span>: <span class="val" id="out-gap">0</span><span class="val">px</span>;
+}</pre>
+            </div>
+
+            <p class="hint">This whole panel is its own thing — no iframe, no main-preview side effects. Reload to reset.</p>
+          </div>
+        </div>
 
         <!-- STEP 6 — HOVER + TRANSITIONS -->
         <article class="step" id="step-6" data-step="6">
@@ -1068,92 +1233,6 @@
               <p class="hint">Flexbox version: <code>display: flex; align-items: center; justify-content: center</code>.</p>
             </div>
           </details>
-        </div>
-      </div>
-
-      <!-- ── STANDALONE FLEXBOX LAB ────────────────────────────── -->
-      <div class="more">
-        <div class="panel flex-lab" id="flex-lab">
-          <div class="panel-title">🧪 Flexbox lab · click around (independent of the main preview)</div>
-          <p>Five flex properties, side-by-side buttons. Click any one and the box updates. The CSS at the bottom rewrites itself in real time so you can see the rule that matches what you're looking at.</p>
-
-          <div class="lab-controls">
-            <fieldset>
-              <legend>flex-direction</legend>
-              <button class="btn tiny" data-prop="dir" data-val="row">row</button>
-              <button class="btn tiny" data-prop="dir" data-val="row-reverse">row-reverse</button>
-              <button class="btn tiny" data-prop="dir" data-val="column">column</button>
-              <button class="btn tiny" data-prop="dir" data-val="column-reverse">column-reverse</button>
-            </fieldset>
-
-            <fieldset>
-              <legend>justify-content<span class="legend-hint"> · main axis</span></legend>
-              <button class="btn tiny" data-prop="justify" data-val="flex-start">flex-start</button>
-              <button class="btn tiny" data-prop="justify" data-val="center">center</button>
-              <button class="btn tiny" data-prop="justify" data-val="flex-end">flex-end</button>
-              <button class="btn tiny" data-prop="justify" data-val="space-between">space-between</button>
-              <button class="btn tiny" data-prop="justify" data-val="space-around">space-around</button>
-              <button class="btn tiny" data-prop="justify" data-val="space-evenly">space-evenly</button>
-            </fieldset>
-
-            <fieldset>
-              <legend>align-items<span class="legend-hint"> · cross axis</span></legend>
-              <button class="btn tiny" data-prop="align" data-val="stretch">stretch</button>
-              <button class="btn tiny" data-prop="align" data-val="flex-start">flex-start</button>
-              <button class="btn tiny" data-prop="align" data-val="center">center</button>
-              <button class="btn tiny" data-prop="align" data-val="flex-end">flex-end</button>
-              <button class="btn tiny" data-prop="align" data-val="baseline">baseline</button>
-            </fieldset>
-
-            <fieldset>
-              <legend>flex-wrap</legend>
-              <button class="btn tiny" data-prop="wrap" data-val="nowrap">nowrap</button>
-              <button class="btn tiny" data-prop="wrap" data-val="wrap">wrap</button>
-              <button class="btn tiny" data-prop="wrap" data-val="wrap-reverse">wrap-reverse</button>
-            </fieldset>
-
-            <fieldset>
-              <legend>gap</legend>
-              <button class="btn tiny" data-prop="gap" data-val="0">0</button>
-              <button class="btn tiny" data-prop="gap" data-val="8">8</button>
-              <button class="btn tiny" data-prop="gap" data-val="16">16</button>
-              <button class="btn tiny" data-prop="gap" data-val="32">32</button>
-            </fieldset>
-
-            <fieldset>
-              <legend>items <span class="legend-hint">· what's inside the container</span></legend>
-              <button class="btn tiny" data-prop="items" data-val="3">3 items</button>
-              <button class="btn tiny" data-prop="items" data-val="4">4 items</button>
-              <button class="btn tiny" data-prop="items" data-val="6">6 items</button>
-              <button class="btn tiny" data-prop="items" data-val="9">9 items</button>
-            </fieldset>
-          </div>
-
-          <div class="lab-stage" id="lab-stage">
-            <div class="lab-item">A</div>
-            <div class="lab-item">B</div>
-            <div class="lab-item">C</div>
-            <div class="lab-item">D</div>
-            <div class="lab-item">E</div>
-            <div class="lab-item">F</div>
-            <div class="lab-item">G</div>
-            <div class="lab-item">H</div>
-            <div class="lab-item">I</div>
-          </div>
-
-          <div class="lab-output">
-            <div class="lab-output-tag">live CSS</div>
-<pre class="code"><span class="sel">.container</span> {
-  <span class="prop">display</span>: <span class="val">flex</span>;
-  <span class="prop">flex-direction</span>: <span class="val" id="out-dir">row</span>;
-  <span class="prop">justify-content</span>: <span class="val" id="out-justify">flex-start</span>;
-  <span class="prop">align-items</span>: <span class="val" id="out-align">stretch</span>;
-  <span class="prop">flex-wrap</span>: <span class="val" id="out-wrap">nowrap</span>;
-  <span class="prop">gap</span>: <span class="val" id="out-gap">0</span><span class="val">px</span>;
-}</pre>
-          </div>
-
-          <p class="hint">This whole panel is its own thing — no iframe, no main-preview side effects. Reload to reset.</p>
         </div>
       </div>
 
@@ -1571,6 +1650,52 @@ h1 {
 
       // Initial state — default values, default highlights
       Object.entries(DEFAULTS).forEach(([prop, val]) => apply(prop, val));
+    })();
+
+    // ── Selector lab (step 2) ───────────────────────────────────
+    (function () {
+      const lab = document.getElementById('selector-lab');
+      if (!lab) return;
+      const ruleEl = document.getElementById('selector-rule');
+      const hitsEl = document.getElementById('selector-hits');
+
+      // Build a tokenized rule line via createElement (no innerHTML).
+      function renderRule(selectorText) {
+        ruleEl.replaceChildren();
+        if (!selectorText) {
+          ruleEl.append(document.createTextNode('— pick a selector to see the rule —'));
+          return;
+        }
+        const sel  = document.createElement('span'); sel.className  = 'sel-tok';  sel.textContent  = selectorText;
+        const prop = document.createElement('span'); prop.className = 'prop-tok'; prop.textContent = 'background';
+        const val  = document.createElement('span'); val.className  = 'val-tok';  val.textContent  = '#fff7d6';
+        const prop2 = document.createElement('span'); prop2.className = 'prop-tok'; prop2.textContent = 'border';
+        const val2  = document.createElement('span'); val2.className  = 'val-tok';  val2.textContent  = '2px solid #c47a00';
+        ruleEl.append(sel, document.createTextNode(' { '),
+                      prop, document.createTextNode(': '), val, document.createTextNode('; '),
+                      prop2, document.createTextNode(': '), val2, document.createTextNode('; }'));
+      }
+
+      const SELECTORS = { tag: 'p', id: '#tagline', class: '.warn', '': '' };
+      const HITS = {
+        tag:   '\u2192 matches all 4 paragraphs',
+        id:    '\u2192 matches 1 element (the one with id="tagline")',
+        class: '\u2192 matches 2 elements (both wearing class="warn")',
+        '':    '\u00a0'
+      };
+
+      lab.querySelectorAll('button[data-pick]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pick = btn.dataset.pick;
+          if (pick) lab.dataset.pick = pick;
+          else delete lab.dataset.pick;
+          renderRule(SELECTORS[pick]);
+          hitsEl.textContent = HITS[pick];
+          lab.querySelectorAll('button[data-pick]').forEach(b => {
+            b.classList.toggle('is-on', b.dataset.pick === pick && pick !== '');
+          });
+        });
+      });
     })();
 
     // Initial render
