@@ -651,6 +651,22 @@
 
       <div class="more">
         <div class="panel">
+          <div class="panel-title">Primer · can a tag have both <code>class</code> and <code>id</code>?</div>
+          <p><strong>Yes — both, on the same tag, no conflict.</strong> An element can also have <em>multiple</em> classes (space-separated). It can only have <em>one</em> id, and that id must be unique on the page.</p>
+<pre class="code"><span class="tag">&lt;button</span> <span class="prop">id</span>=<span class="val">"checkout-btn"</span> <span class="prop">class</span>=<span class="val">"btn btn-primary btn-lg"</span><span class="tag">&gt;</span>Pay now<span class="tag">&lt;/button&gt;</span></pre>
+          <ul>
+            <li><code>id="checkout-btn"</code> — unique. JS hooks here. Anchor links (<code>href="#checkout-btn"</code>) jump here. Analytics tracks this one button.</li>
+            <li><code>class="btn"</code> — base button style, shared by every button on the site.</li>
+            <li><code>class="btn-primary"</code> — modifier: "main action" color.</li>
+            <li><code>class="btn-lg"</code> — modifier: large size.</li>
+          </ul>
+          <p>Mental split: <strong>id says "this specific element"</strong>, <strong>class says "this kind of element"</strong>.</p>
+          <p class="hint"><strong>Convention worth following:</strong> target with <code>id</code> (or <code>data-*</code> attributes), <em>style</em> with <code>class</code>. Why: <code>id</code> has very high specificity, so once you style with it, overriding later forces you to reach for <code>!important</code> or another id selector. Classes are flat and composable — you can have ten of them on one tag and they don't fight each other.</p>
+        </div>
+      </div>
+
+      <div class="more">
+        <div class="panel">
           <div class="panel-title">Primer · the box model</div>
           <p>Every element on a page is a rectangle. That rectangle has four layers, from inside out:</p>
 <pre class="code" aria-hidden="true" style="background: var(--cream); color: var(--black); white-space: pre; line-height: 1.2; box-shadow: var(--sink); font-size: 12px;">+-------------------------------+
