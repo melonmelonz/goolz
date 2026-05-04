@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PURE CSS — no JS, just style.exe</title>
+  <meta name="description" content="A showcase of things you can build with only HTML + CSS — no JavaScript at all. Drag-paint a canvas, watch a solar system, spin a 3D cube, run a Win95 defragmenter, and more.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
+  <style>
+    /* ════════════════════════════════════════════════════════════
+       PURE CSS · zero JavaScript
+       win95 chrome · big retro showcase
+       ════════════════════════════════════════════════════════════ */
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gray:        #c0c0c0;
+      --gray-2:      #d4d0c8;
+      --gray-dark:   #808080;
+      --gray-darker: #404040;
+      --white:       #fff;
+      --black:       #000;
+      --navy:        #000080;
+      --navy-light:  #1084d0;
+      --teal:        #008080;
+      --cream:       #fffaf0;
+      --gold:        #ffd24d;
+      --hot:         #ff4d6d;
+
+      --font: 'Tahoma', 'MS Sans Serif', Arial, sans-serif;
+      --mono: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+
+      --shadow-out: 2px 2px 0 var(--black);
+      --raise: inset 1px 1px 0 var(--white), inset -1px -1px 0 var(--gray-darker);
+      --sink:  inset 1px 1px 0 var(--gray-darker), inset -1px -1px 0 var(--white);
+    }
+
+    html, body { min-height: 100%; }
+    body {
+      font-family: var(--font);
+      font-size: 13px;
+      background: var(--teal);
+      color: var(--black);
+      padding: 14px 14px 40px;
+      line-height: 1.5;
+    }
+    a { color: var(--navy); }
+    a:hover { text-decoration: underline; }
+
+    /* ── window chrome ───────────────────────────────────── */
+    .window {
+      max-width: 1100px;
+      margin: 0 auto 18px;
+      background: var(--gray);
+      border: 2px solid var(--gray);
+      border-top-color: var(--white);
+      border-left-color: var(--white);
+      border-right-color: var(--gray-darker);
+      border-bottom-color: var(--gray-darker);
+      box-shadow: var(--shadow-out);
+    }
+    .title-bar {
+      display: flex; align-items: center; gap: 6px;
+      background: linear-gradient(to right, var(--navy), var(--navy-light));
+      padding: 4px 6px;
+      color: var(--white);
+      font-weight: bold;
+      font-size: 13px;
+    }
+    .title-bar .icon { font-size: 14px; line-height: 1; }
+    .title-bar .text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .title-btn {
+      width: 22px; height: 18px;
+      background: var(--gray);
+      box-shadow: var(--raise);
+      border: 1px solid var(--black);
+      color: var(--black);
+      font-size: 12px; font-weight: bold;
+      font-family: var(--font);
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      text-decoration: none !important;
+      line-height: 1;
+      padding: 0 0 2px;
+    }
+    .content { padding: 14px 16px 18px; }
+    .crumb {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-bottom: 10px;
+      font-size: 12px; color: var(--navy);
+      text-decoration: none;
+    }
+    .crumb:hover { text-decoration: underline; }
+
+    h1.page-title { font-size: 26px; margin-bottom: 4px; letter-spacing: 0.3px; }
+    .page-sub { color: var(--gray-darker); margin-bottom: 14px; }
+
+    .panel {
+      background: var(--gray-2);
+      box-shadow: var(--sink);
+      padding: 12px 14px;
+      margin: 12px 0;
+    }
+    .panel-title {
+      font-weight: bold; font-size: 14px;
+      border-bottom: 1px solid var(--gray-darker);
+      padding-bottom: 4px; margin-bottom: 8px;
+      letter-spacing: 0.4px;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--navy); color: var(--white);
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: 1px; padding: 1px 6px;
+      vertical-align: middle; margin-left: 6px;
+    }
+    .badge.gold { background: var(--gold); color: var(--black); }
+    .badge.hot { background: var(--hot); color: var(--white); }
+
+    code, pre.code, kbd {
+      font-family: var(--mono); font-size: 12.5px;
+    }
+    kbd {
+      background: var(--gray); border: 1px solid var(--gray-darker);
+      box-shadow: var(--raise);
+      padding: 1px 6px; font-size: 11px;
+    }
+    pre.code {
+      background: var(--cream); color: var(--black);
+      padding: 10px 12px; border: 1px solid var(--gray-darker);
+      overflow-x: auto; line-height: 1.45;
+    }
+    pre.code .com { color: #5a7d5a; font-style: italic; }
+    pre.code .sel { color: #aa00aa; }
+    pre.code .prop { color: #0050aa; }
+    pre.code .val { color: #aa3300; }
+    pre.code .at { color: #aa00aa; font-weight: bold; }
+
+    /* ── “How does it work?” reveal ──────────────────────── */
+    details.how {
+      margin-top: 12px;
+      background: var(--cream);
+      border: 1px solid var(--gray-darker);
+    }
+    details.how > summary {
+      list-style: none; cursor: pointer;
+      padding: 6px 10px;
+      background: var(--gray);
+      box-shadow: var(--raise);
+      font-weight: bold; font-size: 12px;
+      letter-spacing: 0.4px;
+      user-select: none;
+    }
+    details.how > summary::-webkit-details-marker { display: none; }
+    details.how > summary::after {
+      content: 'Show ▾';
+      float: right;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--gray-darker);
+    }
+    details.how[open] > summary::after { content: 'Hide ▴'; }
+    details.how[open] > summary { background: var(--gray-2); }
+    details.how > .how-body { padding: 10px 12px; }
+    details.how > .how-body p { margin-bottom: 6px; }
+    details.how > .how-body ul { margin: 4px 0 8px 20px; }
+
+    /* ── Demo card layout ────────────────────────────────── */
+    .demo {
+      margin: 18px 0;
+      background: var(--gray);
+      box-shadow: var(--raise);
+    }
+    .demo-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 10px;
+      background: linear-gradient(to right, var(--gray-darker), var(--gray-dark));
+      color: var(--white);
+      font-weight: bold;
+      font-family: var(--mono); font-size: 12px;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .demo-head .num {
+      width: 22px; height: 22px;
+      background: var(--gold); color: var(--black);
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: var(--raise);
+      font-family: var(--font); font-weight: bold; font-size: 13px;
+      letter-spacing: 0;
+    }
+    .demo-body { padding: 14px; background: var(--gray-2); }
+    .demo-blurb { margin-bottom: 12px; }
+
+    /* ════════════════════════════════════════════════════════
+       1 · PaintCSS — drag to paint, no JS
+       ════════════════════════════════════════════════════════ */
+
+    .paint {
+      --paint-color: #1084d0;
+      background: var(--cream);
+      border: 1px solid var(--gray-darker);
+      padding: 12px;
+    }
+
+    /* Hide the radio inputs visually but keep them keyboard-reachable */
+    .paint input[type="radio"] {
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0; pointer-events: none;
+    }
+
+    .paint .palette {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .paint .palette label {
+      width: 28px; height: 28px;
+      display: inline-block;
+      box-shadow: var(--raise);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 80ms ease, border-color 80ms ease;
+    }
+    .paint .palette label:hover { transform: translateY(-1px); }
+    .paint .palette label.eraser {
+      background:
+        linear-gradient(45deg, transparent 45%, #c00 45% 55%, transparent 55%),
+        linear-gradient(-45deg, transparent 45%, #c00 45% 55%, transparent 55%),
+        var(--white);
+    }
+    /* Show selection */
+    .paint:has(#pc-c1:checked)  label[for="pc-c1"],
+    .paint:has(#pc-c2:checked)  label[for="pc-c2"],
+    .paint:has(#pc-c3:checked)  label[for="pc-c3"],
+    .paint:has(#pc-c4:checked)  label[for="pc-c4"],
+    .paint:has(#pc-c5:checked)  label[for="pc-c5"],
+    .paint:has(#pc-c6:checked)  label[for="pc-c6"],
+    .paint:has(#pc-c7:checked)  label[for="pc-c7"],
+    .paint:has(#pc-c8:checked)  label[for="pc-c8"],
+    .paint:has(#pc-c9:checked)  label[for="pc-c9"],
+    .paint:has(#pc-c10:checked) label[for="pc-c10"],
+    .paint:has(#pc-c11:checked) label[for="pc-c11"],
+    .paint:has(#pc-c12:checked) label[for="pc-c12"],
+    .paint:has(#pc-c13:checked) label[for="pc-c13"],
+    .paint:has(#pc-c14:checked) label[for="pc-c14"],
+    .paint:has(#pc-c15:checked) label[for="pc-c15"],
+    .paint:has(#pc-cE:checked)  label[for="pc-cE"] {
+      border-color: var(--black);
+      transform: translateY(-2px);
+      box-shadow: var(--raise), 0 3px 0 var(--black);
+    }
+
+    /* The :has() drives the canvas paint color */
+    .paint:has(#pc-c1:checked)  { --paint-color: #000000; }
+    .paint:has(#pc-c2:checked)  { --paint-color: #ffffff; }
+    .paint:has(#pc-c3:checked)  { --paint-color: #c0c0c0; }
+    .paint:has(#pc-c4:checked)  { --paint-color: #808080; }
+    .paint:has(#pc-c5:checked)  { --paint-color: #800000; }
+    .paint:has(#pc-c6:checked)  { --paint-color: #ff0000; }
+    .paint:has(#pc-c7:checked)  { --paint-color: #ff8c00; }
+    .paint:has(#pc-c8:checked)  { --paint-color: #ffd24d; }
+    .paint:has(#pc-c9:checked)  { --paint-color: #008000; }
+    .paint:has(#pc-c10:checked) { --paint-color: #00c853; }
+    .paint:has(#pc-c11:checked) { --paint-color: #008080; }
+    .paint:has(#pc-c12:checked) { --paint-color: #1084d0; }
+    .paint:has(#pc-c13:checked) { --paint-color: #000080; }
+    .paint:has(#pc-c14:checked) { --paint-color: #800080; }
+    .paint:has(#pc-c15:checked) { --paint-color: #ff4d9d; }
+    /* Eraser uses canvas background */
+    .paint:has(#pc-cE:checked)  { --paint-color: #fffef6; }
+
+    .paint .canvas {
+      display: grid;
+      grid-template-columns: repeat(30, 1fr);
+      gap: 0;
+      background: #fffef6;
+      border: 2px solid var(--gray-darker);
+      box-shadow: var(--sink);
+      width: 100%;
+      aspect-ratio: 30 / 18;
+      cursor: crosshair;
+    }
+    .paint .canvas i {
+      display: block;
+      background: transparent;
+      /* The trick: long delay before the transition starts on un-hover,
+         so the "painted" state effectively sticks. On hover, no delay. */
+      transition: background 0s 99999s;
+    }
+    .paint .canvas i:hover {
+      background: var(--paint-color);
+      transition: background 0s 0s;
+    }
+
+    .paint .tools {
+      margin-top: 8px;
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--gray-darker);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .paint .palette label { transition: none; }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       2 · Solar System — pure @keyframes
+       ════════════════════════════════════════════════════════ */
+
+    .solar-stage {
+      background: radial-gradient(ellipse at center, #1a1a3a 0%, #07071a 80%);
+      border: 1px solid var(--gray-darker);
+      padding: 30px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 360px;
+    }
+    /* Tiny stars (CSS box-shadow trick) */
+    .solar-stage::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(1px 1px at 12% 18%, #fff, transparent 50%),
+        radial-gradient(1px 1px at 82% 12%, #fff, transparent 50%),
+        radial-gradient(1px 1px at 23% 78%, #cfd, transparent 50%),
+        radial-gradient(1px 1px at 67% 88%, #fff, transparent 50%),
+        radial-gradient(1px 1px at 91% 56%, #ffd, transparent 50%),
+        radial-gradient(2px 2px at 47% 31%, #fff, transparent 50%),
+        radial-gradient(1px 1px at 33% 45%, #fff, transparent 50%),
+        radial-gradient(1px 1px at 75% 71%, #aef, transparent 50%);
+      pointer-events: none;
+      animation: twinkle 4s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.55; }
+      50%      { opacity: 1; }
+    }
+
+    .solar {
+      position: relative;
+      width: 320px; height: 320px;
+    }
+    .solar .sun {
+      position: absolute; top: 50%; left: 50%;
+      width: 44px; height: 44px;
+      margin: -22px 0 0 -22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff8a0, #ffb200 60%, #d76600);
+      box-shadow: 0 0 24px #ff9d00, 0 0 60px rgba(255,140,0,0.6);
+      animation: sun-pulse 3s ease-in-out infinite;
+    }
+    @keyframes sun-pulse {
+      0%, 100% { box-shadow: 0 0 18px #ff9d00, 0 0 50px rgba(255,140,0,0.5); }
+      50%      { box-shadow: 0 0 28px #ffc54a, 0 0 80px rgba(255,140,0,0.8); }
+    }
+
+    .solar .orbit {
+      position: absolute; top: 50%; left: 50%;
+      border: 1px dashed rgba(255,255,255,0.18);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .solar .planet {
+      position: absolute; top: 50%; left: 50%;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    /* Orbit sizes (diameters) */
+    .solar .orbit-1 { width:  90px; height:  90px; }
+    .solar .orbit-2 { width: 150px; height: 150px; }
+    .solar .orbit-3 { width: 220px; height: 220px; }
+    .solar .orbit-4 { width: 300px; height: 300px; }
+
+    /* The trick: a wrapper rotates around the center, the planet
+       sits on the wrapper's edge via translateX(orbit-radius). */
+    .solar .arm {
+      position: absolute; top: 50%; left: 50%;
+      width: 0; height: 0;
+      transform-origin: 0 0;
+    }
+    .solar .arm-1 { animation: orbit  4s linear infinite; }
+    .solar .arm-2 { animation: orbit  7s linear infinite; }
+    .solar .arm-3 { animation: orbit 11s linear infinite; }
+    .solar .arm-4 { animation: orbit 17s linear infinite; }
+
+    .solar .arm .planet {
+      position: absolute; top: 0; left: 0;
+      transform: translate(-50%, -50%);
+    }
+    .solar .arm-1 .planet { width: 10px; height: 10px; left:  45px; background: #b86b3a; box-shadow: inset -2px -2px 0 rgba(0,0,0,0.4); }
+    .solar .arm-2 .planet { width: 14px; height: 14px; left:  75px; background: #6dc6ff; box-shadow: inset -2px -2px 0 rgba(0,0,0,0.4); }
+    .solar .arm-3 .planet { width: 12px; height: 12px; left: 110px; background: #c6f08a; box-shadow: inset -2px -2px 0 rgba(0,0,0,0.4); }
+    .solar .arm-4 .planet { width: 18px; height: 18px; left: 150px; background: #e7a55b; box-shadow: inset -2px -2px 0 rgba(0,0,0,0.4); }
+
+    /* A ring on the gas giant, just for fun */
+    .solar .arm-4 .planet::after {
+      content: "";
+      position: absolute;
+      width: 32px; height: 8px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(-20deg);
+      border: 1.5px solid rgba(255,220,150,0.85);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    @keyframes orbit {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       3 · 3D Cube — preserve-3d + perspective
+       ════════════════════════════════════════════════════════ */
+
+    .cube-stage {
+      background: linear-gradient(135deg, #0d1b2a 0%, #1b3a5b 100%);
+      border: 1px solid var(--gray-darker);
+      perspective: 900px;
+      padding: 50px 0 60px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 320px;
+    }
+    .cube {
+      width: 160px; height: 160px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: spin-cube 14s linear infinite;
+    }
+    .cube .face {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 14px;
+      letter-spacing: 1px;
+      color: var(--white);
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+      backface-visibility: visible;
+    }
+    .cube .face::before {
+      content: ""; position: absolute; inset: 0;
+      background: inherit;
+      filter: brightness(1.05);
+      box-shadow: inset 0 0 24px rgba(0,0,0,0.45);
+    }
+    .cube .face > span { position: relative; z-index: 1; }
+
+    .cube .face-front  { background: #ff6b6b; transform: translateZ(80px); }
+    .cube .face-back   { background: #4ecdc4; transform: rotateY(180deg) translateZ(80px); }
+    .cube .face-right  { background: #ffe66d; color: #333; text-shadow: none; transform: rotateY(90deg)  translateZ(80px); }
+    .cube .face-left   { background: #c084fc; transform: rotateY(-90deg) translateZ(80px); }
+    .cube .face-top    { background: #95e1d3; color: #333; text-shadow: none; transform: rotateX(90deg)  translateZ(80px); }
+    .cube .face-bottom { background: #f38181; transform: rotateX(-90deg) translateZ(80px); }
+
+    @keyframes spin-cube {
+      0%   { transform: rotateX(-20deg) rotateY(0deg); }
+      100% { transform: rotateX(-20deg) rotateY(360deg); }
+    }
+
+    /* Hover anywhere on the stage to slow the cube and "lift" it */
+    .cube-stage:hover .cube {
+      animation-duration: 30s;
+      transform: scale(1.08);
+      transition: transform 600ms ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cube { animation: none; transform: rotateX(-20deg) rotateY(-25deg); }
+      .solar .arm-1, .solar .arm-2, .solar .arm-3, .solar .arm-4,
+      .solar .sun, .solar-stage::before { animation: none; }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       4 · CSS-only Tabs — radio + sibling combinator
+       ════════════════════════════════════════════════════════ */
+
+    .tabs {
+      background: var(--gray);
+      box-shadow: var(--sink);
+      padding: 8px;
+    }
+    .tabs > input[type="radio"] {
+      position: absolute; left: -9999px;
+    }
+    .tabs > .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 2px;
+      border-bottom: 2px solid var(--gray-darker);
+      padding-bottom: 0;
+    }
+    .tabs > .tab-bar label {
+      cursor: pointer;
+      padding: 6px 12px;
+      background: var(--gray);
+      box-shadow: var(--raise);
+      font-weight: bold;
+      font-size: 12px;
+      border-bottom: none;
+      position: relative; top: 1px;
+      user-select: none;
+    }
+    .tabs > .tab-bar label:hover { background: var(--gray-2); }
+
+    .tabs > .tab-panel {
+      display: none;
+      padding: 14px 12px;
+      background: var(--cream);
+      border: 1px solid var(--gray-darker);
+      border-top: none;
+      min-height: 110px;
+    }
+    /* selected tab styling */
+    .tabs:has(#tab-1:checked) .tab-bar label[for="tab-1"],
+    .tabs:has(#tab-2:checked) .tab-bar label[for="tab-2"],
+    .tabs:has(#tab-3:checked) .tab-bar label[for="tab-3"],
+    .tabs:has(#tab-4:checked) .tab-bar label[for="tab-4"] {
+      background: var(--cream);
+      box-shadow: inset 1px 1px 0 var(--white), inset -1px 0 0 var(--gray-darker);
+      padding-bottom: 7px; /* visually merge with panel */
+    }
+    .tabs:has(#tab-1:checked) .panel-1,
+    .tabs:has(#tab-2:checked) .panel-2,
+    .tabs:has(#tab-3:checked) .panel-3,
+    .tabs:has(#tab-4:checked) .panel-4 { display: block; }
+
+    /* ════════════════════════════════════════════════════════
+       5 · Defragmenter — animated visualization
+       ════════════════════════════════════════════════════════ */
+
+    .defrag {
+      background: var(--cream);
+      border: 1px solid var(--gray-darker);
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    .defrag .blocks {
+      display: grid;
+      grid-template-columns: repeat(40, 1fr);
+      gap: 2px;
+      padding: 4px;
+      background: var(--white);
+      border: 1px solid var(--gray-darker);
+      box-shadow: var(--sink);
+    }
+    .defrag .blocks i {
+      display: block;
+      aspect-ratio: 1 / 1;
+      background: var(--gray);
+      animation: defrag-cycle 12s ease-in-out infinite;
+    }
+    /* Stagger each block by index (manually selected nth-child groups) */
+    .defrag .blocks i:nth-child(8n+1) { animation-delay: 0.0s; }
+    .defrag .blocks i:nth-child(8n+2) { animation-delay: 0.4s; }
+    .defrag .blocks i:nth-child(8n+3) { animation-delay: 0.8s; }
+    .defrag .blocks i:nth-child(8n+4) { animation-delay: 1.2s; }
+    .defrag .blocks i:nth-child(8n+5) { animation-delay: 1.6s; }
+    .defrag .blocks i:nth-child(8n+6) { animation-delay: 2.0s; }
+    .defrag .blocks i:nth-child(8n+7) { animation-delay: 2.4s; }
+    .defrag .blocks i:nth-child(8n+8) { animation-delay: 2.8s; }
+
+    @keyframes defrag-cycle {
+      0%        { background: #c0c0c0; }   /* fragmented */
+      15%       { background: #ff4d6d; }   /* found bad block */
+      30%       { background: #1084d0; }   /* relocating */
+      45%       { background: #1084d0; }
+      60%       { background: #2cb673; }   /* defragged */
+      90%       { background: #2cb673; }
+      100%      { background: #c0c0c0; }   /* loop */
+    }
+
+    .defrag .legend {
+      margin-top: 8px;
+      display: flex; flex-wrap: wrap; gap: 14px;
+      font-family: var(--mono); font-size: 11px;
+    }
+    .defrag .legend span::before {
+      content: ""; display: inline-block;
+      width: 10px; height: 10px;
+      margin-right: 6px;
+      vertical-align: middle;
+      border: 1px solid var(--gray-darker);
+    }
+    .defrag .legend .l-frag::before { background: #c0c0c0; }
+    .defrag .legend .l-bad::before  { background: #ff4d6d; }
+    .defrag .legend .l-mov::before  { background: #1084d0; }
+    .defrag .legend .l-ok::before   { background: #2cb673; }
+
+    .defrag .meter {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 10px;
+    }
+    .defrag .meter .bar {
+      flex: 1; height: 14px;
+      background: var(--white);
+      border: 1px solid var(--gray-darker);
+      box-shadow: var(--sink);
+      overflow: hidden;
+      position: relative;
+    }
+    .defrag .meter .bar::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, #2cb673, #6df0a3);
+      transform-origin: left;
+      animation: bar-fill 12s ease-in-out infinite;
+    }
+    @keyframes bar-fill {
+      0%   { transform: scaleX(0.05); }
+      60%  { transform: scaleX(0.95); }
+      100% { transform: scaleX(0.05); }
+    }
+    .defrag .meter .pct {
+      font-family: var(--mono); font-weight: bold;
+      width: 56px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .defrag .blocks i,
+      .defrag .meter .bar::before { animation: none; }
+    }
+
+    /* ════════════════════════════════════════════════════════
+       6 · Bonus — pure CSS accordion menu (already shown
+       elsewhere via <details>, but a styled sample is fun)
+       ════════════════════════════════════════════════════════ */
+
+    .accordion details {
+      background: var(--cream);
+      border: 1px solid var(--gray-darker);
+      margin-bottom: 6px;
+    }
+    .accordion details > summary {
+      list-style: none; cursor: pointer;
+      padding: 8px 12px;
+      background: var(--gray);
+      box-shadow: var(--raise);
+      font-weight: bold; font-size: 12px;
+    }
+    .accordion details > summary::-webkit-details-marker { display: none; }
+    .accordion details > summary::after {
+      content: '▸'; float: right;
+      transition: transform 200ms ease;
+    }
+    .accordion details[open] > summary::after { transform: rotate(90deg); }
+    .accordion details > .acc-body { padding: 10px 12px; }
+
+    /* ── footer ─────────────────────────────────────────── */
+    footer {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 1px solid var(--gray-darker);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px;
+      flex-wrap: wrap; gap: 6px;
+    }
+
+    /* ── Mobile tightening ──────────────────────────────── */
+    @media (max-width: 640px) {
+      body { padding: 10px 10px 30px; font-size: 12.5px; }
+      .content { padding: 10px 10px 14px; }
+      h1.page-title { font-size: 20px; }
+      .demo-head { font-size: 11px; padding: 6px 8px; }
+      .paint .canvas { aspect-ratio: 30 / 22; }   /* taller canvas on mobile */
+      .solar { width: 280px; height: 280px; }
+      .solar .orbit-4 { width: 260px; height: 260px; }
+      .solar .arm-4 .planet { left: 130px; }
+      .cube { width: 130px; height: 130px; }
+      .cube .face-front  { transform: translateZ(65px); }
+      .cube .face-back   { transform: rotateY(180deg) translateZ(65px); }
+      .cube .face-right  { transform: rotateY(90deg)  translateZ(65px); }
+      .cube .face-left   { transform: rotateY(-90deg) translateZ(65px); }
+      .cube .face-top    { transform: rotateX(90deg)  translateZ(65px); }
+      .cube .face-bottom { transform: rotateX(-90deg) translateZ(65px); }
+      .defrag .blocks { grid-template-columns: repeat(28, 1fr); }
+    }
+
+    /* ── Print ──────────────────────────────────────────── */
+    @media print {
+      body { background: #fff; color: #000; padding: 0; }
+      .window { box-shadow: none; border: 1px solid #000; }
+      .demo, .panel { box-shadow: none; }
+      .paint .canvas, .solar-stage, .cube-stage { display: none; }
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      clip: rect(1px,1px,1px,1px); clip-path: inset(50%);
+      width: 1px; height: 1px; overflow: hidden; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="window" role="application" aria-label="Pure CSS Showcase">
+    <div class="title-bar">
+      <span class="icon" aria-hidden="true">✨</span>
+      <span class="text">PURE CSS — style.exe (no JavaScript)</span>
+      <a class="title-btn" href="/next-chapter/css-class/" title="Back to CSS Class" aria-label="Close — back to CSS Class">×</a>
+    </div>
+
+    <div class="content">
+      <a class="crumb" href="/next-chapter/css-class/">← Back to CSS Class</a>
+
+      <h1 class="page-title">PURE CSS.</h1>
+      <p class="page-sub">
+        Five live demos. Zero JavaScript. <span class="badge">view-source</span> <span class="badge gold">no JS</span>
+        Open DevTools → Network → JS — the count is <strong>0</strong>. Everything below is HTML structure plus stylesheet rules.
+      </p>
+
+      <div class="panel">
+        <div class="panel-title">Why this exists</div>
+        <p>CSS used to be "make text pink." Modern CSS can hold <em>state</em>, animate, transform in 3D, react to user input, even paint a canvas — all without a single line of JavaScript. Each demo below shows one trick. Click <kbd>How does it work?</kbd> on any demo to read the trick.</p>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════
+           DEMO 1 · PaintCSS
+           ════════════════════════════════════════════════════════ -->
+      <div class="demo">
+        <div class="demo-head">
+          <span class="num">1</span>
+          <span>PaintCSS — drag to paint</span>
+          <span class="badge hot" style="margin-left:auto">headliner</span>
+        </div>
+        <div class="demo-body">
+          <p class="demo-blurb">Pick a color, then drag your mouse across the canvas. (On mobile: drag with your finger.) The canvas remembers every cell you've touched. Every pixel of this is CSS — no <code>onclick</code>, no script.</p>
+
+          <form class="paint" aria-label="Pure CSS paint demo">
+            <input type="radio" name="pc-color" id="pc-c12" checked>
+            <input type="radio" name="pc-color" id="pc-c1">
+            <input type="radio" name="pc-color" id="pc-c2">
+            <input type="radio" name="pc-color" id="pc-c3">
+            <input type="radio" name="pc-color" id="pc-c4">
+            <input type="radio" name="pc-color" id="pc-c5">
+            <input type="radio" name="pc-color" id="pc-c6">
+            <input type="radio" name="pc-color" id="pc-c7">
+            <input type="radio" name="pc-color" id="pc-c8">
+            <input type="radio" name="pc-color" id="pc-c9">
+            <input type="radio" name="pc-color" id="pc-c10">
+            <input type="radio" name="pc-color" id="pc-c11">
+            <input type="radio" name="pc-color" id="pc-c13">
+            <input type="radio" name="pc-color" id="pc-c14">
+            <input type="radio" name="pc-color" id="pc-c15">
+            <input type="radio" name="pc-color" id="pc-cE">
+
+            <div class="palette" role="group" aria-label="Color palette">
+              <label for="pc-c1"  style="background:#000000" title="Black"></label>
+              <label for="pc-c2"  style="background:#ffffff" title="White"></label>
+              <label for="pc-c3"  style="background:#c0c0c0" title="Gray light"></label>
+              <label for="pc-c4"  style="background:#808080" title="Gray dark"></label>
+              <label for="pc-c5"  style="background:#800000" title="Maroon"></label>
+              <label for="pc-c6"  style="background:#ff0000" title="Red"></label>
+              <label for="pc-c7"  style="background:#ff8c00" title="Orange"></label>
+              <label for="pc-c8"  style="background:#ffd24d" title="Gold"></label>
+              <label for="pc-c9"  style="background:#008000" title="Green"></label>
+              <label for="pc-c10" style="background:#00c853" title="Bright green"></label>
+              <label for="pc-c11" style="background:#008080" title="Teal"></label>
+              <label for="pc-c12" style="background:#1084d0" title="Win95 blue"></label>
+              <label for="pc-c13" style="background:#000080" title="Navy"></label>
+              <label for="pc-c14" style="background:#800080" title="Purple"></label>
+              <label for="pc-c15" style="background:#ff4d9d" title="Hot pink"></label>
+              <label for="pc-cE"  class="eraser" title="Eraser"></label>
+            </div>
+
+            <div class="canvas" role="img" aria-label="Paint canvas — drag to paint">
+              <!-- 30 columns × 18 rows = 540 cells -->
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+
+            <div class="tools">
+              <button type="reset" style="font-family: var(--font); padding: 4px 10px;">Reset palette</button>
+              <span>↺ Reset palette puts the picker back on Win95 blue. To clear cells, pick the Eraser ✖ and drag.</span>
+            </div>
+          </form>
+
+          <details class="how">
+            <summary>How does it work?</summary>
+            <div class="how-body">
+              <p>Three CSS tricks stacked together — no JS:</p>
+              <ul>
+                <li><strong>The "sticky paint" trick.</strong> Each cell has <code>transition: background 0s 99999s</code>. When you hover, a more specific rule overrides it with <code>transition: background 0s 0s</code> and sets the painted color. When you stop hovering, the original transition kicks back in — but its <em>delay</em> is 99999 seconds, so the unpaint never visibly happens. Result: the cell stays painted.</li>
+                <li><strong>The color picker.</strong> Sixteen <code>&lt;input type="radio"&gt;</code> elements (one per color) hold the "selected color" state. The labels are the visible swatches.</li>
+                <li><strong><code>:has()</code> drives the canvas.</strong> A rule like <code>.paint:has(#pc-c6:checked) { --paint-color: #ff0000; }</code> reads the selected radio and updates a custom property on the parent. Every cell's hover rule reads <code>var(--paint-color)</code>, so changing the picker changes the paint.</li>
+              </ul>
+              <pre class="code"><span class="sel">.canvas i</span> {
+  <span class="prop">transition</span>: <span class="val">background 0s 99999s</span>; <span class="com">/* delay = forever */</span>
+}
+<span class="sel">.canvas i:hover</span> {
+  <span class="prop">background</span>: <span class="val">var(--paint-color)</span>;
+  <span class="prop">transition</span>: <span class="val">background 0s 0s</span>;     <span class="com">/* no delay on the way in */</span>
+}
+<span class="sel">.paint:has(#pc-c6:checked)</span> { <span class="prop">--paint-color</span>: <span class="val">#ff0000</span>; }</pre>
+              <p class="hint" style="margin-top:6px"><strong>Caveats:</strong> the cells aren't really "painted" — they just look that way. Reload and the canvas is blank. Eraser works because it just paints with the canvas background color. The classic limitation of clever CSS-only state.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════
+           DEMO 2 · Solar System
+           ════════════════════════════════════════════════════════ -->
+      <div class="demo">
+        <div class="demo-head">
+          <span class="num">2</span>
+          <span>Solar system — pure @keyframes</span>
+        </div>
+        <div class="demo-body">
+          <p class="demo-blurb">Four planets, four orbits, four loop durations. The whole thing is one shape (a circle) repeated, plus one animation (<code>rotate</code>).</p>
+
+          <div class="solar-stage">
+            <div class="solar" aria-label="Animated solar system">
+              <div class="orbit orbit-1"></div>
+              <div class="orbit orbit-2"></div>
+              <div class="orbit orbit-3"></div>
+              <div class="orbit orbit-4"></div>
+              <div class="sun" aria-hidden="true"></div>
+              <div class="arm arm-1"><div class="planet"></div></div>
+              <div class="arm arm-2"><div class="planet"></div></div>
+              <div class="arm arm-3"><div class="planet"></div></div>
+              <div class="arm arm-4"><div class="planet"></div></div>
+            </div>
+          </div>
+
+          <details class="how">
+            <summary>How does it work?</summary>
+            <div class="how-body">
+              <p>Each "arm" is a zero-size element pinned at the center of the stage. The planet sits offset from that center using <code>left:</code>. Then we rotate the arm — and the planet rides along the circle.</p>
+              <pre class="code"><span class="at">@keyframes</span> <span class="sel">orbit</span> {
+  <span class="sel">from</span> { <span class="prop">transform</span>: <span class="val">rotate(0deg)</span>; }
+  <span class="sel">to</span>   { <span class="prop">transform</span>: <span class="val">rotate(360deg)</span>; }
+}
+
+<span class="sel">.arm</span>     { <span class="prop">position</span>: <span class="val">absolute</span>; <span class="prop">top</span>: <span class="val">50%</span>; <span class="prop">left</span>: <span class="val">50%</span>;
+            <span class="prop">animation</span>: <span class="val">orbit 7s linear infinite</span>; }
+<span class="sel">.arm .planet</span> { <span class="prop">position</span>: <span class="val">absolute</span>; <span class="prop">left</span>: <span class="val">75px</span>; <span class="com">/* orbit radius */</span> }</pre>
+              <p>Different orbit radii (<code>left</code> values) and different durations give you the full system. The sun also pulses (a separate <code>@keyframes</code> on its <code>box-shadow</code>) and the stars twinkle (<code>opacity</code> alternation on a background made of radial-gradient dots — yes, that's all CSS too).</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════
+           DEMO 3 · 3D Cube
+           ════════════════════════════════════════════════════════ -->
+      <div class="demo">
+        <div class="demo-head">
+          <span class="num">3</span>
+          <span>3D cube — preserve-3d + perspective</span>
+        </div>
+        <div class="demo-body">
+          <p class="demo-blurb">A cube made of six <code>&lt;div&gt;</code>s, each rotated and pushed into 3D space. Hover the stage to slow the spin and lean closer.</p>
+
+          <div class="cube-stage">
+            <div class="cube" aria-label="Spinning 3D cube">
+              <div class="face face-front"><span>FRONT</span></div>
+              <div class="face face-back"><span>BACK</span></div>
+              <div class="face face-right"><span>RIGHT</span></div>
+              <div class="face face-left"><span>LEFT</span></div>
+              <div class="face face-top"><span>TOP</span></div>
+              <div class="face face-bottom"><span>BOTTOM</span></div>
+            </div>
+          </div>
+
+          <details class="how">
+            <summary>How does it work?</summary>
+            <div class="how-body">
+              <p>Two CSS properties unlock the third dimension:</p>
+              <ul>
+                <li><code>perspective</code> on the parent — sets how far away the camera is. Smaller numbers = more dramatic 3D.</li>
+                <li><code>transform-style: preserve-3d</code> on the cube — children get to live in 3D space instead of being flattened.</li>
+              </ul>
+              <p>Each face starts on top of the other, then we rotate it and push it outward by half the cube's size:</p>
+              <pre class="code"><span class="sel">.cube</span> { <span class="prop">transform-style</span>: <span class="val">preserve-3d</span>; <span class="prop">animation</span>: <span class="val">spin-cube 14s linear infinite</span>; }
+
+<span class="sel">.face-front</span>  { <span class="prop">transform</span>: <span class="val">translateZ(80px)</span>; }
+<span class="sel">.face-back</span>   { <span class="prop">transform</span>: <span class="val">rotateY(180deg) translateZ(80px)</span>; }
+<span class="sel">.face-right</span>  { <span class="prop">transform</span>: <span class="val">rotateY(90deg)  translateZ(80px)</span>; }
+<span class="sel">.face-left</span>   { <span class="prop">transform</span>: <span class="val">rotateY(-90deg) translateZ(80px)</span>; }
+<span class="sel">.face-top</span>    { <span class="prop">transform</span>: <span class="val">rotateX(90deg)  translateZ(80px)</span>; }
+<span class="sel">.face-bottom</span> { <span class="prop">transform</span>: <span class="val">rotateX(-90deg) translateZ(80px)</span>; }</pre>
+              <p class="hint">Mental model: each face is initially flat-on, then you rotate it to point outward, then push it away from the center by half the cube's edge so the inside surface lines up. Pure geometry; no JS, no canvas, no WebGL.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════
+           DEMO 4 · CSS-only Tabs
+           ════════════════════════════════════════════════════════ -->
+      <div class="demo">
+        <div class="demo-head">
+          <span class="num">4</span>
+          <span>Tabs — radio inputs holding state</span>
+        </div>
+        <div class="demo-body">
+          <p class="demo-blurb">Click a tab. The content below updates. No JavaScript reads or writes to the DOM — the radio button is the state, and CSS shows/hides panels based on which one is checked.</p>
+
+          <div class="tabs">
+            <input type="radio" name="tabs" id="tab-1" checked>
+            <input type="radio" name="tabs" id="tab-2">
+            <input type="radio" name="tabs" id="tab-3">
+            <input type="radio" name="tabs" id="tab-4">
+
+            <div class="tab-bar" role="tablist">
+              <label for="tab-1" role="tab">Overview</label>
+              <label for="tab-2" role="tab">Selectors</label>
+              <label for="tab-3" role="tab">Layout</label>
+              <label for="tab-4" role="tab">Animation</label>
+            </div>
+
+            <div class="tab-panel panel-1" role="tabpanel">
+              <strong>Overview.</strong> CSS is a rule-based language. You describe the look you want; the browser figures out how to draw it. Every visual feature on this page (and the entire one you're reading) is driven by the same idea.
+            </div>
+            <div class="tab-panel panel-2" role="tabpanel">
+              <strong>Selectors</strong> tell the browser <em>who</em>. <code>p</code> is every paragraph. <code>.note</code> is every element with class "note." <code>#hero</code> is the one with id "hero." Modern selectors include <code>:has()</code>, <code>:not()</code>, <code>:nth-child()</code>, and many more.
+            </div>
+            <div class="tab-panel panel-3" role="tabpanel">
+              <strong>Layout.</strong> Flexbox arranges things in a row or column. Grid arranges them in two dimensions at once. Both replaced years of float-and-table-hack. <code>display: flex</code> on a parent is usually enough to fix 80% of layout pain.
+            </div>
+            <div class="tab-panel panel-4" role="tabpanel">
+              <strong>Animation.</strong> <code>transition</code> smooths a change between two states. <code>@keyframes</code> + <code>animation</code> describes a multi-step timeline that loops. The browser does the math; you describe the destination.
+            </div>
+          </div>
+
+          <details class="how">
+            <summary>How does it work?</summary>
+            <div class="how-body">
+              <p>The radio inputs are <em>visually hidden</em> but still focusable. Clicking the matching <code>&lt;label&gt;</code> checks them. Then <code>:has()</code> reads which one is checked and shows the right panel:</p>
+              <pre class="code"><span class="sel">.tab-panel</span> { <span class="prop">display</span>: <span class="val">none</span>; }
+
+<span class="sel">.tabs:has(#tab-1:checked) .panel-1</span>,
+<span class="sel">.tabs:has(#tab-2:checked) .panel-2</span>,
+<span class="sel">.tabs:has(#tab-3:checked) .panel-3</span>,
+<span class="sel">.tabs:has(#tab-4:checked) .panel-4</span> { <span class="prop">display</span>: <span class="val">block</span>; }</pre>
+              <p>Before <code>:has()</code> existed, the same effect was done with the general sibling combinator (<code>~</code>). It still works, just uglier. <code>:has()</code> is the modern way.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════
+           DEMO 5 · Defragmenter
+           ════════════════════════════════════════════════════════ -->
+      <div class="demo">
+        <div class="demo-head">
+          <span class="num">5</span>
+          <span>Defragmenter — staggered keyframes</span>
+        </div>
+        <div class="demo-body">
+          <p class="demo-blurb">The classic Win95 defrag screen, animated entirely with <code>@keyframes</code> and <code>animation-delay</code>. Every block runs the same animation — they're just offset in time.</p>
+
+          <div class="defrag">
+            <div class="header" style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span><strong>C:\</strong> &nbsp; Optimizing 1 of 1 drives…</span>
+              <span>Press <kbd>Esc</kbd> to cancel</span>
+            </div>
+            <div class="blocks" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <div class="legend">
+              <span class="l-frag">Fragmented</span>
+              <span class="l-bad">Bad block</span>
+              <span class="l-mov">Relocating</span>
+              <span class="l-ok">Optimized</span>
+            </div>
+            <div class="meter">
+              <span>Progress:</span>
+              <div class="bar" aria-hidden="true"></div>
+              <span class="pct">∞</span>
+            </div>
+          </div>
+
+          <details class="how">
+            <summary>How does it work?</summary>
+            <div class="how-body">
+              <p>240 blocks all share one <code>@keyframes</code> rule that walks through gray → red → blue → green. Each block gets a <em>different</em> <code>animation-delay</code> using <code>:nth-child()</code> — so they ripple through the cycle instead of all flashing in sync.</p>
+              <pre class="code"><span class="at">@keyframes</span> <span class="sel">defrag-cycle</span> {
+  <span class="sel">0%</span>  { <span class="prop">background</span>: <span class="val">#c0c0c0</span>; }   <span class="com">/* fragmented */</span>
+  <span class="sel">15%</span> { <span class="prop">background</span>: <span class="val">#ff4d6d</span>; }   <span class="com">/* bad block found */</span>
+  <span class="sel">30%</span> { <span class="prop">background</span>: <span class="val">#1084d0</span>; }   <span class="com">/* relocating  */</span>
+  <span class="sel">60%</span> { <span class="prop">background</span>: <span class="val">#2cb673</span>; }   <span class="com">/* optimized   */</span>
+  <span class="sel">100%</span>{ <span class="prop">background</span>: <span class="val">#c0c0c0</span>; }
+}
+
+<span class="sel">.blocks i</span>           { <span class="prop">animation</span>: <span class="val">defrag-cycle 12s ease-in-out infinite</span>; }
+<span class="sel">.blocks i:nth-child(8n+2)</span> { <span class="prop">animation-delay</span>: <span class="val">0.4s</span>; }
+<span class="sel">.blocks i:nth-child(8n+3)</span> { <span class="prop">animation-delay</span>: <span class="val">0.8s</span>; }
+<span class="com">/* …and so on. The wave is just spaced delays. */</span></pre>
+              <p>The progress bar uses the same trick on a single element: <code>transform: scaleX()</code> animated from 0.05 → 0.95 over the loop, with the bar's left origin so it grows rightward.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════
+           One-stop "things you saw" panel
+           ════════════════════════════════════════════════════════ -->
+      <div class="panel">
+        <div class="panel-title">CSS techniques featured here</div>
+        <div class="accordion">
+          <details>
+            <summary><code>:has()</code> — the parent / "looks-down" selector</summary>
+            <div class="acc-body">
+              <p>The big new thing. Until 2023 it didn't exist. <code>parent:has(child:state)</code> styles the parent based on the child. It's why we can run a color picker without a single <code>onclick</code>.</p>
+            </div>
+          </details>
+          <details>
+            <summary><code>transition-delay: 99999s</code> — the "stuck" trick</summary>
+            <div class="acc-body">
+              <p>A property changes on hover; the transition has a huge delay before it animates back. Effectively permanent. Used by the paint canvas above.</p>
+            </div>
+          </details>
+          <details>
+            <summary><code>transform-style: preserve-3d</code> + <code>perspective</code></summary>
+            <div class="acc-body">
+              <p>Switches the child elements from "flat" to "in 3D space." Combined with <code>rotateX</code>/<code>rotateY</code>/<code>translateZ</code>, you get a real cube — not a fake-looking one.</p>
+            </div>
+          </details>
+          <details>
+            <summary><code>@keyframes</code> + <code>animation-delay</code> + <code>:nth-child()</code></summary>
+            <div class="acc-body">
+              <p>Define one timeline, share it across many elements, stagger the start by index. Every "wave," "stagger," or "ripple" effect on the web is this pattern.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Hidden radios + <code>&lt;label&gt;</code> as state</summary>
+            <div class="acc-body">
+              <p>The browser already tracks which radio is "checked." That's free state. Style the labels to look like buttons; CSS reads <code>:checked</code> via <code>:has()</code> or the sibling combinator.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Custom properties (CSS variables)</summary>
+            <div class="acc-body">
+              <p><code>--paint-color: red</code> on a parent; <code>background: var(--paint-color)</code> on every child. Change the parent, every child updates. Themes and dynamic colors without a single line of script.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">The honest part: what CSS still can't do</div>
+        <p>Pure CSS state is <em>session-only</em> — every demo above resets on reload. There's no localStorage, no math, no fetching data. JavaScript is still the right tool when you need persistence, real interactivity, or anything time-based that needs precise control. The lesson here isn't "JS is bad" — it's that the line keeps moving toward CSS, and a lot of UI that used to need JS doesn't any more.</p>
+      </div>
+
+      <footer>
+        <a href="/next-chapter/css-class/">← Back to CSS Class</a>
+        <span>PURE CSS · part of class.exe</span>
+      </footer>
+    </div>
+  </div>
+
+</body>
+</html>

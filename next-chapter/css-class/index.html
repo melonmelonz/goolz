@@ -542,6 +542,45 @@
         </div>
       </div>
 
+      <!-- ── PRIMER · before the steps ────────────────────────── -->
+      <div class="more">
+        <div class="panel">
+          <div class="panel-title">Primer · three ways to attach CSS</div>
+          <p>Same paint, different brushes. There are <strong>three</strong> places CSS can live:</p>
+          <ul>
+            <li><strong>Inline</strong> — on the element itself: <code>&lt;h1 style="color: navy"&gt;</code>. Quick test, but messy and not reusable. Avoid in real code.</li>
+            <li><strong>Internal</strong> — in a <code>&lt;style&gt;</code> block in the page's <code>&lt;head&gt;</code>. Fine for one tiny page or a single-file demo (this lesson uses internal under the hood).</li>
+            <li><strong>External</strong> — in its own <code>.css</code> file, linked from the <code>&lt;head&gt;</code>: <code>&lt;link rel="stylesheet" href="styles.css"&gt;</code>. <em>This is the way.</em> Cached by the browser. Reusable across pages. Step 1 below shows the link.</li>
+          </ul>
+          <p class="hint">Gotcha: type <code>colr: blue</code> by accident and the browser silently ignores the rule — no error, no warning, just nothing happens. CSS forgives spelling mistakes. <strong>Always check spelling and the missing semicolon first.</strong></p>
+        </div>
+      </div>
+
+      <div class="more">
+        <div class="panel">
+          <div class="panel-title">Primer · the box model</div>
+          <p>Every element on a page is a rectangle. That rectangle has four layers, from inside out:</p>
+<pre class="code" aria-hidden="true" style="background: var(--cream); white-space: pre; line-height: 1.2;">+-------------------------------+
+|           MARGIN              |   ← space OUTSIDE the border
+|  +-------------------------+  |     (pushes neighbors away)
+|  |        BORDER           |  |
+|  |  +-------------------+  |  |   ← the visible edge
+|  |  |     PADDING       |  |  |
+|  |  |  +-------------+  |  |  |   ← space INSIDE the border
+|  |  |  |   CONTENT   |  |  |  |     (between border and content)
+|  |  |  +-------------+  |  |  |
+|  |  +-------------------+  |  |   ← your text, image, child elements
+|  +-------------------------+  |
++-------------------------------+</pre>
+          <ul>
+            <li><strong>Padding</strong> = breathing room <em>inside</em> the box (between border and content).</li>
+            <li><strong>Margin</strong> = breathing room <em>outside</em> the box (between this box and its neighbors).</li>
+            <li><strong>Border</strong> = the line drawn at the edge.</li>
+          </ul>
+          <p class="hint">Mnemonic: more space <em>inside</em> an element? Padding. More space <em>between</em> elements? Margin. The DevTools "Computed" tab paints this exact diagram in real numbers — show it to the class.</p>
+        </div>
+      </div>
+
       <!-- ── STEPS ────────────────────────────────────────────── -->
       <div class="steps">
 
@@ -873,6 +912,21 @@
           </details>
 
           <details class="qa">
+            <summary><strong>I changed the CSS, hit save, refreshed — and nothing happened.</strong> What's going on?</summary>
+            <div class="answer">
+              <p>This is the most universal CSS pain. Probably one of:</p>
+              <ul>
+                <li><strong>Typo in a property.</strong> <code>colr: blue</code>, <code>bcolor: red</code>, <code>marign: 8px</code> — CSS silently drops rules it doesn't recognize. <em>No error.</em> Inspect the rule in DevTools — it'll have a yellow warning triangle.</li>
+                <li><strong>Missing semicolon.</strong> A missing <code>;</code> can break the rule below it.</li>
+                <li><strong>Specificity loss.</strong> A more specific selector elsewhere is winning. DevTools shows you which rule won and which got crossed out.</li>
+                <li><strong>Browser cache.</strong> Hard refresh: <kbd>Ctrl/Cmd + Shift + R</kbd>.</li>
+                <li><strong>You're editing the wrong file.</strong> It happens. Check the path in your <code>&lt;link&gt;</code>.</li>
+              </ul>
+              <p class="hint">Habit to build: after a "nothing happened" moment, open DevTools → Elements → click the element → look at the Styles pane. If your rule isn't there at all, it's a typo or a wrong file. If it's there but crossed out, it's specificity.</p>
+            </div>
+          </details>
+
+          <details class="qa">
             <summary><strong>Why doesn't <code>text-align: center</code> center a <code>&lt;div&gt;</code>?</strong></summary>
             <div class="answer">
               <p>Because <code>text-align</code> only centers <em>inline content</em> (text, inline images, inline-block elements) <em>inside</em> the element it's set on. It doesn't center the element itself.</p>
@@ -892,6 +946,13 @@
         <div class="panel">
           <div class="panel-title">Cheat sheet · keyboard shortcuts</div>
           <p>Press <kbd>1</kbd>–<kbd>7</kbd> to toggle each step · <kbd>A</kbd> applies all · <kbd>0</kbd> resets.</p>
+        </div>
+      </div>
+
+      <div class="more">
+        <div class="panel" style="border: 2px solid var(--navy);">
+          <div class="panel-title">✨ See how far CSS can go — <a href="/next-chapter/pure-css/">PURE CSS showcase →</a></div>
+          <p>A bonus page with five live demos that use <strong>zero JavaScript</strong>: a drag-to-paint canvas, an animated solar system, a 3D cube, CSS-only tabs, and a Win95 defragmenter. Every demo has a "How does it work?" reveal panel. Made for class.</p>
         </div>
       </div>
 
