@@ -235,18 +235,30 @@ table.field th { background: #e8dfb8; }
 }
 .wobble { display: inline-block; animation: wobble 2.5s ease-in-out infinite; }
 
+/* ── Pre / ASCII overflow safety (all widths) ──────────── */
+pre, .ascii { overflow-x: auto; max-width: 100%; }
+
 /* ── Mobile tightening ──────────────────────────────────── */
 @media (max-width: 480px) {
   .page { padding: 16px 14px 60px; }
   .banner h1 { font-size: 22px; letter-spacing: 2px; }
   .banner .sub { font-size: 10px; }
   nav.top { font-size: 12px; }
-  nav.top a { margin: 2px 2px; padding: 6px 8px; }   /* roomier taps */
+  nav.top a { margin: 2px 2px; padding: 8px 10px; }   /* roomier taps (≥40px) */
   h2 { font-size: 16px; margin-top: 24px; }
   .ascii { font-size: 10px; }
   .ascii.big { font-size: 12px; }
   pre, code { font-size: 12px; word-break: break-word; }
   table.field { font-size: 11px; }
+}
+
+/* ── Narrow phones (≤ 375px) ────────────────────────────── */
+@media (max-width: 375px) {
+  .page { padding: 12px 10px 60px; }
+  .banner h1 { font-size: 18px; letter-spacing: 1px; }
+  nav.top a { padding: 8px 6px; }
+  h2 { font-size: 15px; }
+  .ascii, .ascii.big { font-size: 9px; }
 }
 
 /* ── Honor reduced-motion preference ────────────────────── */

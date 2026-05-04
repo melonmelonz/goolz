@@ -4,22 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CSS Class — class.exe</title>
-  <meta name="description" content="A tiny intro to CSS — link a stylesheet, style elements, change colors and fonts, and lay things out with flexbox.">
+  <meta name="description" content="A live, hands-on intro to CSS — link a stylesheet, style elements, change colors and fonts, lay things out with flexbox, add hover effects, and animate with keyframes.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
     :root {
-      --gray: #c0c0c0;
-      --gray-dark: #808080;
+      --gray:        #c0c0c0;
+      --gray-2:      #d4d0c8;
+      --gray-dark:   #808080;
       --gray-darker: #404040;
-      --white: #fff;
-      --black: #000;
-      --navy: #000080;
-      --navy-light: #1084d0;
-      --teal: #008080;
-      --yellow: #ffeb3b;
+      --white:       #fff;
+      --black:       #000;
+      --navy:        #000080;
+      --navy-light:  #1084d0;
+      --teal:        #008080;
+      --cream:       #fffaf0;
+      --gold:        #ffd24d;
+
       --font: 'Tahoma', 'MS Sans Serif', Arial, sans-serif;
       --mono: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+
+      --shadow-out: 2px 2px 0 var(--black);
+      --raise: inset 1px 1px 0 var(--white), inset -1px -1px 0 var(--gray-darker);
+      --sink:  inset 1px 1px 0 var(--gray-darker), inset -1px -1px 0 var(--white);
     }
 
     html, body { min-height: 100%; }
@@ -28,240 +36,396 @@
       font-size: 13px;
       background: var(--teal);
       color: var(--black);
-      padding: 14px;
+      padding: 14px 14px 84px; /* leave room for sticky dock */
       line-height: 1.5;
     }
 
-    /* ── Window chrome ── */
+    a { color: var(--navy); }
+    a:hover { text-decoration: underline; }
+
+    /* ── WINDOW CHROME ────────────────────────────────────────── */
     .window {
       max-width: 1100px;
       margin: 0 auto;
       background: var(--gray);
-      border-top: 2px solid var(--white);
-      border-left: 2px solid var(--white);
-      border-right: 2px solid var(--gray-darker);
-      border-bottom: 2px solid var(--gray-darker);
-      box-shadow: 2px 2px 0 var(--black);
+      border: 2px solid var(--gray);
+      border-top-color: var(--white);
+      border-left-color: var(--white);
+      border-right-color: var(--gray-darker);
+      border-bottom-color: var(--gray-darker);
+      box-shadow: var(--shadow-out);
     }
     .title-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      display: flex; align-items: center; gap: 6px;
       background: linear-gradient(to right, var(--navy), var(--navy-light));
       padding: 4px 6px;
       color: var(--white);
       font-weight: bold;
       font-size: 13px;
     }
-    .title-bar .icon { font-size: 14px; }
+    .title-bar .icon { font-size: 14px; line-height: 1; }
     .title-bar .text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .title-btn {
-      width: 18px; height: 16px;
+      width: 22px; height: 18px;
       background: var(--gray);
-      border-top: 1px solid var(--white);
-      border-left: 1px solid var(--white);
-      border-right: 1px solid var(--gray-darker);
-      border-bottom: 1px solid var(--gray-darker);
+      box-shadow: var(--raise);
+      border: 1px solid var(--black);
       color: var(--black);
-      font-size: 11px; font-weight: bold;
+      font-size: 12px; font-weight: bold;
       font-family: var(--font);
       display: inline-flex; align-items: center; justify-content: center;
       cursor: pointer;
-      text-decoration: none;
+      text-decoration: none !important;
       line-height: 1;
+      padding: 0 0 2px;
     }
-    .title-btn:active {
-      border-top: 1px solid var(--gray-darker);
-      border-left: 1px solid var(--gray-darker);
-      border-right: 1px solid var(--white);
-      border-bottom: 1px solid var(--white);
-    }
+    .title-btn:active { box-shadow: var(--sink); padding: 1px 0 1px 1px; }
 
-    /* ── Content layout ── */
+    /* ── CONTENT ──────────────────────────────────────────────── */
     .content { padding: 14px 16px 18px; }
 
     .crumb {
       display: inline-flex; align-items: center; gap: 4px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       font-size: 12px; color: var(--navy);
       text-decoration: none;
     }
     .crumb:hover { text-decoration: underline; }
 
     h1.lesson-title {
-      font-size: 22px;
+      font-size: 24px;
       margin-bottom: 4px;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
     .lesson-sub {
       color: var(--gray-darker);
       margin-bottom: 14px;
+      max-width: 70ch;
+    }
+    kbd {
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--white);
+      box-shadow: var(--raise);
+      padding: 1px 4px;
+      border: 1px solid var(--black);
     }
 
-    /* ── Sunken panel (Win95 inset) ── */
+    /* ── PANEL ────────────────────────────────────────────────── */
     .panel {
       background: var(--white);
-      border-top: 1px solid var(--gray-darker);
-      border-left: 1px solid var(--gray-darker);
-      border-right: 1px solid var(--white);
-      border-bottom: 1px solid var(--white);
-      box-shadow: inset 1px 1px 0 var(--black), inset -1px -1px 0 var(--gray);
+      box-shadow: var(--sink);
       padding: 10px 12px;
     }
     .panel-title {
-      font-weight: bold;
-      font-size: 12px;
-      color: var(--navy);
+      font-weight: bold; font-size: 12px; color: var(--navy);
       margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      text-transform: uppercase; letter-spacing: 0.6px;
     }
 
-    /* ── Previews row ── */
+    /* ── PREVIEWS ─────────────────────────────────────────────── */
     .previews {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin: 14px 0;
+      margin: 12px 0 16px;
     }
     .preview-card {
       background: var(--gray);
-      border-top: 2px solid var(--white);
-      border-left: 2px solid var(--white);
-      border-right: 2px solid var(--gray-darker);
-      border-bottom: 2px solid var(--gray-darker);
-      padding: 6px;
+      box-shadow: var(--raise);
+      padding: 6px 6px 8px;
       display: flex; flex-direction: column;
+      position: relative;
     }
     .preview-card .label {
       font-size: 11px; font-weight: bold;
-      background: var(--gray-darker); color: var(--white);
-      padding: 2px 6px; margin-bottom: 6px;
-      letter-spacing: 0.5px;
+      background: var(--gray-dark); color: var(--white);
+      padding: 3px 8px; margin-bottom: 6px;
+      letter-spacing: 0.6px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
     }
-    .preview-card .label.live {
-      background: var(--navy);
-    }
+    .preview-card .label.live { background: var(--navy); }
+    .preview-card .label .tag { font-size: 10px; opacity: 0.9; font-weight: normal; }
     .preview-frame {
       width: 100%;
-      height: 380px;
+      height: 420px;
       border: 1px solid var(--gray-darker);
       background: var(--white);
+      transition: box-shadow 600ms ease-out;
     }
-    .preview-controls {
-      display: flex; gap: 6px; margin-top: 8px;
-      flex-wrap: wrap;
+    .preview-frame.flash {
+      box-shadow: 0 0 0 3px var(--navy-light);
+      transition: box-shadow 100ms ease-in;
+    }
+    .celebration {
+      position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+      background: var(--gold); color: var(--black);
+      padding: 6px 14px;
+      border: 1px solid var(--black); box-shadow: var(--shadow-out);
+      font-weight: bold; font-size: 13px;
+      pointer-events: none; opacity: 0;
+      transition: opacity 300ms;
+      z-index: 2;
+    }
+    .preview-card.complete .celebration { opacity: 1; }
+    @media (prefers-reduced-motion: reduce) {
+      .preview-frame, .preview-frame.flash { transition: none; box-shadow: none; }
+      .celebration { transition: none; }
     }
 
-    /* ── Buttons (Win95 raised) ── */
+    /* Mobile collapsible BEFORE */
+    details.before-toggle { display: none; }
+    details.before-toggle > summary {
+      cursor: pointer;
+      font-size: 12px;
+      padding: 6px 8px;
+      background: var(--gray);
+      box-shadow: var(--raise);
+      list-style: none;
+      user-select: none;
+    }
+    details.before-toggle > summary::-webkit-details-marker { display: none; }
+    details.before-toggle[open] > summary { box-shadow: var(--sink); }
+    details.before-toggle > summary::after { content: ' ▾'; float: right; }
+    details.before-toggle[open] > summary::after { content: ' ▴'; }
+
+    /* ── BUTTONS ──────────────────────────────────────────────── */
     .btn {
       font-family: var(--font);
       font-size: 12px;
-      padding: 4px 12px;
+      padding: 5px 12px;
       background: var(--gray);
-      border-top: 2px solid var(--white);
-      border-left: 2px solid var(--white);
-      border-right: 2px solid var(--gray-darker);
-      border-bottom: 2px solid var(--gray-darker);
+      box-shadow: var(--raise);
       color: var(--black);
       cursor: pointer;
-      min-width: 80px;
+      border: 1px solid var(--black);
+      min-width: 96px;
+      min-height: 28px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      text-decoration: none;
+      white-space: nowrap;
     }
-    .btn:active,
-    .btn.is-on {
-      border-top: 2px solid var(--gray-darker);
-      border-left: 2px solid var(--gray-darker);
-      border-right: 2px solid var(--white);
-      border-bottom: 2px solid var(--white);
+    .btn:hover { background: var(--gray-2); }
+    .btn:active, .btn.is-on {
+      box-shadow: var(--sink);
+      padding: 6px 11px 4px 13px;
     }
     .btn.primary { font-weight: bold; }
-    .btn:focus { outline: 1px dotted var(--black); outline-offset: -4px; }
+    .btn:focus-visible { outline: 1px dotted var(--black); outline-offset: -4px; }
+    .btn.tiny {
+      font-size: 11px;
+      padding: 2px 8px;
+      min-width: 0;
+      min-height: 0;
+    }
+    .btn.tiny:active { padding: 3px 7px 1px 9px; }
 
-    /* ── Steps ── */
-    .steps { display: grid; gap: 14px; margin-top: 16px; }
+    /* ── STEPS ────────────────────────────────────────────────── */
+    .steps { display: grid; gap: 14px; margin-top: 14px; }
     .step {
       background: var(--gray);
-      border-top: 2px solid var(--white);
-      border-left: 2px solid var(--white);
-      border-right: 2px solid var(--gray-darker);
-      border-bottom: 2px solid var(--gray-darker);
+      box-shadow: var(--raise);
       padding: 12px 14px 14px;
+      position: relative;
+      scroll-margin-top: 12px;
+      border-left: 4px solid transparent;
+      transition: border-color 200ms;
     }
+    .step.is-applied { border-left-color: var(--navy); }
+    .step.is-bonus { border-left-color: var(--gold); }
+    .step.is-bonus.is-applied { border-left-color: #b07a00; }
+
     .step-head {
       display: flex; align-items: center; gap: 10px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       flex-wrap: wrap;
     }
     .step-num {
       background: var(--navy); color: var(--white);
-      width: 26px; height: 26px;
+      width: 28px; height: 28px;
+      flex-shrink: 0;
       display: inline-flex; align-items: center; justify-content: center;
-      font-weight: bold;
-      border-top: 1px solid var(--gray-darker);
-      border-left: 1px solid var(--gray-darker);
-      border-right: 1px solid var(--white);
-      border-bottom: 1px solid var(--white);
+      font-weight: bold; font-size: 14px;
+      box-shadow: var(--sink);
     }
-    .step-title { font-size: 15px; font-weight: bold; flex: 1; min-width: 200px; }
+    .step.is-applied .step-num {
+      background: var(--white); color: var(--navy);
+      outline: 2px solid var(--navy); outline-offset: -2px;
+    }
+    .step.is-bonus .step-num {
+      background: var(--gold); color: var(--black);
+    }
+    .step-title { font-size: 16px; font-weight: bold; flex: 1; min-width: 200px; }
+    .step-tag {
+      font-size: 10px; font-weight: bold;
+      background: var(--gold); color: var(--black);
+      padding: 2px 6px; letter-spacing: 0.6px;
+      border: 1px solid var(--black);
+    }
     .step-body p { margin: 6px 0; }
     .step-body p.hint {
       font-size: 12px; color: var(--gray-darker); font-style: italic;
     }
-    .step-body code { font-family: var(--mono); background: rgba(0,0,0,0.06); padding: 1px 4px; }
+    .step-body code {
+      font-family: var(--mono); background: rgba(0,0,0,0.07);
+      padding: 1px 5px; font-size: 12px; border-radius: 2px;
+    }
+    .step-body ul { margin: 6px 0 6px 22px; }
+    .step-body li { margin: 2px 0; }
+
+    /* ── CODE BLOCK with copy button ─────────────────────────── */
+    .code-block { position: relative; margin: 8px 0 10px; }
+    .code-block .copy-btn { position: absolute; top: 6px; right: 6px; z-index: 1; }
     pre.code {
       font-family: var(--mono);
-      background: var(--black);
-      color: #b8e0ff;
+      background: #1e1e2e;
+      color: #cdd6f4;
       padding: 10px 12px;
-      margin: 8px 0;
       overflow-x: auto;
       font-size: 13px;
-      line-height: 1.5;
-      border-top: 1px solid var(--gray-darker);
-      border-left: 1px solid var(--gray-darker);
-      border-right: 1px solid var(--white);
-      border-bottom: 1px solid var(--white);
+      line-height: 1.55;
+      box-shadow: var(--sink);
+      tab-size: 2;
+      white-space: pre;
     }
-    pre.code .sel { color: #ffb86c; }
-    pre.code .prop { color: #8be9fd; }
-    pre.code .val { color: #f1fa8c; }
-    pre.code .com { color: #6272a4; font-style: italic; }
-    pre.code .tag { color: #ff79c6; }
+    pre.code .sel  { color: #f9e2af; }
+    pre.code .prop { color: #89dceb; }
+    pre.code .val  { color: #a6e3a1; }
+    pre.code .com  { color: #6c7086; font-style: italic; }
+    pre.code .tag  { color: #f5c2e7; }
+    pre.code .at   { color: #cba6f7; }
 
-    .step-controls { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .step.is-applied { box-shadow: inset 0 0 0 2px var(--navy); }
-    .step .badge {
-      display: none;
+    .step-controls {
+      margin-top: 10px;
+      display: flex; gap: 8px; flex-wrap: wrap;
+      align-items: center;
+    }
+    .step-controls .btn.apply-btn {
+      width: 200px;
+      justify-content: center;
+    }
+    .step-controls .helper {
+      font-size: 11px; color: var(--gray-darker); font-style: italic;
+    }
+
+    /* ── FLEX PLAYGROUND ─────────────────────────────────────── */
+    .playground {
+      margin-top: 10px;
+      background: var(--white);
+      box-shadow: var(--sink);
+      padding: 8px 10px;
+    }
+    .playground-title {
       font-size: 11px; font-weight: bold;
-      background: var(--navy); color: var(--white);
-      padding: 1px 6px;
+      color: var(--navy); letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
     }
-    .step.is-applied .badge { display: inline-block; }
+    .flex-modes {
+      display: flex; flex-wrap: wrap; gap: 4px;
+    }
+    .playground .helper {
+      font-size: 11px; color: var(--gray-darker);
+      margin-top: 6px; font-style: italic;
+    }
 
-    /* ── More / footer ── */
+    /* ── MORE / FOOTER ───────────────────────────────────────── */
     .more { margin-top: 18px; }
     .more p { margin: 6px 0; }
-    .more a { color: var(--navy); }
-    .more a:hover { text-decoration: underline; }
+    .more h3 {
+      font-size: 14px; margin: 10px 0 4px; color: var(--navy);
+    }
     footer {
       margin-top: 18px; padding-top: 10px;
       border-top: 1px solid var(--gray-dark);
       font-size: 12px; color: var(--gray-darker);
       display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;
     }
-    footer a { color: var(--navy); }
 
-    /* ── Sticky preview on wider screens (so live coding shows results without scrolling) ── */
-    @media (min-width: 900px) {
-      .previews { position: sticky; top: 8px; z-index: 5; }
+    /* ── DOCK (sticky bottom) ─────────────────────────────────── */
+    .dock-wrap {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 50;
+      padding: 0 14px 12px;
+      pointer-events: none;
+    }
+    .dock {
+      pointer-events: auto;
+      max-width: 1100px;
+      margin: 0 auto;
+      background: var(--gray);
+      box-shadow: var(--raise), var(--shadow-out);
+      padding: 8px 12px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .dock-progress { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px; }
+    .dock-count { font-size: 12px; font-weight: bold; white-space: nowrap; }
+    .dock-count strong { color: var(--navy); font-size: 14px; }
+    .dock-dots { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+    .dock-dot {
+      width: 24px; height: 24px;
+      background: var(--white);
+      box-shadow: var(--sink);
+      cursor: pointer;
+      font-size: 11px; font-weight: bold;
+      color: var(--gray-dark);
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid var(--black);
+      font-family: var(--font);
+    }
+    .dock-dot.is-on { background: var(--navy); color: var(--white); }
+    .dock-dot.is-bonus.is-on { background: var(--gold); color: var(--black); }
+    .dock-dot:hover { outline: 1px dotted var(--black); }
+    .dock-controls { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── A11y live region ─────────────────────────────────────── */
+    .visually-hidden {
+      position: absolute !important; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
     }
 
-    /* ── Small screens ── */
+    /* ── SMALL SCREENS (≤ 720px) ──────────────────────────────── */
     @media (max-width: 720px) {
-      body { padding: 6px; font-size: 13px; }
-      .previews { grid-template-columns: 1fr; }
-      .preview-frame { height: 280px; }
-      h1.lesson-title { font-size: 18px; }
+      body { padding: 8px 8px 88px; font-size: 13px; }
+      .content { padding: 12px 12px 14px; }
+      .previews { grid-template-columns: 1fr; gap: 10px; }
+      .preview-frame { height: 320px; }
+
+      /* hide the BEFORE preview by default; show the toggle */
+      .preview-card.before-card { display: none; }
+      details.before-toggle { display: block; margin-bottom: 8px; }
+      details.before-toggle .preview-card.before-card { display: flex; margin-top: 8px; }
+
+      h1.lesson-title { font-size: 19px; }
+      .step { padding: 10px 12px 12px; }
+      .step-title { font-size: 15px; }
+      .step-controls .btn.apply-btn { width: 100%; }
+
+      .dock-wrap { padding: 0 6px 6px; }
+      .dock { padding: 6px 8px; gap: 8px; }
+      .dock-progress { min-width: 0; gap: 6px; }
+      .dock-count { font-size: 11px; }
+      .dock-dot { width: 22px; height: 22px; font-size: 10px; }
+      .btn { min-width: 76px; }
+    }
+
+    @media (max-width: 380px) {
+      .dock-controls .btn { padding: 4px 8px; min-width: 60px; }
+      .step-num { width: 24px; height: 24px; font-size: 12px; }
+      pre.code { font-size: 12px; }
+    }
+
+    /* ── PRINT ────────────────────────────────────────────────── */
+    @media print {
+      body { background: var(--white); padding: 0; }
+      .window { box-shadow: none; border: 1px solid var(--black); max-width: none; }
+      .title-bar { background: var(--white); color: var(--black); border-bottom: 1px solid var(--black); }
+      .title-btn, .dock-wrap, .crumb, .step-controls, details.before-toggle, .playground { display: none !important; }
+      .preview-frame { height: 240px; }
+      pre.code { background: var(--white); color: var(--black); border: 1px solid var(--black); }
+      pre.code .sel, pre.code .prop, pre.code .val, pre.code .com, pre.code .tag, pre.code .at { color: var(--black); }
     }
   </style>
 </head>
@@ -277,38 +441,58 @@
       <a class="crumb" href="/next-chapter/">← Back to Desktop</a>
 
       <h1 class="lesson-title">Welcome to CSS.</h1>
-      <p class="lesson-sub">HTML is the bones. CSS is the paint. Below is one plain HTML page on the left and the same page on the right — we'll get from one to the other in five tiny steps. Click <strong>Apply</strong> on each step to watch it land in the live preview.</p>
+      <p class="lesson-sub">HTML is the bones. CSS is the paint. Below is one plain HTML page on the left and the same page on the right — we'll get from one to the other in seven hands-on steps. Click <strong>Apply</strong> on each step (or use the dock at the bottom of the page) and watch the right preview transform.</p>
 
-      <!-- ── Live previews ── -->
-      <div class="previews" id="previews">
-        <div class="preview-card">
-          <div class="label">BEFORE — index.html (no CSS)</div>
-          <iframe id="frame-before" class="preview-frame" title="Page with no CSS"></iframe>
-        </div>
-        <div class="preview-card">
-          <div class="label live">AFTER — index.html + your CSS</div>
-          <iframe id="frame-after" class="preview-frame" title="Page with your CSS"></iframe>
-          <div class="preview-controls">
-            <button class="btn primary" id="apply-all">Apply all</button>
-            <button class="btn" id="reset-all">Reset</button>
+      <!-- ── PREVIEWS ─────────────────────────────────────────── -->
+
+      <!-- Mobile-only collapsible BEFORE -->
+      <details class="before-toggle">
+        <summary>Show BEFORE (raw HTML, no CSS)</summary>
+        <div class="preview-card before-card">
+          <div class="label">
+            <span>BEFORE — index.html</span>
+            <span class="tag">no CSS</span>
           </div>
+          <iframe class="preview-frame frame-before" title="Page with no CSS" loading="lazy"></iframe>
+        </div>
+      </details>
+
+      <div class="previews" id="previews">
+        <div class="preview-card before-card">
+          <div class="label">
+            <span>BEFORE — index.html</span>
+            <span class="tag">no CSS</span>
+          </div>
+          <iframe class="preview-frame frame-before" title="Page with no CSS" loading="lazy"></iframe>
+        </div>
+        <div class="preview-card" id="after-card">
+          <div class="label live">
+            <span>AFTER — your CSS</span>
+            <span class="tag" id="after-tag">0 / 7 applied</span>
+          </div>
+          <iframe id="frame-after" class="preview-frame" title="Page with your CSS"></iframe>
+          <div class="celebration" id="celebration" aria-hidden="true">🎉 You styled it!</div>
         </div>
       </div>
 
-      <!-- ── Steps ── -->
+      <!-- ── STEPS ────────────────────────────────────────────── -->
       <div class="steps">
 
         <!-- STEP 1 -->
-        <article class="step" data-step="1">
+        <article class="step" id="step-1" data-step="1">
           <div class="step-head">
             <span class="step-num">1</span>
             <span class="step-title">Tell HTML where the CSS lives</span>
-            <span class="badge">Applied</span>
           </div>
           <div class="step-body">
             <p>CSS usually lives in its own file (e.g. <code>styles.css</code>). You connect it to your HTML with one line inside the <code>&lt;head&gt;</code>:</p>
+            <div class="code-block">
+              <button class="btn tiny copy-btn" type="button" data-copy aria-label="Copy code">Copy</button>
 <pre class="code"><span class="tag">&lt;link</span> <span class="prop">rel</span>=<span class="val">"stylesheet"</span> <span class="prop">href</span>=<span class="val">"styles.css"</span><span class="tag">&gt;</span></pre>
-            <p>Then anything you write in <code>styles.css</code> applies to your page. As a tiny first taste of what CSS does, let's make the page readable — set a sane font and add some breathing room:</p>
+            </div>
+            <p>Then anything you write in <code>styles.css</code> applies to your page. As a tiny first taste, let's make the page readable — set a sane font and add some breathing room:</p>
+            <div class="code-block">
+              <button class="btn tiny copy-btn" type="button" data-copy aria-label="Copy code">Copy</button>
 <pre class="code"><span class="sel">body</span> {
   <span class="prop">font-family</span>: <span class="val">Arial, sans-serif</span>;
   <span class="prop">line-height</span>: <span class="val">1.6</span>;
@@ -316,22 +500,25 @@
   <span class="prop">max-width</span>: <span class="val">640px</span>;
   <span class="prop">margin</span>: <span class="val">0 auto</span>;
 }</pre>
-            <p class="hint">Hint: <code>body</code> means "every &lt;body&gt; element" — there's only one, so this styles the whole page.</p>
+            </div>
+            <p class="hint">Hint: <code>body</code> means "every &lt;body&gt; element" — there's only one, so this styles the whole page. <code>margin: 0 auto</code> is the classic centering trick.</p>
           </div>
           <div class="step-controls">
-            <button class="btn apply-btn" data-apply="1">Apply step 1</button>
+            <button class="btn primary apply-btn" type="button" data-apply="1">Apply step 1</button>
+            <span class="helper">or press <kbd>1</kbd></span>
           </div>
         </article>
 
         <!-- STEP 2 -->
-        <article class="step" data-step="2">
+        <article class="step" id="step-2" data-step="2">
           <div class="step-head">
             <span class="step-num">2</span>
             <span class="step-title">Element selectors — paint by tag name</span>
-            <span class="badge">Applied</span>
           </div>
           <div class="step-body">
-            <p>The simplest CSS rule has a <em>selector</em> (who to style) and a <em>declaration block</em> (how to style them). Here we pick every <code>&lt;h1&gt;</code> on the page and color it:</p>
+            <p>A CSS rule has two parts: a <em>selector</em> (who) and a <em>declaration block</em> (how). Here we pick every <code>&lt;h1&gt;</code> and every <code>&lt;h2&gt;</code> on the page and color them:</p>
+            <div class="code-block">
+              <button class="btn tiny copy-btn" type="button" data-copy aria-label="Copy code">Copy</button>
 <pre class="code"><span class="sel">h1</span> {
   <span class="prop">color</span>: <span class="val">navy</span>;
 }
@@ -341,22 +528,25 @@
   <span class="prop">border-bottom</span>: <span class="val">2px solid teal</span>;
   <span class="prop">padding-bottom</span>: <span class="val">2px</span>;
 }</pre>
-            <p class="hint">You can also use <code>#some-id</code> for one element and <code>.some-class</code> for groups. We'll use a class in step 5.</p>
+            </div>
+            <p class="hint">Selector cheat-sheet: <code>h1</code> = every tag, <code>#some-id</code> = the one element with that id, <code>.some-class</code> = every element with that class. We'll use a class in step 5.</p>
           </div>
           <div class="step-controls">
-            <button class="btn apply-btn" data-apply="2">Apply step 2</button>
+            <button class="btn primary apply-btn" type="button" data-apply="2">Apply step 2</button>
+            <span class="helper">or press <kbd>2</kbd></span>
           </div>
         </article>
 
         <!-- STEP 3 -->
-        <article class="step" data-step="3">
+        <article class="step" id="step-3" data-step="3">
           <div class="step-head">
             <span class="step-num">3</span>
             <span class="step-title">Backgrounds &amp; colors</span>
-            <span class="badge">Applied</span>
           </div>
           <div class="step-body">
             <p>Color isn't just for text. Anything visual has a <code>background</code> too. Let's give the page some warmth and turn the title into a banner:</p>
+            <div class="code-block">
+              <button class="btn tiny copy-btn" type="button" data-copy aria-label="Copy code">Copy</button>
 <pre class="code"><span class="sel">body</span> {
   <span class="prop">background</span>: <span class="val">#fffaf0</span>;  <span class="com">/* warm off-white */</span>
 }
@@ -366,22 +556,25 @@
   <span class="prop">color</span>: <span class="val">white</span>;
   <span class="prop">padding</span>: <span class="val">10px 14px</span>;
 }</pre>
-            <p class="hint">Colors can be names (<code>navy</code>), hex (<code>#fffaf0</code>), or <code>rgb()</code>. Pick what reads cleanest to you.</p>
+            </div>
+            <p class="hint">Colors can be names (<code>navy</code>), hex (<code>#fffaf0</code>), or <code>rgb()</code>. Pick what reads cleanest. Modern CSS also has <code>hsl()</code> and <code>oklch()</code> for fancier color work.</p>
           </div>
           <div class="step-controls">
-            <button class="btn apply-btn" data-apply="3">Apply step 3</button>
+            <button class="btn primary apply-btn" type="button" data-apply="3">Apply step 3</button>
+            <span class="helper">or press <kbd>3</kbd></span>
           </div>
         </article>
 
         <!-- STEP 4 -->
-        <article class="step" data-step="4">
+        <article class="step" id="step-4" data-step="4">
           <div class="step-head">
             <span class="step-num">4</span>
             <span class="step-title">Fonts — change how text feels</span>
-            <span class="badge">Applied</span>
           </div>
           <div class="step-body">
             <p>One <code>font-family</code> sets the default for everything. You can override it per element. Mixing a serif body with a sans-serif heading is a classic move:</p>
+            <div class="code-block">
+              <button class="btn tiny copy-btn" type="button" data-copy aria-label="Copy code">Copy</button>
 <pre class="code"><span class="sel">body</span> {
   <span class="prop">font-family</span>: <span class="val">Georgia, serif</span>;
 }
@@ -390,27 +583,31 @@
   <span class="prop">font-family</span>: <span class="val">'Trebuchet MS', sans-serif</span>;
   <span class="prop">letter-spacing</span>: <span class="val">0.5px</span>;
 }</pre>
-            <p class="hint">List multiple fonts in case the first one isn't installed — the browser falls back down the list.</p>
+            </div>
+            <p class="hint">List multiple fonts in case the first one isn't installed — the browser falls back down the list. End with a generic family (<code>serif</code>, <code>sans-serif</code>, <code>monospace</code>) so you always get <em>something</em>.</p>
           </div>
           <div class="step-controls">
-            <button class="btn apply-btn" data-apply="4">Apply step 4</button>
+            <button class="btn primary apply-btn" type="button" data-apply="4">Apply step 4</button>
+            <span class="helper">or press <kbd>4</kbd></span>
           </div>
         </article>
 
-        <!-- STEP 5 -->
-        <article class="step" data-step="5">
+        <!-- STEP 5 — FLEXBOX (deep dive) -->
+        <article class="step" id="step-5" data-step="5">
           <div class="step-head">
             <span class="step-num">5</span>
-            <span class="step-title">Flexbox — line things up in a row</span>
-            <span class="badge">Applied</span>
+            <span class="step-title">Flexbox — lay things out in a row (or column)</span>
           </div>
           <div class="step-body">
-            <p>By default, block elements stack vertically. To put them in a row, give their <em>parent</em> <code>display: flex</code>. Look at the three "friend" cards in the preview — they're stacked. One line of CSS lays them out side by side:</p>
-<pre class="code"><span class="com">/* The three cards live inside &lt;div class="row"&gt;…&lt;/div&gt; */</span>
+            <p>By default, block elements stack vertically. To put them in a row, give their <em>parent</em> <code>display: flex</code>. Look at the three "friend" cards in the preview — they're stacked. One rule lays them out side by side:</p>
+            <div class="code-block">
+              <button class="btn tiny copy-btn" type="button" data-copy aria-label="Copy code">Copy</button>
+<pre class="code"><span class="com">/* The cards live inside &lt;div class="row"&gt;…&lt;/div&gt; */</span>
 <span class="sel">.row</span> {
   <span class="prop">display</span>: <span class="val">flex</span>;
   <span class="prop">gap</span>: <span class="val">12px</span>;
   <span class="prop">justify-content</span>: <span class="val">center</span>;
+  <span class="prop">align-items</span>: <span class="val">center</span>;
   <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
 }
 
@@ -421,29 +618,176 @@
   <span class="prop">border-radius</span>: <span class="val">6px</span>;
   <span class="prop">font-weight</span>: <span class="val">bold</span>;
 }</pre>
-            <p>Three new ideas in one rule:</p>
-            <ul style="margin-left: 22px;">
-              <li><code>display: flex</code> — children sit in a row.</li>
-              <li><code>gap</code> — space between them (no margin math).</li>
-              <li><code>justify-content: center</code> — pushes the whole row to the middle.</li>
+            </div>
+            <p>Five flexbox ideas to know:</p>
+            <ul>
+              <li><code>display: flex</code> — children sit on the <strong>main axis</strong> (a row by default).</li>
+              <li><code>flex-direction: row | column</code> — flip the main axis to vertical.</li>
+              <li><code>justify-content</code> — pack items along the <em>main</em> axis: <code>flex-start</code>, <code>center</code>, <code>flex-end</code>, <code>space-between</code>, <code>space-around</code>, <code>space-evenly</code>.</li>
+              <li><code>align-items</code> — line items up on the <em>cross</em> axis: <code>stretch</code>, <code>center</code>, <code>flex-start</code>, <code>flex-end</code>.</li>
+              <li><code>gap</code> — space between items. Beats margin every time.</li>
             </ul>
-            <p class="hint">Flexbox can do <em>way</em> more than this — alignment, ordering, wrapping, growing, shrinking. The full guide is linked at the bottom of this page.</p>
+            <p class="hint">There's also <code>flex-grow</code> and <code>flex-shrink</code> on the children, for "make this one fill the leftover space" tricks. The full guide is linked at the bottom.</p>
+
+            <div class="playground" id="flex-playground" hidden>
+              <div class="playground-title">🧪 Try it: switch the flex mode live</div>
+              <div class="flex-modes">
+                <button class="btn tiny" type="button" data-flex-mode="default">default</button>
+                <button class="btn tiny" type="button" data-flex-mode="space-between">space-between</button>
+                <button class="btn tiny" type="button" data-flex-mode="space-around">space-around</button>
+                <button class="btn tiny" type="button" data-flex-mode="space-evenly">space-evenly</button>
+                <button class="btn tiny" type="button" data-flex-mode="flex-start">flex-start</button>
+                <button class="btn tiny" type="button" data-flex-mode="flex-end">flex-end</button>
+                <button class="btn tiny" type="button" data-flex-mode="column">column</button>
+                <button class="btn tiny" type="button" data-flex-mode="grow">stretch (grow)</button>
+              </div>
+              <p class="helper">Each button rewrites only the <code>.row</code> rule on the live preview. Watch the cards reposition.</p>
+            </div>
           </div>
           <div class="step-controls">
-            <button class="btn apply-btn" data-apply="5">Apply step 5</button>
+            <button class="btn primary apply-btn" type="button" data-apply="5">Apply step 5</button>
+            <span class="helper">or press <kbd>5</kbd> · the playground unlocks once applied</span>
+          </div>
+        </article>
+
+        <!-- STEP 6 — HOVER + TRANSITIONS -->
+        <article class="step" id="step-6" data-step="6">
+          <div class="step-head">
+            <span class="step-num">6</span>
+            <span class="step-title">Hover &amp; transitions — make it feel alive</span>
+          </div>
+          <div class="step-body">
+            <p>CSS lets you change styles based on what the user is doing. <code>:hover</code> kicks in when the mouse is over an element. <code>transition</code> smooths the change so it doesn't jump.</p>
+            <div class="code-block">
+              <button class="btn tiny copy-btn" type="button" data-copy aria-label="Copy code">Copy</button>
+<pre class="code"><span class="sel">.card</span> {
+  <span class="com">/* whenever any of these change, animate over 200ms */</span>
+  <span class="prop">transition</span>: <span class="val">background 200ms ease, box-shadow 200ms ease, transform 200ms ease</span>;
+  <span class="prop">cursor</span>: <span class="val">pointer</span>;
+}
+
+<span class="sel">.card:hover</span> {
+  <span class="prop">background</span>: <span class="val">#ffd24d</span>;
+  <span class="prop">transform</span>: <span class="val">translateY(-3px)</span>;
+  <span class="prop">box-shadow</span>: <span class="val">0 4px 0 rgba(0,0,0,0.25)</span>;
+}
+
+<span class="sel">h1</span> {
+  <span class="prop">transition</span>: <span class="val">letter-spacing 250ms ease</span>;
+}
+<span class="sel">h1:hover</span> {
+  <span class="prop">letter-spacing</span>: <span class="val">3px</span>;
+}</pre>
+            </div>
+            <p>After applying, hover the friend cards in the preview — they lift, the color warms, the shadow grows. Hover the <code>&lt;h1&gt;</code> too. The <code>transition</code> property is the magic glue.</p>
+            <p class="hint">The shape of <code>transition</code>: <code>property duration timing-function delay</code>. Common timings: <code>ease</code>, <code>ease-in-out</code>, <code>linear</code>, <code>cubic-bezier(...)</code>.</p>
+          </div>
+          <div class="step-controls">
+            <button class="btn primary apply-btn" type="button" data-apply="6">Apply step 6</button>
+            <span class="helper">or press <kbd>6</kbd></span>
+          </div>
+        </article>
+
+        <!-- STEP 7 — KEYFRAMES (BONUS) -->
+        <article class="step is-bonus" id="step-7" data-step="7">
+          <div class="step-head">
+            <span class="step-num">7</span>
+            <span class="step-title">@keyframes — full-blown animations</span>
+            <span class="step-tag">BONUS</span>
+          </div>
+          <div class="step-body">
+            <p>Transitions only animate <em>between</em> two states (resting → hovered). For more — looping wobbles, multi-stage fades, choreography — you write a <code>@keyframes</code> rule and attach it with <code>animation</code>.</p>
+            <div class="code-block">
+              <button class="btn tiny copy-btn" type="button" data-copy aria-label="Copy code">Copy</button>
+<pre class="code"><span class="com">/* 1. Define a named timeline */</span>
+<span class="at">@keyframes</span> <span class="sel">fade-in</span> {
+  <span class="sel">from</span> { <span class="prop">opacity</span>: <span class="val">0</span>; <span class="prop">transform</span>: <span class="val">translateY(8px)</span>; }
+  <span class="sel">to</span>   { <span class="prop">opacity</span>: <span class="val">1</span>; <span class="prop">transform</span>: <span class="val">translateY(0)</span>; }
+}
+
+<span class="at">@keyframes</span> <span class="sel">wobble</span> {
+  <span class="sel">0%</span>   { <span class="prop">transform</span>: <span class="val">rotate(-2deg)</span>; }
+  <span class="sel">50%</span>  { <span class="prop">transform</span>: <span class="val">rotate(2deg) translateY(-2px)</span>; }
+  <span class="sel">100%</span> { <span class="prop">transform</span>: <span class="val">rotate(-2deg)</span>; }
+}
+
+<span class="com">/* 2. Attach with the animation shorthand:
+   name | duration | timing | delay | iteration | direction | fill */</span>
+<span class="sel">h1</span> {
+  <span class="prop">animation</span>: <span class="val">fade-in 600ms ease-out both</span>;
+}
+
+<span class="sel">.card</span> {
+  <span class="prop">animation</span>: <span class="val">wobble 2.5s ease-in-out infinite</span>;
+}
+<span class="sel">.card:nth-child(2)</span> { <span class="prop">animation-delay</span>: <span class="val">0.3s</span>; }
+<span class="sel">.card:nth-child(3)</span> { <span class="prop">animation-delay</span>: <span class="val">0.6s</span>; }
+
+<span class="com">/* Be a good citizen: respect users who turn motion off. */</span>
+<span class="at">@media</span> (<span class="prop">prefers-reduced-motion</span>: <span class="val">reduce</span>) {
+  <span class="sel">*</span> { <span class="prop">animation</span>: <span class="val">none !important</span>; }
+}</pre>
+            </div>
+            <p>What you'll see when you apply this: the title fades up into place, and the three friend cards do a staggered, gentle wobble forever — each one starts a beat after the last. That's <code>animation-delay</code> + <code>:nth-child()</code> doing the choreography.</p>
+            <p>Three concepts in one step:</p>
+            <ul>
+              <li><strong><code>@keyframes</code></strong> — a named timeline of styles, percentages from 0% → 100% (or just <code>from</code>/<code>to</code>).</li>
+              <li><strong><code>animation</code></strong> shorthand — name + duration + timing + delay + how many iterations + direction + fill mode.</li>
+              <li><strong><code>:nth-child(n)</code></strong> — pseudo-class that matches the Nth element. Combine with <code>animation-delay</code> for staggered effects.</li>
+            </ul>
+            <p class="hint">Keep it tasteful: a 300–600ms entrance animation reads as "polished"; a constant infinite wobble on every card reads as "carnival." For UI, restraint wins.</p>
+          </div>
+          <div class="step-controls">
+            <button class="btn primary apply-btn" type="button" data-apply="7">Apply step 7</button>
+            <span class="helper">or press <kbd>7</kbd> · ✨ unlocks the finale</span>
           </div>
         </article>
 
       </div>
 
-      <!-- ── More ── -->
+      <!-- ── MORE ─────────────────────────────────────────────── -->
+      <div class="more">
+        <div class="panel">
+          <div class="panel-title">Things to chew on · class discussion</div>
+          <p>No "right" answers; the point is to notice CSS has lots of close-but-not-equal pairs. Toss these to the room:</p>
+          <ul>
+            <li><strong><code>display: none</code> vs <code>visibility: hidden</code></strong> — they both make an element invisible. Are they the same? <em>(Hint: try one and then the other on a card and watch what happens to the layout — and to keyboard tab order, and to a screen reader.)</em></li>
+            <li><strong><code>px</code> vs <code>em</code> vs <code>rem</code> vs <code>%</code></strong> — four ways to say "this size." When does each make sense? <em>(Which one breaks if a user bumps their browser font size?)</em></li>
+            <li><strong><code>margin</code> vs <code>padding</code></strong> — which one collides with its neighbors and which one doesn't? <em>(And what on earth is "margin collapse"?)</em></li>
+            <li><strong>Why does <code>width: 100%</code> sometimes <em>overflow</em> its parent?</strong> <em>(Three letters: b-o-x. As in <code>box-sizing</code>.)</em></li>
+            <li><strong>Is <code>!important</code> a tool or a red flag?</strong> <em>(Usually it means our selectors picked the wrong fight.)</em></li>
+            <li><strong>Why doesn't <code>text-align: center</code> center a <code>&lt;div&gt;</code>?</strong> <em>(What is it actually centering?)</em></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="more">
+        <div class="panel">
+          <div class="panel-title">Cheat sheet · keyboard shortcuts</div>
+          <p>Press <kbd>1</kbd>–<kbd>7</kbd> to toggle each step · <kbd>A</kbd> applies all · <kbd>0</kbd> resets.</p>
+        </div>
+      </div>
+
       <div class="more">
         <div class="panel">
           <div class="panel-title">Want more?</div>
-          <p>Flexbox barely got a hello. Bookmark this — it has every property explained with diagrams:</p>
-          <p><a href="https://css-tricks.com/snippets/css/a-guide-to-flexbox/" target="_blank" rel="noopener">CSS-Tricks — A Complete Guide to Flexbox →</a></p>
-          <p>And the page this lesson is based on, with longer explanations:</p>
+          <h3>Flexbox, in depth</h3>
+          <p><a href="https://css-tricks.com/snippets/css/a-guide-to-flexbox/" target="_blank" rel="noopener">CSS-Tricks — A Complete Guide to Flexbox →</a> · every property explained with diagrams.</p>
+          <p><a href="https://flexboxfroggy.com/" target="_blank" rel="noopener">Flexbox Froggy →</a> · 24-level game that teaches flexbox by lily-pad puzzles. Highly recommended.</p>
+
+          <h3>Animations &amp; transitions</h3>
+          <p><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_animations/Using_CSS_animations" target="_blank" rel="noopener">MDN — Using CSS animations →</a></p>
+          <p><a href="https://easings.net/" target="_blank" rel="noopener">easings.net →</a> · visual reference for cubic-bezier curves.</p>
+
+          <h3>The MDN trail this lesson rides on</h3>
           <p><a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Your_first_website/Styling_the_content" target="_blank" rel="noopener">MDN — Styling the content →</a></p>
+          <p><a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics" target="_blank" rel="noopener">MDN — Core: Styling basics (the whole CSS track) →</a></p>
+
+          <h3>What we didn't cover (yet)</h3>
+          <p><strong>Grid</strong> — flex's two-dimensional cousin. Rows AND columns at once. <a href="https://css-tricks.com/snippets/css/complete-guide-grid/" target="_blank" rel="noopener">CSS-Tricks Grid guide</a>.</p>
+          <p><strong>CSS variables</strong> — <code>--my-color: navy</code> and <code>color: var(--my-color)</code>. Themeing in two lines.</p>
+          <p><strong>Media queries</strong> — <code>@media (max-width: 600px) { … }</code> for responsive design.</p>
+          <p><strong>Pseudo-classes &amp; pseudo-elements</strong> — <code>:focus</code>, <code>:nth-child()</code>, <code>::before</code>, <code>::after</code>.</p>
         </div>
       </div>
 
@@ -454,9 +798,35 @@
     </div>
   </div>
 
+  <!-- ── DOCK (sticky bottom — always visible) ───────────────── -->
+  <div class="dock-wrap" role="region" aria-label="Lesson controls">
+    <div class="dock">
+      <div class="dock-progress">
+        <span class="dock-count"><strong id="dock-num">0</strong> / 7 applied</span>
+        <div class="dock-dots" role="group" aria-label="Jump to step">
+          <button class="dock-dot" type="button" data-jump="1" aria-label="Jump to step 1">1</button>
+          <button class="dock-dot" type="button" data-jump="2" aria-label="Jump to step 2">2</button>
+          <button class="dock-dot" type="button" data-jump="3" aria-label="Jump to step 3">3</button>
+          <button class="dock-dot" type="button" data-jump="4" aria-label="Jump to step 4">4</button>
+          <button class="dock-dot" type="button" data-jump="5" aria-label="Jump to step 5">5</button>
+          <button class="dock-dot" type="button" data-jump="6" aria-label="Jump to step 6">6</button>
+          <button class="dock-dot is-bonus-marker" type="button" data-jump="7" aria-label="Jump to step 7 (bonus)">7</button>
+        </div>
+      </div>
+      <div class="dock-controls">
+        <button class="btn primary" type="button" id="apply-all">Apply all</button>
+        <button class="btn" type="button" id="reset-all">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="visually-hidden" aria-live="polite" id="aria-live"></div>
+
   <script>
   (function () {
-    // The page being styled — pure HTML, no styles to start with.
+    'use strict';
+
+    // The page being styled — pure HTML, no styles to start.
     const BASE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -498,25 +868,19 @@
   max-width: 640px;
   margin: 0 auto;
 }`,
-      2: `h1 {
-  color: navy;
-}
+      2: `h1 { color: navy; }
 h2 {
   color: teal;
   border-bottom: 2px solid teal;
   padding-bottom: 2px;
 }`,
-      3: `body {
-  background: #fffaf0;
-}
+      3: `body { background: #fffaf0; }
 h1 {
   background: navy;
   color: white;
   padding: 10px 14px;
 }`,
-      4: `body {
-  font-family: Georgia, serif;
-}
+      4: `body { font-family: Georgia, serif; }
 h1, h2 {
   font-family: 'Trebuchet MS', sans-serif;
   letter-spacing: 0.5px;
@@ -525,6 +889,7 @@ h1, h2 {
   display: flex;
   gap: 12px;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
 }
 .card {
@@ -534,20 +899,101 @@ h1, h2 {
   border-radius: 6px;
   font-weight: bold;
 }`,
+      6: `.card {
+  transition: background 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+  cursor: pointer;
+}
+.card:hover {
+  background: #ffd24d;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+}
+h1 {
+  transition: letter-spacing 250ms ease;
+}
+h1:hover {
+  letter-spacing: 3px;
+}`,
+      7: `@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes wobble {
+  0%   { transform: rotate(-2deg); }
+  50%  { transform: rotate(2deg) translateY(-2px); }
+  100% { transform: rotate(-2deg); }
+}
+h1 {
+  animation: fade-in 600ms ease-out both;
+}
+.card {
+  animation: wobble 2.5s ease-in-out infinite;
+}
+.card:nth-child(2) { animation-delay: 0.3s; }
+.card:nth-child(3) { animation-delay: 0.6s; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}`,
     };
 
-    const applied = new Set();
-    const beforeFrame = document.getElementById('frame-before');
-    const afterFrame  = document.getElementById('frame-after');
+    const TOTAL_STEPS = 7;
+    const ALL_STEPS = [1, 2, 3, 4, 5, 6, 7];
+
+    // Flex playground overrides (applied AFTER step 5, only when step 5 is active).
+    const FLEX_MODES = {
+      'space-between': `.row { justify-content: space-between; }`,
+      'space-around':  `.row { justify-content: space-around; }`,
+      'space-evenly':  `.row { justify-content: space-evenly; }`,
+      'flex-start':    `.row { justify-content: flex-start; }`,
+      'flex-end':      `.row { justify-content: flex-end; }`,
+      'column':        `.row { flex-direction: column; align-items: center; }`,
+      'grow':          `.row { justify-content: stretch; align-items: stretch; }
+.card { flex: 1; text-align: center; }`,
+    };
+
+    const applied   = new Set();
+    let   flexMode  = 'default';
+
+    const beforeFrames = document.querySelectorAll('.frame-before');
+    const afterFrame   = document.getElementById('frame-after');
+    const afterCard    = document.getElementById('after-card');
+    const dockNum      = document.getElementById('dock-num');
+    const afterTag     = document.getElementById('after-tag');
+    const ariaLive     = document.getElementById('aria-live');
+    const playground   = document.getElementById('flex-playground');
+
+    const isMobile     = () => window.matchMedia('(max-width: 720px)').matches;
+    const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function buildHTML(css) {
       return BASE_HTML.replace('/*CSS*/', css || '');
     }
 
-    function rebuild() {
-      const css = [...applied].sort((a, b) => a - b).map(n => STEPS[n]).join('\n\n');
+    function flashAfter() {
+      if (reduceMotion()) return;
+      afterFrame.classList.remove('flash');
+      void afterFrame.offsetWidth;
+      afterFrame.classList.add('flash');
+      setTimeout(() => afterFrame.classList.remove('flash'), 600);
+    }
+
+    function rebuild(opts = {}) {
+      const sorted = [...applied].sort((a, b) => a - b);
+      let css = sorted.map(n => STEPS[n]).join('\n\n');
+      if (applied.has(5) && flexMode !== 'default' && FLEX_MODES[flexMode]) {
+        css += '\n\n' + FLEX_MODES[flexMode];
+      }
       afterFrame.srcdoc = buildHTML(css);
-      // Update step UI
+
+      // dock + tag
+      dockNum.textContent = String(applied.size);
+      afterTag.textContent = `${applied.size} / ${TOTAL_STEPS} applied`;
+
+      // celebration banner when all are done
+      const complete = applied.size === TOTAL_STEPS;
+      afterCard.classList.toggle('complete', complete);
+
+      // step UI
       document.querySelectorAll('.step').forEach(el => {
         const n = +el.dataset.step;
         const on = applied.has(n);
@@ -555,32 +1001,123 @@ h1, h2 {
         const btn = el.querySelector('.apply-btn');
         if (btn) {
           btn.classList.toggle('is-on', on);
-          btn.textContent = on ? `✓ Step ${n} applied (click to undo)` : `Apply step ${n}`;
+          btn.textContent = on ? `✓ Step ${n} applied` : `Apply step ${n}`;
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
         }
       });
+
+      // dock dots
+      document.querySelectorAll('.dock-dot').forEach(d => {
+        const n = +d.dataset.jump;
+        const on = applied.has(n);
+        d.classList.toggle('is-on', on);
+        d.classList.toggle('is-bonus', n === 7);
+        d.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+
+      // playground visibility
+      if (playground) {
+        if (applied.has(5)) playground.removeAttribute('hidden');
+        else playground.setAttribute('hidden', '');
+      }
+      // playground active mode highlight
+      document.querySelectorAll('[data-flex-mode]').forEach(b => {
+        b.classList.toggle('is-on', b.dataset.flexMode === flexMode);
+      });
+
+      if (!opts.silent) {
+        flashAfter();
+        if (opts.announce) ariaLive.textContent = opts.announce;
+      }
     }
 
     function toggleStep(n) {
-      if (applied.has(n)) applied.delete(n); else applied.add(n);
-      rebuild();
+      const wasOn = applied.has(n);
+      if (wasOn) applied.delete(n); else applied.add(n);
+      rebuild({ announce: wasOn ? `Step ${n} undone.` : `Step ${n} applied.` });
+      if (!wasOn && isMobile()) {
+        afterFrame.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'center' });
+      }
     }
 
     document.querySelectorAll('.apply-btn').forEach(btn => {
       btn.addEventListener('click', () => toggleStep(+btn.dataset.apply));
     });
 
+    document.querySelectorAll('.dock-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const n = +dot.dataset.jump;
+        document.getElementById(`step-${n}`).scrollIntoView({
+          behavior: reduceMotion() ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      });
+    });
+
     document.getElementById('apply-all').addEventListener('click', () => {
-      [1,2,3,4,5].forEach(n => applied.add(n));
-      rebuild();
+      ALL_STEPS.forEach(n => applied.add(n));
+      rebuild({ announce: 'All steps applied.' });
     });
     document.getElementById('reset-all').addEventListener('click', () => {
       applied.clear();
-      rebuild();
+      flexMode = 'default';
+      rebuild({ announce: 'All steps reset.' });
     });
 
+    // Flex playground
+    document.querySelectorAll('[data-flex-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!applied.has(5)) applied.add(5);
+        flexMode = btn.dataset.flexMode;
+        rebuild({ announce: `Flex mode: ${flexMode}.` });
+      });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.matches('input, textarea, [contenteditable]')) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key >= '1' && e.key <= '7') { toggleStep(+e.key); e.preventDefault(); }
+      else if (e.key === '0') { applied.clear(); flexMode = 'default'; rebuild({ announce: 'Reset.' }); e.preventDefault(); }
+      else if (e.key === 'a' || e.key === 'A') {
+        ALL_STEPS.forEach(n => applied.add(n));
+        rebuild({ announce: 'All steps applied.' });
+        e.preventDefault();
+      }
+    });
+
+    // Copy buttons on every code block
+    document.querySelectorAll('[data-copy]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pre = btn.parentElement.querySelector('pre.code');
+        if (!pre) return;
+        const text = pre.textContent;
+        const done = () => {
+          const original = 'Copy';
+          btn.textContent = 'Copied ✓';
+          setTimeout(() => { btn.textContent = original; }, 1100);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+        } else {
+          fallbackCopy(text, done);
+        }
+      });
+    });
+    function fallbackCopy(text, cb) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      cb && cb();
+    }
+
     // Initial render
-    beforeFrame.srcdoc = buildHTML('');
-    rebuild();
+    beforeFrames.forEach(f => { f.srcdoc = buildHTML(''); });
+    rebuild({ silent: true });
   })();
   </script>
 </body>
