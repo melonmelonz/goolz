@@ -744,7 +744,26 @@
   <span class="prop">padding-bottom</span>: <span class="val">2px</span>;
 }</pre>
             </div>
-            <p class="hint">Selector cheat-sheet: <code>h1</code> = every tag, <code>#some-id</code> = the one element with that id, <code>.some-class</code> = every element with that class. We'll use a class in step 5.</p>
+
+            <p style="margin-top:14px"><strong>Three flavors of selector — same HTML, different reach.</strong> Imagine this little chunk of markup:</p>
+            <div class="code-block">
+<pre class="code"><span class="sel">&lt;p&gt;</span>A regular paragraph.<span class="sel">&lt;/p&gt;</span>
+<span class="sel">&lt;p id=<span class="val">"tagline"</span>&gt;</span>The Goolz Society — est. 1893.<span class="sel">&lt;/p&gt;</span>
+<span class="sel">&lt;p class=<span class="val">"warn"</span>&gt;</span>Goolz are NOT ghouls.<span class="sel">&lt;/p&gt;</span>
+<span class="sel">&lt;p class=<span class="val">"warn"</span>&gt;</span>Please do not feed them.<span class="sel">&lt;/p&gt;</span></pre>
+            </div>
+            <p>Now watch what each selector picks:</p>
+            <div class="code-block">
+<pre class="code"><span class="sel">p</span>          { <span class="prop">color</span>: <span class="val">navy</span>; }         <span class="com">/* every &lt;p&gt; — all four lines */</span>
+<span class="sel">#tagline</span>   { <span class="prop">font-style</span>: <span class="val">italic</span>; }  <span class="com">/* only the one with id="tagline" */</span>
+<span class="sel">.warn</span>      { <span class="prop">color</span>: <span class="val">crimson</span>; }      <span class="com">/* every element wearing class="warn" */</span></pre>
+            </div>
+            <ul style="margin-top:8px">
+              <li><strong>Tag</strong> (<code>p</code>) — hits <em>every</em> matching element. Broad strokes.</li>
+              <li><strong>Id</strong> (<code>#tagline</code>, the <code>#</code> means "id") — hits <em>one</em> specific element. Sharp scalpel.</li>
+              <li><strong>Class</strong> (<code>.warn</code>, the <code>.</code> means "class") — hits <em>any</em> element wearing that class. The workhorse you'll use most.</li>
+            </ul>
+            <p class="hint"><strong>There's a fourth flavor — pseudo-classes</strong> like <code>:hover</code>, <code>:focus</code>, <code>:nth-child()</code>. They start with a colon and pick elements based on <em>state</em> (being hovered, being focused, being the second child) rather than what's written in the HTML. We'll meet <code>:hover</code> in step 6 and <code>:nth-child()</code> in step 7.</p>
           </div>
           <div class="step-controls">
             <button class="btn primary apply-btn" type="button" data-apply="2">Apply step 2</button>
@@ -800,6 +819,7 @@
 }</pre>
             </div>
             <p class="hint">List multiple fonts in case the first one isn't installed — the browser falls back down the list. End with a generic family (<code>serif</code>, <code>sans-serif</code>, <code>monospace</code>) so you always get <em>something</em>.</p>
+            <p class="hint"><strong>Units · <code>px</code> vs <code>rem</code>.</strong> Sizes can be written in <code>px</code> (exact pixels — <code>16px</code> means 16 pixels, full stop) or <code>rem</code> (relative to the <em>root</em> font size, which is 16px by default — so <code>1rem = 16px</code>, <code>1.5rem = 24px</code>). For text, <strong>prefer <code>rem</code></strong>: when a user bumps up their browser's default text size for accessibility, your typography scales with them. Use <code>px</code> for things that <em>shouldn't</em> scale — 1px borders, fine offsets, hairlines. Quick rule: <code>rem</code> for "stuff people read," <code>px</code> for "stuff that holds the layout together."</p>
           </div>
           <div class="step-controls">
             <button class="btn primary apply-btn" type="button" data-apply="4">Apply step 4</button>
