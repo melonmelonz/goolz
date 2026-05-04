@@ -458,12 +458,12 @@
       100% { transform: rotateX(-20deg) rotateY(360deg); }
     }
 
-    /* Hover anywhere on the stage to slow the cube and "lift" it */
-    .cube-stage:hover .cube {
-      animation-duration: 30s;
-      transform: scale(1.08);
-      transition: transform 600ms ease;
-    }
+    /* Hover anywhere on the stage to slow the cube down (don't set
+       transform here — that would override the animation's transform
+       and freeze the rotation) */
+    .cube-stage:hover .cube { animation-duration: 30s; }
+    .cube-stage { transition: filter 400ms ease; }
+    .cube-stage:hover { filter: brightness(1.15) saturate(1.15); }
 
     @media (prefers-reduced-motion: reduce) {
       .cube { animation: none; transform: rotateX(-20deg) rotateY(-25deg); }
@@ -481,7 +481,17 @@
       padding: 8px;
     }
     .tabs > input[type="radio"] {
-      position: absolute; left: -9999px;
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0; pointer-events: none;
+    }
+    /* Show a focus ring on the matching label when its hidden radio is focused */
+    .tabs:has(#tab-1:focus-visible) .tab-bar label[for="tab-1"],
+    .tabs:has(#tab-2:focus-visible) .tab-bar label[for="tab-2"],
+    .tabs:has(#tab-3:focus-visible) .tab-bar label[for="tab-3"],
+    .tabs:has(#tab-4:focus-visible) .tab-bar label[for="tab-4"] {
+      outline: 2px dotted var(--navy);
+      outline-offset: 2px;
     }
     .tabs > .tab-bar {
       display: flex; flex-wrap: wrap; gap: 2px;
@@ -723,7 +733,7 @@
           <span class="badge hot" style="margin-left:auto">headliner</span>
         </div>
         <div class="demo-body">
-          <p class="demo-blurb">Pick a color, then drag your mouse across the canvas. (On mobile: drag with your finger.) The canvas remembers every cell you've touched. Every pixel of this is CSS — no <code>onclick</code>, no script.</p>
+          <p class="demo-blurb">Pick a color, then drag your mouse across the canvas. The canvas remembers every cell you've touched. Every pixel of this is CSS — no <code>onclick</code>, no script. <em>Touch note:</em> the trick uses <code>:hover</code>, which mobile browsers don't have a great answer for — tap-and-drag may not paint reliably on phones. Use a mouse if you can.</p>
 
           <form class="paint" aria-label="Pure CSS paint demo">
             <input type="radio" name="pc-color" id="pc-c12" checked>
