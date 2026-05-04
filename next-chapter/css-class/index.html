@@ -335,6 +335,73 @@
     .more h3 {
       font-size: 14px; margin: 10px 0 4px; color: var(--navy);
     }
+
+    /* ── Rhetoricals (click-to-reveal Q/A) ───────────────────── */
+    .rhetoricals .qa {
+      margin: 8px 0;
+      background: var(--gray);
+      box-shadow: var(--raise);
+      padding: 0;
+    }
+    .rhetoricals .qa > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 8px 12px 8px 38px;
+      position: relative;
+      user-select: none;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .rhetoricals .qa > summary::-webkit-details-marker { display: none; }
+    .rhetoricals .qa > summary::before {
+      content: 'Q';
+      position: absolute;
+      left: 8px; top: 8px;
+      width: 22px; height: 22px;
+      background: var(--navy); color: var(--white);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 12px;
+      box-shadow: var(--sink);
+    }
+    .rhetoricals .qa > summary::after {
+      content: 'Show answer ▾';
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 11px;
+      color: var(--navy);
+      font-style: italic;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .rhetoricals .qa[open] > summary::after { content: 'Hide answer ▴'; }
+    .rhetoricals .qa[open] > summary { background: var(--gray-2); }
+    .rhetoricals .qa > summary:hover { background: var(--gray-2); }
+
+    .rhetoricals .qa .answer {
+      padding: 8px 12px 12px 38px;
+      background: var(--white);
+      box-shadow: var(--sink);
+      margin: 0 4px 4px;
+      position: relative;
+    }
+    .rhetoricals .qa .answer::before {
+      content: 'A';
+      position: absolute;
+      left: 8px; top: 8px;
+      width: 22px; height: 22px;
+      background: var(--gold); color: var(--black);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 12px;
+      box-shadow: var(--sink);
+    }
+    .rhetoricals .qa .answer pre.code {
+      margin: 8px 0;
+    }
+    @media (max-width: 480px) {
+      .rhetoricals .qa > summary { padding-left: 36px; padding-right: 8px; }
+      .rhetoricals .qa > summary::after { display: block; margin-left: 0; margin-top: 4px; }
+      .rhetoricals .qa .answer { padding-left: 36px; }
+    }
     footer {
       margin-top: 18px; padding-top: 10px;
       border-top: 1px solid var(--gray-dark);
@@ -745,19 +812,79 @@
 
       </div>
 
-      <!-- ── MORE ─────────────────────────────────────────────── -->
+      <!-- ── DISCUSSION RHETORICALS ───────────────────────────── -->
       <div class="more">
-        <div class="panel">
+        <div class="panel rhetoricals">
           <div class="panel-title">Things to chew on · class discussion</div>
-          <p>No "right" answers; the point is to notice CSS has lots of close-but-not-equal pairs. Toss these to the room:</p>
-          <ul>
-            <li><strong><code>display: none</code> vs <code>visibility: hidden</code></strong> — they both make an element invisible. Are they the same? <em>(Hint: try one and then the other on a card and watch what happens to the layout — and to keyboard tab order, and to a screen reader.)</em></li>
-            <li><strong><code>px</code> vs <code>em</code> vs <code>rem</code> vs <code>%</code></strong> — four ways to say "this size." When does each make sense? <em>(Which one breaks if a user bumps their browser font size?)</em></li>
-            <li><strong><code>margin</code> vs <code>padding</code></strong> — which one collides with its neighbors and which one doesn't? <em>(And what on earth is "margin collapse"?)</em></li>
-            <li><strong>Why does <code>width: 100%</code> sometimes <em>overflow</em> its parent?</strong> <em>(Three letters: b-o-x. As in <code>box-sizing</code>.)</em></li>
-            <li><strong>Is <code>!important</code> a tool or a red flag?</strong> <em>(Usually it means our selectors picked the wrong fight.)</em></li>
-            <li><strong>Why doesn't <code>text-align: center</code> center a <code>&lt;div&gt;</code>?</strong> <em>(What is it actually centering?)</em></li>
-          </ul>
+          <p>Ask the room. Let people argue. Click <strong>Show answer</strong> when you're ready.</p>
+
+          <details class="qa">
+            <summary><strong><code>display: none</code> vs <code>visibility: hidden</code></strong> — they both make an element invisible. Are they the same?</summary>
+            <div class="answer">
+              <p><strong>No.</strong> They differ in three big ways:</p>
+              <ul>
+                <li><strong>Layout:</strong> <code>display: none</code> removes the element entirely — surrounding elements collapse into the space. <code>visibility: hidden</code> keeps the box; the space stays reserved.</li>
+                <li><strong>Tab order &amp; screen readers:</strong> <code>display: none</code> is gone — not focusable, not announced. <code>visibility: hidden</code> is also skipped by both, but the layout slot is still there.</li>
+                <li><strong>Animations:</strong> you can't transition <code>display</code> (well, until very recently — it's still spotty). <code>visibility</code> can transition, and <code>opacity: 0</code> is usually what you actually want for fade effects.</li>
+              </ul>
+              <p class="hint">There's also <code>opacity: 0</code> — invisible, takes space, AND still focusable/clickable. That's the gotcha.</p>
+            </div>
+          </details>
+
+          <details class="qa">
+            <summary><strong><code>px</code> vs <code>em</code> vs <code>rem</code> vs <code>%</code></strong> — four ways to say "this size." When do you use each?</summary>
+            <div class="answer">
+              <ul>
+                <li><strong><code>px</code></strong> — fixed pixels. Predictable, but doesn't scale if a user bumps their browser font size for accessibility. Use for borders, tiny details.</li>
+                <li><strong><code>em</code></strong> — relative to the <em>current element's</em> font-size. Compounds in nested elements (a 1.2em inside a 1.2em inside a 1.2em… runaway).</li>
+                <li><strong><code>rem</code></strong> — relative to the <em>root</em> (<code>&lt;html&gt;</code>) font-size. No compounding. The modern default for typography and spacing.</li>
+                <li><strong><code>%</code></strong> — relative to the parent's matching dimension. Great for fluid widths.</li>
+              </ul>
+              <p class="hint">Rule of thumb: <code>rem</code> for spacing &amp; type, <code>%</code> or <code>fr</code> for layout, <code>px</code> for hairlines.</p>
+            </div>
+          </details>
+
+          <details class="qa">
+            <summary><strong><code>margin</code> vs <code>padding</code></strong> — which one collides with its neighbors, and what is "margin collapse"?</summary>
+            <div class="answer">
+              <p><strong>Margin</strong> is space <em>outside</em> the border — it pushes neighbors away. <strong>Padding</strong> is space <em>inside</em> the border — between border and content. Padding never affects neighbors.</p>
+              <p><strong>Margin collapse:</strong> when two vertical margins meet (e.g. one element's <code>margin-bottom: 20px</code> and the next's <code>margin-top: 30px</code>), they don't add to 50 — they collapse into the larger one (30). Catches everyone the first time.</p>
+              <p class="hint">Padding doesn't collapse. Flex/grid <code>gap</code> doesn't collapse. That's a major reason <code>gap</code> beats margin for layout.</p>
+            </div>
+          </details>
+
+          <details class="qa">
+            <summary><strong>Why does <code>width: 100%</code> sometimes <em>overflow</em> its parent?</strong></summary>
+            <div class="answer">
+              <p>Default <code>box-sizing</code> is <code>content-box</code>: <code>width</code> is just the content. Padding and border are <em>added on top</em>. So <code>width: 100% + padding: 20px</code> = parent width + 40px → overflow.</p>
+              <p>Fix it once for the whole project:</p>
+              <pre class="code"><span class="sel">*, *::before, *::after</span> { <span class="prop">box-sizing</span>: <span class="val">border-box</span>; }</pre>
+              <p>Now <code>width</code> includes padding and border. Most modern stylesheets start with this exact rule.</p>
+            </div>
+          </details>
+
+          <details class="qa">
+            <summary><strong>Is <code>!important</code> a tool or a red flag?</strong></summary>
+            <div class="answer">
+              <p>Usually a red flag. It overrides normal specificity rules, which means later you'll need <em>another</em> <code>!important</code> to undo it. Specificity wars escalate fast.</p>
+              <p><strong>When it's fine:</strong> utility classes (<code>.hidden { display: none !important }</code>), user stylesheets overriding sites, beating third-party CSS you can't edit.</p>
+              <p><strong>When it's a smell:</strong> patching your own selectors because you can't figure out why they're losing. The fix is usually a more specific selector, not nuclear-grade override.</p>
+            </div>
+          </details>
+
+          <details class="qa">
+            <summary><strong>Why doesn't <code>text-align: center</code> center a <code>&lt;div&gt;</code>?</strong></summary>
+            <div class="answer">
+              <p>Because <code>text-align</code> only centers <em>inline content</em> (text, inline images, inline-block elements) <em>inside</em> the element it's set on. It doesn't center the element itself.</p>
+              <p>To center a block element <strong>horizontally</strong>: give it a width and <code>margin-inline: auto</code> (or the classic <code>margin: 0 auto</code>).</p>
+              <p>To center anything (block or inline) in <strong>both</strong> directions, the modern answer is one rule on the parent:</p>
+              <pre class="code"><span class="sel">.parent</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">place-items</span>: <span class="val">center</span>;
+}</pre>
+              <p class="hint">Flexbox version: <code>display: flex; align-items: center; justify-content: center</code>.</p>
+            </div>
+          </details>
         </div>
       </div>
 
