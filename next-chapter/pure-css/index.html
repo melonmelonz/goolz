@@ -294,23 +294,21 @@
     }
 
     /* Clear-canvas toggle. The checkbox is hidden; a <label> styled as a
-       button drives it. When checked, every cell animates to transparent
-       (and hover painting is disabled until you click again to resume). */
+       button drives it. When checked, every cell is forced back to
+       transparent (overriding the held-by-transition paint state) and
+       hover painting is disabled. Click again to resume painting. */
     .paint-clear-toggle {
       position: absolute;
       width: 1px; height: 1px;
       opacity: 0; pointer-events: none;
     }
-    .paint:has(#pc-clear:checked) .canvas i {
-      animation: paint-clear-fade 220ms ease forwards;
-    }
+    /* !important is needed here because the painted appearance comes from
+       a transition stuck mid-delay; without !important it would lose to
+       the still-pending transition target. */
+    .paint:has(#pc-clear:checked) .canvas i,
     .paint:has(#pc-clear:checked) .canvas i:hover {
-      background: transparent;
-      transition: none;
-      animation: paint-clear-fade 220ms ease forwards;
-    }
-    @keyframes paint-clear-fade {
-      to { background: transparent; }
+      background: transparent !important;
+      transition: none !important;
     }
 
     .paint-btn-clear, .paint-btn-reset {
@@ -850,11 +848,13 @@
   <span class="prop">transition</span>: <span class="val">background 0s 0s</span>;     <span class="com">/* no delay on the way in */</span>
 }
 <span class="sel">.paint:has(#pc-c6:checked)</span> { <span class="prop">--paint-color</span>: <span class="val">#ff0000</span>; }</pre>
-              <p style="margin-top:6px"><strong>Clear canvas</strong> uses one more trick — a hidden checkbox <code>#pc-clear</code> with a <code>&lt;label&gt;</code> styled as a button. When checked, <code>:has()</code> attaches a <code>@keyframes</code> animation to every cell that fades the background to transparent. While checked, the hover paint rule is also overridden, so painting is paused. Click the button again to uncheck and resume painting.</p>
-              <pre class="code"><span class="sel">.paint:has(#pc-clear:checked) .canvas i</span> {
-  <span class="prop">animation</span>: <span class="val">paint-clear-fade 220ms ease forwards</span>;
-}
-<span class="at">@keyframes</span> <span class="sel">paint-clear-fade</span> { <span class="sel">to</span> { <span class="prop">background</span>: <span class="val">transparent</span>; } }</pre>
+              <p style="margin-top:6px"><strong>Clear canvas</strong> uses one more trick — a hidden checkbox <code>#pc-clear</code> with a <code>&lt;label&gt;</code> styled as a button. When checked, <code>:has()</code> applies an <code>!important</code> rule that cancels every cell's paused transition and forces the background back to transparent. While checked, the hover paint rule is also overridden, so painting is paused. Click the button again to uncheck and resume painting.</p>
+              <pre class="code"><span class="sel">.paint:has(#pc-clear:checked) .canvas i</span>,
+<span class="sel">.paint:has(#pc-clear:checked) .canvas i:hover</span> {
+  <span class="prop">background</span>: <span class="val">transparent</span> <span class="val">!important</span>;
+  <span class="prop">transition</span>: <span class="val">none</span> <span class="val">!important</span>;  <span class="com">/* cancels the held delay */</span>
+}</pre>
+              <p class="hint" style="margin-top:6px">First attempt was an animation that faded cells to transparent — but the painted appearance comes from a transition stuck in its 99999s delay phase, not from a real "paint-color" property value. The animation interpolated from "transparent" (the underlying value) to "transparent" — visibly, nothing happened. Forcing the value with <code>!important</code> works because it overrides the transition target itself.</p>
               <p class="hint" style="margin-top:6px"><strong>Caveats:</strong> the cells aren't really "painted" — they just look that way. Reload and the canvas is blank. Eraser works because it just paints with the canvas background color. The classic limitation of clever CSS-only state.</p>
             </div>
           </details>
