@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪦</text></svg>">
   <link rel="stylesheet" href="gbc.css">
 </head>
-<body>
+<body data-page="ex2">
 
   <a class="crumb" href="./">back to menu</a>
 
@@ -35,6 +35,12 @@
       </div>
 
       <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
         <div class="screen-inner">
 
           <div class="boot">
@@ -48,7 +54,7 @@
 
           <h2>① The Skeleton I Typed</h2>
           <p>
-            VS Code → new file <code>index.html</code> → typed it letter-by-letter so my
+            <code>vim index.html</code> → <kbd>i</kbd> → typed it letter-by-letter so my
             fingers learn the shape:
           </p>
 <pre><code>&lt;!DOCTYPE html&gt;
@@ -62,7 +68,7 @@
 &lt;/html&gt;</code></pre>
 
           <h2>② Then, One At A Time</h2>
-          <p>Save → refresh → next element. Here's the final body:</p>
+          <p><kbd>:w</kbd> → refresh browser → next element. Here's the final body:</p>
 <pre><code>&lt;h1&gt;Penn&lt;/h1&gt;
 
 &lt;p&gt;I run Linux as my daily driver, paint Necrons on weekends,
@@ -107,7 +113,7 @@ and chase milliseconds in games I'm definitely not good at yet.&lt;/p&gt;
           <h2>④ Notes From Doing It</h2>
           <ul>
             <li>Saving + refreshing after every line really does help &mdash; you watch the page assemble itself piece by piece.</li>
-            <li>VS Code's emmet shortcut <code>!</code> + <kbd>Tab</kbd> generates the skeleton instantly. Resisted using it. Typing is the point.</li>
+            <li>I have <code>emmet-vim</code> sitting in my plugins; it would expand <code>!</code> + <kbd>Ctrl</kbd>-<kbd>y</kbd>,<kbd>,</kbd> into the whole skeleton. Didn't load it. Typing's the point.</li>
             <li>Indentation isn't required by HTML, but the page felt instantly more readable once I matched indents to nesting depth.</li>
             <li>An <code>&lt;img&gt;</code> with a broken <code>src</code> just shows the alt text plus a placeholder icon &mdash; alt text isn't optional, it's the safety net.</li>
             <li>The <code>&lt;a&gt;</code> link to Goonhammer is blue + underlined by default. Same color as the page from Ex 1 &mdash; that's the browser's user-agent stylesheet, not anything I did.</li>
@@ -159,5 +165,6 @@ and chase milliseconds in games I'm definitely not good at yet.&lt;/p&gt;
 
   <p class="footer-tag">ex 2 of 2 · made on linux · <a href="/">goolz.org</a></p>
 
+  <script src="gbc.js" defer></script>
 </body>
 </html>

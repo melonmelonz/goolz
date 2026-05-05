@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
   <link rel="stylesheet" href="gbc.css">
 </head>
-<body>
+<body data-page="menu">
 
   <a class="crumb" href="/next-chapter/">back to desktop</a>
 
@@ -36,6 +36,12 @@
       </div>
 
       <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
         <div class="screen-inner">
 
           <div class="boot">
@@ -78,6 +84,12 @@
             ▼ press A to select · B to go back
           </p>
 
+          <div class="controls-help">
+            <b>↑↓</b> move · <b>← →</b> page · <b>A</b> select · <b>B</b> back<br>
+            <b>START</b> pause · <b>SELECT</b> palette · <b>vol</b> mute<br>
+            keyboard: arrows / Z / X / Enter / Shift / M
+          </div>
+
         </div>
       </div>
 
@@ -112,5 +124,6 @@
 
   <p class="footer-tag">made on linux · <a href="/">goolz.org</a> · ncd</p>
 
+  <script src="gbc.js" defer></script>
 </body>
 </html>
