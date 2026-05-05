@@ -1187,8 +1187,8 @@
       <div class="icon-label">CSS&nbsp;Class</div>
     </div>
     <div class="icon" tabindex="0" title="Week 2 Day 1 — HTML reading + writing (opens in a new tab)"
-         ondblclick="window.open('/next-chapter/week-02/','_blank','noopener')"
-         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-02/','_blank','noopener')">
+         ondblclick="window.open('/next-chapter/week-02/day-1/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-02/day-1/','_blank','noopener')">
       <div class="icon-img shortcut">🎮</div>
       <div class="icon-label">W2D1.gbc</div>
     </div>
@@ -1239,19 +1239,15 @@
             <span class="fl-icon">📄</span>
             <span class="fl-name">Week 1 Day 4 — Human Lane vs. AI Lane</span>
           </li>
-          <li onclick="openWindow('win-calc')">
-            <span class="fl-icon">🖩</span>
-            <span class="fl-name">Calculator</span>
-          </li>
-          <li onclick="openWindow('win-notepad')">
-            <span class="fl-icon">📝</span>
-            <span class="fl-name">Notepad</span>
+          <li onclick="window.open('/next-chapter/week-02/day-1/','_blank','noopener')">
+            <span class="fl-icon">🎮</span>
+            <span class="fl-name">Week 2 Day 1 — HTML: Reading &amp; Writing</span>
           </li>
         </ul>
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">6 object(s)</div>
+      <div class="status-pane">5 object(s)</div>
     </div>
   </div>
 
@@ -2796,7 +2792,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.3.1';
+const NCD_VERSION = 'v2.4.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -2833,13 +2829,11 @@ window.NCD_VERSION = NCD_VERSION;
   }
 
   // Advance in discrete jumps to mimic Win95 segment-by-segment fill.
-  // Slower + smaller chunks so the boot splash actually feels like a boot,
-  // not a flicker. ~16 ticks * 240ms ≈ 3.8s of bar fill, plus the 300+700ms
-  // tail = ~4.8s total. Long enough to read the version, short enough to
-  // not annoy on repeat visits (gated by localStorage anyway).
+  // Tuned to ~2.5s bar fill + 800ms tail. Original 1.5s felt like a flicker;
+  // 5s felt like the page was stuck. This is the goldilocks zone.
   let pct = 0;
   const interval = setInterval(() => {
-    pct += Math.floor(Math.random() * 6) + 3;
+    pct += Math.floor(Math.random() * 7) + 4;
     if (pct > 100) pct = 100;
     // Snap to nearest segment boundary (each segment ≈ 6.3% of 300px)
     bar.style.width = pct + '%';
@@ -2852,10 +2846,10 @@ window.NCD_VERSION = NCD_VERSION;
           boot.style.display = 'none';
           localStorage.setItem('booted', BOOT_VERSION);
           initDesktop();
-        }, 700);
-      }, 600);
+        }, 500);
+      }, 300);
     }
-  }, 240);
+  }, 200);
 })();
 
 // ═══════════════════════════════════════════════
@@ -3440,6 +3434,19 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-05',
+      title: 'Course materials are back · Week 2 launches',
+      notes: [
+        'Course Materials window auto-opens on boot again — Day 1–4 plus the new Week 2 Day 1',
+        'Week 2 Day 1 (HTML reading + writing) lives at /next-chapter/week-02/day-1/ on an Atomic Purple Game Boy Color',
+        'Course Materials list trimmed: Calculator + Notepad belong in Start menu, not the curriculum',
+        'Desktop icons now wrap into multiple columns (Win95 fill-down-then-right) so 7+ shortcuts stay on screen',
+        'Boot splash retimed — 1.5s was a flicker, 5s was a hang. Settled on ~3s.',
+        'GBC pages cleaned up: bottom-right screw removed (the curve), cart slot flush instead of protruding, power LED smaller and where it belongs',
+      ]
+    },
+    {
+      version: 'v2.3.0',
       date: '2026-04-30',
       title: 'Glass Corridor + housekeeping',
       notes: [
