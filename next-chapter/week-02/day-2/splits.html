@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 5 — Split Logger / NCD W2D2</title>
+  <meta name="description" content="Exercise 5 (Option B, my pick): speedrun split logger. Hit the button, log a split, see the diffs.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="splits">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 5 / 5 · OPTION B (BUILD-YOUR-OWN)</div>
+            <h1>Speedrun Split Logger</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              The brief said: pick anything that uses an input + a button + DOM
+              update. I run speedrun categories. So: a split logger. Start the
+              timer, hit <kbd>Split</kbd> at every checkpoint, see segment times.
+            </p>
+          </div>
+
+          <h2>① The Idea</h2>
+          <p>
+            Stripped to the essentials of what an actual splits app does:
+          </p>
+          <ul>
+            <li>Type a split name (e.g. <em>Castle 1</em>, <em>Bowser</em>).</li>
+            <li>Hit <kbd>Split</kbd>. Capture <code>performance.now()</code>.</li>
+            <li>Show: split name · total time · segment time (since previous split).</li>
+            <li><kbd>Reset</kbd> wipes everything.</li>
+          </ul>
+          <p>
+            Numbered list output. Same DOM-update pattern as Ex 2 and 3 — just with
+            an array I keep appending to instead of a single sentence.
+          </p>
+
+          <h2>② The Prompt I Sent</h2>
+          <div class="prompt-box">Make me a vanilla-JS speedrun split logger. One text input for the split name,
+two buttons: "Split" and "Reset". Use performance.now() for timing. On Split,
+push {name, total_ms, segment_ms} to an array and re-render an &lt;ol&gt;. Reset
+clears the array and the list. preventDefault on the form submit.</div>
+
+          <h2>③ Decisions From The First Draft</h2>
+          <table class="decision-table">
+            <thead>
+              <tr><th>Bit</th><th>AI's first try</th><th>Verdict</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Time source</td>
+                <td><code>Date.now()</code></td>
+                <td><span class="verdict rej">REJECT</span></td>
+                <td>System clock can jump (NTP, DST). <code>performance.now()</code> is monotonic — never goes backwards. The right tool for elapsed time.</td>
+              </tr>
+              <tr>
+                <td>Render strategy</td>
+                <td>Append a new <code>&lt;li&gt;</code> via <code>createElement</code></td>
+                <td><span class="verdict acc">ACCEPT</span></td>
+                <td>Faster than re-rendering the whole list. Safer than string templates. Builds DOM nodes directly. No injection surface.</td>
+              </tr>
+              <tr>
+                <td>Format</td>
+                <td>Raw milliseconds: <code>4321ms</code></td>
+                <td><span class="verdict mod">MODIFY</span></td>
+                <td>Speedrunners read <code>m:ss.mmm</code>. Wrote a tiny <code>fmt()</code> that pads zeros.</td>
+              </tr>
+              <tr>
+                <td>Empty name</td>
+                <td>Allowed</td>
+                <td><span class="verdict mod">MODIFY</span></td>
+                <td>Auto-fill <code>Split N</code> if empty so I don't have to type during the run.</td>
+              </tr>
+              <tr>
+                <td>Reset</td>
+                <td><code>list.inner&shy;HTML = ''</code></td>
+                <td><span class="verdict mod">MODIFY</span></td>
+                <td>Use <code>list.replaceChildren()</code>. Same effect, no innerHTML reach.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>④ Live — Run It</h2>
+          <div class="demo">
+            <div class="demo-bar">
+              <span><span class="led-dot"></span>SPLITS — INDEX.HTML</span>
+              <span>×</span>
+            </div>
+            <div class="splits-clock" id="splits-clock">0:00.000</div>
+            <form id="splits-form">
+              <div>
+                <label for="split-name">Split name</label>
+                <input id="split-name" type="text" placeholder="Castle 1, Bowser, etc.">
+              </div>
+              <div class="splits-buttons">
+                <button type="submit">▶ Split</button>
+                <button type="button" id="splits-reset">■ Reset</button>
+              </div>
+            </form>
+            <ol id="splits-list" class="demo-list" aria-live="polite"></ol>
+          </div>
+
+          <h2>⑤ Notes On The Build</h2>
+          <ul>
+            <li>The clock is a 60Hz <code>requestAnimationFrame</code> loop. It
+              starts on the first split and keeps ticking until reset. Cheap, smooth,
+              matches the LCD aesthetic.</li>
+            <li>Holding state in a <code>splits = []</code> array (instead of reading
+              the DOM) is the right move. The DOM is for <em>showing</em>; the array
+              is the source of truth.</li>
+            <li><code>performance.now()</code> returns a high-res float in
+              milliseconds. Subtract two readings → segment time, no clock-skew bugs.</li>
+            <li>If I pushed this further: localStorage to save personal bests, a
+              "gold splits" highlight, keyboard shortcut for split (<kbd>Space</kbd>),
+              category select. Out of scope for today.</li>
+          </ul>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            File: <code>splits.html</code><br>
+            Inputs: 1 · Buttons: 2 · State: array of split objects<br>
+            Status: tracks splits, formats m:ss.mmm, never lies about time. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="doubler.html">prev: AI doubler</a> · <a href="./">back to menu ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 5 of 5 · w2d2 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+  <script>
+    (() => {
+      const form    = document.getElementById('splits-form');
+      const nameEl  = document.getElementById('split-name');
+      const list    = document.getElementById('splits-list');
+      const clockEl = document.getElementById('splits-clock');
+      const resetEl = document.getElementById('splits-reset');
+      if (!form) return;
+
+      let splits   = [];
+      let startMs  = null;
+      let rafId    = null;
+
+      function fmt(ms) {
+        const total = Math.max(0, ms);
+        const m     = Math.floor(total / 60000);
+        const s     = Math.floor((total % 60000) / 1000);
+        const mmm   = Math.floor(total % 1000);
+        return `${m}:${String(s).padStart(2,'0')}.${String(mmm).padStart(3,'0')}`;
+      }
+
+      function tick() {
+        if (startMs === null) return;
+        clockEl.textContent = fmt(performance.now() - startMs);
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function startClockIfNeeded() {
+        if (startMs !== null) return;
+        startMs = performance.now();
+        tick();
+      }
+
+      function renderRow(split) {
+        const li = document.createElement('li');
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'split-name';
+        nameSpan.textContent = split.name;
+        const totalSpan = document.createElement('span');
+        totalSpan.className = 'split-total';
+        totalSpan.textContent = fmt(split.total_ms);
+        const segSpan = document.createElement('span');
+        segSpan.className = 'split-seg';
+        segSpan.textContent = '+' + fmt(split.segment_ms);
+        li.append(nameSpan, totalSpan, segSpan);
+        list.appendChild(li);
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        startClockIfNeeded();
+        const total = performance.now() - startMs;
+        const prev  = splits.length ? splits[splits.length - 1].total_ms : 0;
+        const seg   = total - prev;
+        const rawName = nameEl.value.trim();
+        const name = rawName || `Split ${splits.length + 1}`;
+        const split = { name, total_ms: total, segment_ms: seg };
+        splits.push(split);
+        renderRow(split);
+        nameEl.value = '';
+        nameEl.focus();
+      });
+
+      resetEl.addEventListener('click', () => {
+        splits = [];
+        startMs = null;
+        if (rafId) cancelAnimationFrame(rafId);
+        clockEl.textContent = '0:00.000';
+        list.replaceChildren();
+        nameEl.value = '';
+      });
+    })();
+  </script>
+</body>
+</html>

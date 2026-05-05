@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Week 2 — Day 2 / NCD</title>
+  <meta name="description" content="Next Chapter Daily — Week 2 Day 2. Forms + DOM basics: making the page react.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📨</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="menu">
+
+  <a class="crumb" href="/next-chapter/">back to desktop</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ NCD · WK2 · D2</div>
+            <h1>Forms + DOM Basics<span class="blink"></span></h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Yesterday: HTML + CSS, frozen.<br>
+              Today: pages that <em>react</em>. AI scaffolds it, I read every line, decide.
+            </p>
+          </div>
+
+          <ul class="cart-list">
+            <li>
+              <a class="cart" href="contact.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX1 — CONTACT FORM</span>
+                  <span class="cart-sub">structure only · no JS yet</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="greet.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX2 — GREET ME</span>
+                  <span class="cart-sub">first listener · innerHTML XSS lab</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="survey.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX3 — 2 Q SURVEY</span>
+                  <span class="cart-sub">two inputs · summary · stretch q3</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="doubler.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX4 — AI DOUBLER</span>
+                  <span class="cart-sub">prompt GPT · accept/reject/modify</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="splits.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX5 — SPLIT LOGGER</span>
+                  <span class="cart-sub">build-your-own (option B, speedrun)</span>
+                </span>
+              </a>
+            </li>
+          </ul>
+
+          <div class="callout" style="margin-top:18px;">
+            <strong>► Loadout</strong>
+            Player: <code>PENN</code><br>
+            OS: <code>LINUX</code> · editor: <code>vim</code> · class mode: AI-scaffold + read-every-line<br>
+            Mood: today's the day pages start doing things
+          </div>
+
+          <p style="font-size:15px;color:var(--gb-1);margin-top:18px;">
+            ▼ press A to load · D-pad ↑↓ to pick
+          </p>
+
+          <div class="controls-help">
+            <b>↑↓</b> move · <b>← →</b> page · <b>A</b> select · <b>B</b> back<br>
+            <b>START</b> pause · <b>SELECT</b> palette · <b>vol</b> mute<br>
+            keyboard: arrows / Z / X / Enter / Shift / M
+          </div>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">w2d2 · made on linux · <a href="/">goolz.org</a> · ncd</p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

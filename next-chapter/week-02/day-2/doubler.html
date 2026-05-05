@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 4 — AI Doubler / NCD W2D2</title>
+  <meta name="description" content="Exercise 4: prompt the AI for a number doubler. Read the slop. Decide accept/reject/modify.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✖</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="doubler">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 4 / 5</div>
+            <h1>AI Doubler</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Take a number, double it. Sounds trivial. The AI's first answer
+              still had two real bugs. This is the whole point of the course.
+            </p>
+          </div>
+
+          <h2>① The Prompt</h2>
+          <div class="prompt-box">Write me a small HTML page with one number input and a button labeled
+"Double it". When the user clicks the button, show twice their number on the
+page. Use addEventListener and preventDefault. Vanilla JS.</div>
+
+          <h2>② Raw AI Output (Untouched)</h2>
+<pre><code>&lt;form id="doubler"&gt;
+  &lt;input id="n" type="number"&gt;
+  &lt;button&gt;Double it&lt;/button&gt;
+&lt;/form&gt;
+&lt;p id="out"&gt;&lt;/p&gt;
+
+&lt;script&gt;
+  const form = document.getElementById('doubler');
+  form.addEventListener('click', (e) =&gt; {
+    e.preventDefault();
+    const n = document.getElementById('n').value;
+    document.getElementById('out').inner&shy;HTML = n + n;
+  });
+&lt;/script&gt;</code></pre>
+
+          <h2>③ Decision Table — Accept / Reject / Modify</h2>
+          <table class="decision-table">
+            <thead>
+              <tr><th>Line</th><th>What it does</th><th>Verdict</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>&lt;input id="n" type="number"&gt;</code></td>
+                <td>Number field, no <code>required</code></td>
+                <td><span class="verdict mod">MODIFY</span></td>
+                <td>Add <code>required</code> + <code>step="any"</code> so blank submits don't pretend to work and decimals are allowed.</td>
+              </tr>
+              <tr>
+                <td><code>addEventListener('click', ...)</code></td>
+                <td>Listens for click on the form</td>
+                <td><span class="verdict rej">REJECT</span></td>
+                <td>Wrong event. Form has a submit semantic — pressing Enter in the input fires <em>submit</em>, not <em>click</em>. Use <code>'submit'</code>.</td>
+              </tr>
+              <tr>
+                <td><code>const n = ...value</code></td>
+                <td>Read the input</td>
+                <td><span class="verdict mod">MODIFY</span></td>
+                <td><code>.value</code> is a string. <code>n + n</code> would do <strong>string concat</strong>: "5" + "5" = "55". Cast with <code>Number(n)</code> or <code>parseFloat</code>.</td>
+              </tr>
+              <tr>
+                <td><code>.inner&shy;HTML = n + n</code></td>
+                <td>Write the result</td>
+                <td><span class="verdict mod">MODIFY</span></td>
+                <td>No reason to use <code>.inner&shy;HTML</code> for a number — and it'd be unsafe if the input were ever user text. <code>.textContent</code>.</td>
+              </tr>
+              <tr>
+                <td><em>(missing)</em></td>
+                <td>Validation</td>
+                <td><span class="verdict mod">MODIFY</span></td>
+                <td>If the cast returns <code>NaN</code>, say so instead of writing "NaN" to the page.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            Two real bugs in 8 lines: wrong event, string math. If I'd accepted as-is and just clicked Double-it on 5, the page would
+            confidently say <code>55</code>. That's the dangerous kind of bug — it
+            <em>looks</em> like it worked.
+          </div>
+
+          <h2>④ Final Code (After Edits)</h2>
+<pre><code>&lt;form id="doubler-form"&gt;
+  &lt;label for="n"&gt;Number&lt;/label&gt;
+  &lt;input id="n" type="number" step="any" required&gt;
+  &lt;button type="submit"&gt;Double it&lt;/button&gt;
+&lt;/form&gt;
+&lt;p id="doubler-out"&gt;&lt;/p&gt;
+
+&lt;script&gt;
+  const form = document.getElementById('doubler-form');
+  form.addEventListener('submit', (event) =&gt; {
+    event.preventDefault();
+    const raw = document.getElementById('n').value;
+    const n   = Number(raw);
+    const out = document.getElementById('doubler-out');
+    if (Number.isNaN(n)) { out.textContent = 'not a number :('; return; }
+    out.textContent = `${n} × 2 = ${n * 2}`;
+  });
+&lt;/script&gt;</code></pre>
+
+          <h2>⑤ Live — Try It</h2>
+          <div class="demo">
+            <div class="demo-bar">
+              <span><span class="led-dot"></span>DOUBLER — INDEX.HTML</span>
+              <span>×</span>
+            </div>
+            <form id="doubler-form">
+              <div>
+                <label for="n">Number</label>
+                <input id="n" type="number" step="any" required placeholder="5">
+              </div>
+              <button type="submit">Double it</button>
+            </form>
+            <p id="doubler-out" class="demo-result" aria-live="polite"></p>
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            File: <code>doubler.html</code><br>
+            Bugs the AI shipped: 2 (wrong event, string math)<br>
+            Bugs that survived review: 0. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="survey.html">prev: 2 q survey</a> · <a href="splits.html">next: split logger ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 4 of 5 · w2d2 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+  <script>
+    (() => {
+      const form = document.getElementById('doubler-form');
+      const out  = document.getElementById('doubler-out');
+      if (!form) return;
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const raw = document.getElementById('n').value;
+        const n   = Number(raw);
+        if (Number.isNaN(n) || raw === '') { out.textContent = 'not a number :('; return; }
+        out.textContent = `${n} × 2 = ${n * 2}`;
+      });
+    })();
+  </script>
+</body>
+</html>

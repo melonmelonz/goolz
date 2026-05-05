@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 1 — Contact Form / NCD W2D2</title>
+  <meta name="description" content="Exercise 1: structure a contact form, no JavaScript. Browser validation does the heavy lifting.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📮</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="contact">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 1 / 5</div>
+            <h1>Contact Form</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Pure HTML, no JS. Get comfortable with the form skeleton and let the browser
+              do the validation work for free.
+            </p>
+          </div>
+
+          <h2>① The Prompt</h2>
+          <div class="prompt-box">Build me a basic HTML contact form with name, email, and message.
+No CSS framework. Use semantic labels tied to inputs by id, mark required fields,
+and use type="email" so browsers can validate the address. No JavaScript.</div>
+
+          <h2>② What GPT Sent Back</h2>
+<pre><code>&lt;form id="contact-form"&gt;
+  &lt;label for="name-input"&gt;Name&lt;/label&gt;
+  &lt;input id="name-input" type="text" required&gt;
+
+  &lt;label for="email-input"&gt;Email&lt;/label&gt;
+  &lt;input id="email-input" type="email" required&gt;
+
+  &lt;label for="message-input"&gt;Message&lt;/label&gt;
+  &lt;textarea id="message-input" required&gt;&lt;/textarea&gt;
+
+  &lt;button type="submit"&gt;Send&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            All <code>id</code>s match their <code>for</code> attributes — clicking a label focuses
+            the input. <code>required</code> and <code>type="email"</code> are doing real work.
+            Accepted as-is. Onto the live preview.
+          </div>
+
+          <h2>③ Live — Try It</h2>
+          <div class="demo">
+            <div class="demo-bar">
+              <span><span class="led-dot"></span>CONTACT — INDEX.HTML</span>
+              <span>×</span>
+            </div>
+            <form id="contact-form" action="#" onsubmit="event.preventDefault(); document.getElementById('contact-result').textContent='✓ if this had a backend, it would have sent. for now, the form is just structure.';">
+              <div>
+                <label for="name-input">Name</label>
+                <input id="name-input" type="text" required placeholder="Penn">
+              </div>
+              <div>
+                <label for="email-input">Email</label>
+                <input id="email-input" type="email" required placeholder="penn@example.com">
+              </div>
+              <div>
+                <label for="message-input">Message</label>
+                <textarea id="message-input" required placeholder="say hi"></textarea>
+              </div>
+              <button type="submit">Send</button>
+            </form>
+            <div id="contact-result" class="demo-result"></div>
+          </div>
+
+          <h2>④ What I Tried (Lab Notes)</h2>
+          <ul>
+            <li>Clicked <kbd>Send</kbd> with everything blank → browser pops a
+              "Please fill out this field" tooltip on the first empty input. That's
+              <code>required</code> doing its job, no JS involved.</li>
+            <li>Typed <code>notanemail</code> in the email field → submit blocked, "Please
+              include an '@' in the email address." That's <code>type="email"</code>.</li>
+            <li>Clicking the <em>label text</em> moves the cursor into the field. Free
+              accessibility win — comes from <code>for=</code> + <code>id=</code> matching.</li>
+            <li><code>&lt;textarea&gt;</code> is NOT a void element — it has a closing tag, even
+              when empty. <code>&lt;input&gt;</code> is the void one.</li>
+          </ul>
+
+          <h2>⑤ What's Missing</h2>
+          <p>
+            Right now, hitting Send doesn't actually <em>do</em> anything in the page —
+            no JavaScript means no submit handler, no DOM update. That's the whole
+            point of Exercise 2: wire up an event listener so submit means something.
+          </p>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            File: <code>contact.html</code> (~22 lines)<br>
+            JS lines: 0<br>
+            Status: structure good, browser validation working. ready for events.
+            <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="./">back to menu</a> · <a href="greet.html">next: greet me ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 1 of 5 · w2d2 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

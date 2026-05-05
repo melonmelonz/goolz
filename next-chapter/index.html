@@ -1192,6 +1192,12 @@
       <div class="icon-img shortcut">🎮</div>
       <div class="icon-label">W2D1.gbc</div>
     </div>
+    <div class="icon" tabindex="0" title="Week 2 Day 1 — Forms + DOM basics (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-02/day-2/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-02/day-2/','_blank','noopener')">
+      <div class="icon-img shortcut">📨</div>
+      <div class="icon-label">W2D2.gbc</div>
+    </div>
     <div class="icon" tabindex="0" title="Study Plan / Report Card" ondblclick="openWindow('win-rc')">
       <div class="icon-img">📊</div>
       <div class="icon-label">Report&nbsp;Card</div>
@@ -1242,6 +1248,10 @@
           <li onclick="window.open('/next-chapter/week-02/day-1/','_blank','noopener')">
             <span class="fl-icon">🎮</span>
             <span class="fl-name">Week 2 Day 1 — HTML: Reading &amp; Writing</span>
+          </li>
+          <li onclick="window.open('/next-chapter/week-02/day-2/','_blank','noopener')">
+            <span class="fl-icon">📨</span>
+            <span class="fl-name">Week 2 Day 2 — Forms + DOM Basics</span>
           </li>
         </ul>
       </div>
@@ -2792,7 +2802,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.4.0';
+const NCD_VERSION = 'v2.5.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3434,6 +3444,18 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-04',
+      title: 'Week 2 Day 2 — Forms + DOM basics',
+      notes: [
+        'W2D2 lives at /next-chapter/week-02/day-2/ — five exercise carts on the same Atomic Purple GBC',
+        'Ex1 Contact Form (browser-validation only, no JS), Ex2 Greet Me (first listener + innerHTML XSS lab)',
+        'Ex3 2-Question Survey (with a stretch third question), Ex4 AI Doubler (raw slop + accept/reject/modify table)',
+        'Ex5 (build-your-own pick): speedrun split logger — performance.now(), m:ss.mmm formatting, splits array as source of truth',
+        'Course Materials window + desktop shortcut updated with W2D2.gbc',
+      ]
+    },
+    {
+      version: 'v2.4.0',
       date: '2026-05-05',
       title: 'Course materials are back · Week 2 launches',
       notes: [

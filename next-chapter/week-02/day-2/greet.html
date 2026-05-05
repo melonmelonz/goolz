@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 2 — Greet Me / NCD W2D2</title>
+  <meta name="description" content="Exercise 2: first real event listener. Submit → DOM update. Includes innerHTML XSS lab.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👋</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="greet">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 2 / 5</div>
+            <h1>Greet Me</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              First real event listener. Type a name, hit submit, watch the DOM
+              actually change. Then poke at it until something breaks.
+            </p>
+          </div>
+
+          <h2>① The Prompt</h2>
+          <div class="prompt-box">Give me an HTML page with a single text input and a button. When the button is
+clicked, take whatever the user typed and put "Hello, [name]!" into a paragraph
+on the page. Use addEventListener. Use event.preventDefault() so the form
+doesn't reload the page. Vanilla JS only.</div>
+
+          <h2>② What GPT Sent Back</h2>
+<pre><code>&lt;form id="greet-form"&gt;
+  &lt;label for="name"&gt;Your name&lt;/label&gt;
+  &lt;input id="name" type="text" required&gt;
+  &lt;button type="submit"&gt;Greet&lt;/button&gt;
+&lt;/form&gt;
+&lt;p id="greeting"&gt;&lt;/p&gt;
+
+&lt;script&gt;
+  const form     = document.getElementById('greet-form');
+  const input    = document.getElementById('name');
+  const greeting = document.getElementById('greeting');
+
+  form.addEventListener('submit', (event) =&gt; {
+    event.preventDefault();
+    greeting.textContent = `Hello, ${input.value}!`;
+  });
+&lt;/script&gt;</code></pre>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            Reading line by line: grab the form, the input, the output paragraph.
+            Listen for <code>submit</code>. Block the default reload. Read
+            <code>.value</code>, write <code>.textContent</code>. Accepted as-is.
+            Now I want to break it.
+          </div>
+
+          <h2>③ Live — Try It</h2>
+          <div class="demo">
+            <div class="demo-bar">
+              <span><span class="led-dot"></span>GREET — INDEX.HTML</span>
+              <span>×</span>
+            </div>
+            <form id="greet-form">
+              <div>
+                <label for="greet-name">Your name</label>
+                <input id="greet-name" type="text" required placeholder="Penn">
+              </div>
+              <button type="submit">Greet</button>
+            </form>
+            <p id="greeting" class="demo-result" aria-live="polite"></p>
+          </div>
+
+          <h2>④ Lab Investigations</h2>
+          <p>The brief said: poke it. Three experiments, three things learned.</p>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">A. Comment out <code>event.preventDefault()</code></h3>
+          <ul>
+            <li>Submit the form → page <em>flashes</em> and reloads. Browser appends
+              <code>?name=penn</code> to the URL because the form has no
+              <code>action</code> and defaults to GET on the current page.</li>
+            <li>The greeting paragraph briefly shows "Hello, penn!" then vanishes
+              with the reload — the listener fired, then the navigation wiped the DOM.</li>
+            <li>Lesson: the browser's default behavior for a <code>&lt;form&gt;</code> submit
+              is to navigate. If you want to handle it client-side, you HAVE to stop it.</li>
+          </ul>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">B. Swap <code>textContent</code> for <code>innerHTML</code></h3>
+          <ul>
+            <li>Type <code>penn</code> → identical output. Same string, two paths into the DOM.</li>
+            <li>Type <code>&lt;em&gt;penn&lt;/em&gt;</code> →
+              <ul>
+                <li>with <code>.textContent</code>: shows the literal angle brackets,
+                  <code>&lt;em&gt;penn&lt;/em&gt;</code>. Treated as text.</li>
+                <li>with <code>.innerHTML</code>: shows <em>penn</em> in italics. The
+                  string was parsed as HTML and inserted as a real DOM node.</li>
+              </ul>
+            </li>
+            <li>Lesson: <code>.textContent</code> = "this is text, render it as text."
+              <code>.innerHTML</code> = "parse this and build DOM nodes from it." Two
+              very different trust levels.</li>
+          </ul>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">C. The XSS test</h3>
+          <p>With <code>.innerHTML</code> still wired up, type:</p>
+<pre><code>&lt;img src=x onerror="alert('pwned')"&gt;</code></pre>
+          <ul>
+            <li>The image has no valid <code>src</code>, so it errors. The
+              <code>onerror</code> handler fires. <kbd>alert()</kbd> pops.</li>
+            <li>I just executed JavaScript that came from a form input. If the
+              "name" came from a database, a URL parameter, another user's profile,
+              an API — I'd have shipped a stored XSS hole.</li>
+            <li>Lesson: <strong>never put untrusted strings through
+              <code>.innerHTML</code></strong>. <code>.textContent</code> is
+              the safe default. Reach for <code>.innerHTML</code> only with content
+              you 100% control, or after sanitizing.</li>
+          </ul>
+
+          <h2>⑤ Final Code (Decision: ship the safe version)</h2>
+<pre><code>const form     = document.getElementById('greet-form');
+const input    = document.getElementById('greet-name');
+const greeting = document.getElementById('greeting');
+
+form.addEventListener('submit', (event) =&gt; {
+  event.preventDefault();                 // 1. don't reload
+  const name = input.value.trim();        // 2. read value
+  greeting.textContent = `Hello, ${name}!`; // 3. write SAFELY
+});</code></pre>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            File: <code>greet.html</code><br>
+            JS lines: ~7<br>
+            Status: form listens, page reacts, XSS hole closed. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="contact.html">prev: contact form</a> · <a href="survey.html">next: 2 q survey ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 2 of 5 · w2d2 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+  <script>
+    (() => {
+      const form     = document.getElementById('greet-form');
+      const input    = document.getElementById('greet-name');
+      const greeting = document.getElementById('greeting');
+      if (!form) return;
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const name = input.value.trim();
+        greeting.textContent = name ? `Hello, ${name}!` : '';
+      });
+    })();
+  </script>
+</body>
+</html>

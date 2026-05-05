@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 3 — 2 Q Survey / NCD W2D2</title>
+  <meta name="description" content="Exercise 3: two inputs, one summary. Stretch goal adds a third question.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="survey">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 3 / 5</div>
+            <h1>2-Question Survey</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Two inputs, one button, one summary. Then stretch it to three —
+              and see how each new field multiplies the work.
+            </p>
+          </div>
+
+          <h2>① The Prompt</h2>
+          <div class="prompt-box">Build a 2-question survey: a text input asking for a name, and a number
+input asking for years of programming experience. On submit, write a sentence
+into a results paragraph that uses both answers. preventDefault, addEventListener,
+no frameworks.</div>
+
+          <h2>② What GPT Sent Back</h2>
+<pre><code>&lt;form id="survey"&gt;
+  &lt;label&gt;Name &lt;input id="q-name" required&gt;&lt;/label&gt;
+  &lt;label&gt;Years coding &lt;input id="q-years" type="number" min="0" required&gt;&lt;/label&gt;
+  &lt;button&gt;Submit&lt;/button&gt;
+&lt;/form&gt;
+&lt;p id="result"&gt;&lt;/p&gt;
+
+&lt;script&gt;
+  document.getElementById('survey').addEventListener('submit', (e) =&gt; {
+    e.preventDefault();
+    const name  = document.getElementById('q-name').value;
+    const years = document.getElementById('q-years').value;
+    document.getElementById('result').textContent =
+      `${name} has been writing code for ${years} year(s).`;
+  });
+&lt;/script&gt;</code></pre>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            One thing I caught: <code>.value</code> on a number input is still a
+            <strong>string</strong>. For "1 year" vs "many years" pluralization
+            I'd want <code>parseInt</code>. Otherwise — accepted.
+          </div>
+
+          <h2>③ Live — Try It</h2>
+          <div class="demo">
+            <div class="demo-bar">
+              <span><span class="led-dot"></span>SURVEY — INDEX.HTML</span>
+              <span>×</span>
+            </div>
+            <form id="survey-form">
+              <div>
+                <label for="q-name">Name</label>
+                <input id="q-name" type="text" required placeholder="Penn">
+              </div>
+              <div>
+                <label for="q-years">Years coding</label>
+                <input id="q-years" type="number" min="0" required placeholder="3">
+              </div>
+              <div>
+                <label for="q-unit">Favorite Necron unit <span style="color:var(--gb-1);font-size:13px;">(stretch)</span></label>
+                <input id="q-unit" type="text" placeholder="Imotekh, Doomstalker, Lokhust...">
+              </div>
+              <button type="submit">Submit</button>
+            </form>
+            <p id="survey-result" class="demo-result" aria-live="polite"></p>
+          </div>
+
+          <h2>④ Lab Notes</h2>
+          <ul>
+            <li><code>type="number"</code> + <code>min="0"</code> means the browser
+              rejects negative values and non-numeric junk on submit. Free validation.</li>
+            <li>Pluralization with a ternary: <code>years === 1 ? 'year' : 'years'</code>.
+              Tiny detail, but "1 years" reads like a robot.</li>
+            <li>The third field is optional. I check <code>unit.value.trim()</code>
+              before deciding whether to append the extra sentence — if it's empty,
+              don't.</li>
+            <li>Three IDs, three <code>getElementById</code> calls. By Ex 4 this
+              starts to feel repetitive. There's an upgrade waiting (form data,
+              destructuring) but the brief said keep it boring.</li>
+          </ul>
+
+          <h2>⑤ Stretch — Adding A Third Question</h2>
+          <p>The brief asked: how much work was the third input?</p>
+          <ul>
+            <li>+1 <code>&lt;label&gt;</code> + <code>&lt;input&gt;</code> in HTML</li>
+            <li>+1 <code>const unit = ...</code> in JS</li>
+            <li>+1 conditional in the output string</li>
+          </ul>
+          <p>
+            Linear cost per field, basically. Doesn't scale — at ten inputs you'd
+            want to loop over the form's <code>FormData</code> or build the inputs
+            from an array. Right now, three is the sweet spot for "type it all out
+            and learn the shape."
+          </p>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            File: <code>survey.html</code><br>
+            Inputs: 3 (2 required + 1 stretch)<br>
+            Status: submits, summarizes, pluralizes correctly. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="greet.html">prev: greet me</a> · <a href="doubler.html">next: AI doubler ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 3 of 5 · w2d2 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+  <script>
+    (() => {
+      const form  = document.getElementById('survey-form');
+      const out   = document.getElementById('survey-result');
+      if (!form) return;
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const name  = document.getElementById('q-name').value.trim();
+        const years = parseInt(document.getElementById('q-years').value, 10);
+        const unit  = document.getElementById('q-unit').value.trim();
+        const yLabel = years === 1 ? 'year' : 'years';
+        let msg = `${name} has been writing code for ${years} ${yLabel}.`;
+        if (unit) msg += ` Plays Necrons. Favorite unit: ${unit}.`;
+        out.textContent = msg;
+      });
+    })();
+  </script>
+</body>
+</html>
