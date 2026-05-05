@@ -52,7 +52,14 @@
     }
 
     /* ── DESKTOP ICONS ── */
-    .desktop-icons { position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 1; }
+    /* Win95-style: icons fill top-to-bottom, then start a new column.
+       max-height triggers the wrap so 7+ shortcuts don't run off the desktop. */
+    .desktop-icons {
+      position: absolute; top: 14px; left: 14px; z-index: 1;
+      display: flex; flex-direction: column; flex-wrap: wrap;
+      max-height: calc(100dvh - 80px);
+      gap: 6px; column-gap: 8px;
+    }
     .icon {
       display: flex; flex-direction: column; align-items: center;
       width: 72px; padding: 6px 4px; cursor: default;
@@ -2789,7 +2796,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.3.0';
+const NCD_VERSION = 'v2.3.1';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -2825,10 +2832,14 @@ window.NCD_VERSION = NCD_VERSION;
     return;
   }
 
-  // Advance in discrete jumps to mimic Win95 segment-by-segment fill
+  // Advance in discrete jumps to mimic Win95 segment-by-segment fill.
+  // Slower + smaller chunks so the boot splash actually feels like a boot,
+  // not a flicker. ~16 ticks * 240ms ≈ 3.8s of bar fill, plus the 300+700ms
+  // tail = ~4.8s total. Long enough to read the version, short enough to
+  // not annoy on repeat visits (gated by localStorage anyway).
   let pct = 0;
   const interval = setInterval(() => {
-    pct += Math.floor(Math.random() * 12) + 6;
+    pct += Math.floor(Math.random() * 6) + 3;
     if (pct > 100) pct = 100;
     // Snap to nearest segment boundary (each segment ≈ 6.3% of 300px)
     bar.style.width = pct + '%';
@@ -2841,10 +2852,10 @@ window.NCD_VERSION = NCD_VERSION;
           boot.style.display = 'none';
           localStorage.setItem('booted', BOOT_VERSION);
           initDesktop();
-        }, 550);
-      }, 300);
+        }, 700);
+      }, 600);
     }
-  }, 150);
+  }, 240);
 })();
 
 // ═══════════════════════════════════════════════
