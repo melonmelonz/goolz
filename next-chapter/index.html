@@ -1135,7 +1135,7 @@
       <div class="icon-img">🖥️</div>
       <div class="icon-label">My Computer</div>
     </div>
-    <div class="icon" tabindex="0" title="Course Files" ondblclick="openWindow('win-home')" hidden style="display:none">
+    <div class="icon" tabindex="0" title="Course Files" ondblclick="openWindow('win-home')">
       <div class="icon-img">📚</div>
       <div class="icon-label">Course Files</div>
     </div>
@@ -1179,6 +1179,12 @@
       <div class="icon-img shortcut">🎨</div>
       <div class="icon-label">CSS&nbsp;Class</div>
     </div>
+    <div class="icon" tabindex="0" title="Week 2 Day 1 — HTML reading + writing (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-02/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-02/','_blank','noopener')">
+      <div class="icon-img shortcut">🎮</div>
+      <div class="icon-label">W2D1.gbc</div>
+    </div>
     <div class="icon" tabindex="0" title="Study Plan / Report Card" ondblclick="openWindow('win-rc')">
       <div class="icon-img">📊</div>
       <div class="icon-label">Report&nbsp;Card</div>
@@ -1189,7 +1195,7 @@
   <div id="desktop-docs"></div>
 
   <!-- ═══ WINDOW: Home / Course Materials ═══ -->
-  <div class="window hidden" id="win-home" style="width:360px; top:60px; left:calc(50% - 180px);">
+  <div class="window active" id="win-home" style="width:360px; top:60px; left:calc(50% - 180px);">
     <div class="title-bar">
       <span class="title-bar-icon">📚</span>
       <span class="title-bar-text">Course Materials</span>
@@ -2677,10 +2683,10 @@ Features needed:
       <span class="si-label"><strong>Programs</strong></span>
       <span class="si-arrow">▶</span>
       <div class="submenu">
-        <div class="submenu-item" onclick="openWindow('win-day1')" style="display:none">📄 Week 1 Day 1</div>
-        <div class="submenu-item" onclick="openWindow('win-day2')" style="display:none">📄 Week 1 Day 2</div>
-        <div class="submenu-item" onclick="openWindow('win-day3')" style="display:none">📄 Week 1 Day 3</div>
-        <div class="submenu-item" onclick="openWindow('win-day4')" style="display:none">📄 Week 1 Day 4</div>
+        <div class="submenu-item" onclick="openWindow('win-day1')">📄 Week 1 Day 1</div>
+        <div class="submenu-item" onclick="openWindow('win-day2')">📄 Week 1 Day 2</div>
+        <div class="submenu-item" onclick="openWindow('win-day3')">📄 Week 1 Day 3</div>
+        <div class="submenu-item" onclick="openWindow('win-day4')">📄 Week 1 Day 4</div>
         <div class="submenu-item" onclick="openWindow('win-calc')">🖩 Calculator</div>
         <div class="submenu-item" onclick="openWindow('win-ie')">🌐 Internet Explorer</div>
         <div class="submenu-item" onclick="openWindow('win-notepad')">📝 Notepad</div>
@@ -2884,9 +2890,9 @@ function initDesktop() {
   // Any element with `class="window"` and a `.title-bar` is auto-enabled —
   // no per-window registration needed.
   document.querySelectorAll('.window').forEach(_initWindowChrome);
-  // Course Materials hidden — desktop boots with no active window so Clippy
-  // can be the focal point. Window markup is preserved (display:none on icon
-  // and start-menu entries) so it can be restored later without churn.
+  const home = document.getElementById('win-home');
+  addTaskBtn('win-home');
+  activateWindow(home);
 
   startClock();
   initStartMenuSubmenus();
@@ -4054,7 +4060,6 @@ font-family:"Courier New",monospace;z-index:99999;display:none;padding:8vh 8vw;f
           <span class="chip">React</span><span class="chip">Vue</span>
           <span class="chip">PHP</span><span class="chip">Laravel</span>
           <span class="chip">Python</span><span class="chip">Tailwind</span>
-          <span class="chip">HTML5</span><span class="chip">CSS3</span>
           <span class="chip">Linux</span><span class="chip">Bash</span>
           <span class="chip">Cloud Infra</span><span class="chip">AWS</span>
           <span class="chip">Azure</span><span class="chip">GCP</span>
@@ -4062,7 +4067,6 @@ font-family:"Courier New",monospace;z-index:99999;display:none;padding:8vh 8vw;f
           <span class="chip">Kubernetes</span><span class="chip">CI/CD</span>
           <span class="chip">DNS / Networking</span><span class="chip">S3 / Object Storage</span>
           <span class="chip">Unity</span><span class="chip">MATLAB</span>
-          <span class="chip">MVC</span>
         </div>
         <div style="margin-top:8px;font-size:11px;color:#404040">
           Certifications: <strong>CompTIA A+</strong> · <strong>LPI Linux Essentials</strong>

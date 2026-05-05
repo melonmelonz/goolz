@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 2 — About Me / NCD W2D1</title>
+  <meta name="description" content="Exercise 2: type a basic HTML About Me page from scratch.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪦</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body>
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+    <span class="screw br"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 2 / 2</div>
+            <h1>About Me — From Scratch</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              No AI, no copy-paste. I typed the skeleton, then added one element at a time,
+              saving and refreshing after each one.
+            </p>
+          </div>
+
+          <h2>① The Skeleton I Typed</h2>
+          <p>
+            VS Code → new file <code>index.html</code> → typed it letter-by-letter so my
+            fingers learn the shape:
+          </p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;About Me&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+          <h2>② Then, One At A Time</h2>
+          <p>Save → refresh → next element. Here's the final body:</p>
+<pre><code>&lt;h1&gt;Penn&lt;/h1&gt;
+
+&lt;p&gt;I run Linux as my daily driver, paint Necrons on weekends,
+and chase milliseconds in games I'm definitely not good at yet.&lt;/p&gt;
+
+&lt;img src="imotekh.svg" alt="Imotekh the Stormlord — Phaeron of the Sautekh Dynasty"&gt;
+
+&lt;a href="https://www.goonhammer.com"&gt;Goonhammer&lt;/a&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Linux&lt;/li&gt;
+  &lt;li&gt;Speed Running&lt;/li&gt;
+  &lt;li&gt;Audio Acoustics&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+
+          <p style="font-size:15px;color:var(--gb-1);">
+            ※ Every Imotekh image online is either watermarked or 404. Drew my own
+            64&times;64 pixel sprite in the Game Boy palette. More on-brand anyway.
+          </p>
+
+          <h2>③ How It Renders</h2>
+          <div class="preview" role="figure" aria-label="rendered about me page">
+            <div class="preview-bar">
+              <span class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span>ABOUT ME — INDEX.HTML</span>
+              <span>×</span>
+            </div>
+            <div class="preview-body">
+              <h1>Penn</h1>
+              <p>I run Linux as my daily driver, paint Necrons on weekends, and chase milliseconds in games I'm definitely not good at yet.</p>
+              <img class="imotekh-frame" src="imotekh.svg" alt="Imotekh the Stormlord — Phaeron of the Sautekh Dynasty" width="192" height="192">
+              <p class="img-caption">— Imotekh the Stormlord, Phaeron of the Sautekh Dynasty</p>
+              <p><a href="https://www.goonhammer.com" target="_blank" rel="noopener">Goonhammer</a></p>
+              <ul>
+                <li>Linux</li>
+                <li>Speed Running</li>
+                <li>Audio Acoustics</li>
+              </ul>
+            </div>
+          </div>
+
+          <h2>④ Notes From Doing It</h2>
+          <ul>
+            <li>Saving + refreshing after every line really does help &mdash; you watch the page assemble itself piece by piece.</li>
+            <li>VS Code's emmet shortcut <code>!</code> + <kbd>Tab</kbd> generates the skeleton instantly. Resisted using it. Typing is the point.</li>
+            <li>Indentation isn't required by HTML, but the page felt instantly more readable once I matched indents to nesting depth.</li>
+            <li>An <code>&lt;img&gt;</code> with a broken <code>src</code> just shows the alt text plus a placeholder icon &mdash; alt text isn't optional, it's the safety net.</li>
+            <li>The <code>&lt;a&gt;</code> link to Goonhammer is blue + underlined by default. Same color as the AI-generated page from Ex 1 &mdash; that's the browser's user-agent stylesheet, not anything I did.</li>
+          </ul>
+
+          <h2>⑤ Status</h2>
+          <div class="callout">
+            <strong>► Save state</strong>
+            File: <code>index.html</code><br>
+            Lines: 19<br>
+            Status: renders. ready for CSS day. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="exercise-1.html">prev: read the tags</a> · <a href="./">back to menu ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 2 of 2 · made on linux · <a href="/">goolz.org</a></p>
+
+</body>
+</html>

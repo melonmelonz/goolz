@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 1 — Read the Tags / NCD W2D1</title>
+  <meta name="description" content="Exercise 1: read AI-generated HTML for a community center, then map every tag.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body>
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+    <span class="screw br"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 1 / 2</div>
+            <h1>Read The Tags</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              I asked the AI for a basic community-center page. Here's what it gave me &mdash; and what every line is doing.
+            </p>
+          </div>
+
+          <h2>① The Prompt</h2>
+          <p>
+            Asked GPT for a community-center page: heading, paragraph, four programs in a list,
+            a signup link (<code>#</code>), an image placeholder
+            (<code>community.jpg</code>), comments per section, no CSS.
+          </p>
+
+          <h2>② The Source It Sent Back</h2>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;!-- Page info: title shown in the tab --&gt;
+    &lt;title&gt;Riverside Community Center&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+
+    &lt;!-- Main heading: name of the center --&gt;
+    &lt;h1&gt;Riverside Community Center&lt;/h1&gt;
+
+    &lt;!-- Short description of who we are --&gt;
+    &lt;p&gt;Riverside is a neighborhood hub where folks gather to learn,
+    move, make, and connect. Everyone's welcome.&lt;/p&gt;
+
+    &lt;!-- Hero image of the building --&gt;
+    &lt;img src="community.jpg" alt="Riverside Community Center building"&gt;
+
+    &lt;!-- Programs we offer --&gt;
+    &lt;ul&gt;
+      &lt;li&gt;Beginner Yoga&lt;/li&gt;
+      &lt;li&gt;After-School Tutoring&lt;/li&gt;
+      &lt;li&gt;Community Garden Hours&lt;/li&gt;
+      &lt;li&gt;Open Mic Nights&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;!-- Signup link --&gt;
+    &lt;a href="#"&gt;Sign up for a program&lt;/a&gt;
+
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+          <h2>③ How It Renders (no CSS)</h2>
+          <div class="preview" role="figure" aria-label="rendered preview">
+            <div class="preview-bar">
+              <span class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span>RIVERSIDE.HTML</span>
+              <span>×</span>
+            </div>
+            <div class="preview-body">
+              <h1>Riverside Community Center</h1>
+              <p>Riverside is a neighborhood hub where folks gather to learn, move, make, and connect. Everyone's welcome.</p>
+              <div class="img-placeholder">community.jpg ◇ broken</div>
+              <ul>
+                <li>Beginner Yoga</li>
+                <li>After-School Tutoring</li>
+                <li>Community Garden Hours</li>
+                <li>Open Mic Nights</li>
+              </ul>
+              <a href="#">Sign up for a program</a>
+            </div>
+          </div>
+
+          <h2>④ The Tag Table (in my own words)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Tag</th>
+                <th>Purpose</th>
+                <th>What It Looks Like in the Browser</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>&lt;!DOCTYPE html&gt;</code></td>
+                <td>Tells the browser "this doc is HTML5." Not really a tag, more like a declaration at the very top.</td>
+                <td>Invisible. But if you skip it, browsers fall back to "quirks mode" and stuff renders weird.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;html&gt;</code></td>
+                <td>The root of the document. Everything else lives inside it.</td>
+                <td>Invisible &mdash; it's a wrapper.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;head&gt;</code></td>
+                <td>Backstage area: metadata, the title, links to CSS, etc. Not the visible page.</td>
+                <td>Invisible. But its contents change the tab title, favicon, search results.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;title&gt;</code></td>
+                <td>Names the page. Lives inside <code>&lt;head&gt;</code>.</td>
+                <td>Shows up in the browser tab and as the bookmark name.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;body&gt;</code></td>
+                <td>The visible page. Everything you actually see goes here.</td>
+                <td>The full white page area you scroll through.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;h1&gt;</code></td>
+                <td>The top-level heading. Should only be one per page (the main title).</td>
+                <td>Big bold text. Default browser styling makes it the largest text on the page.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;p&gt;</code></td>
+                <td>A paragraph &mdash; one block of body text.</td>
+                <td>Normal-sized text with a little space above and below it.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;ul&gt;</code></td>
+                <td>"Unordered list" &mdash; a bulleted list. Order doesn't matter.</td>
+                <td>An indented list with a bullet (•) before each item.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;li&gt;</code></td>
+                <td>One item inside a list. Lives inside <code>&lt;ul&gt;</code> or <code>&lt;ol&gt;</code>.</td>
+                <td>One bulleted line.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;a&gt;</code></td>
+                <td>Anchor &mdash; a clickable link. The <code>href</code> says where it goes.</td>
+                <td>Blue underlined text by default. Cursor turns into a pointer on hover.</td>
+              </tr>
+              <tr>
+                <td><code>&lt;img&gt;</code></td>
+                <td>Embeds an image. <code>src</code> is the file, <code>alt</code> is the fallback text.</td>
+                <td>The picture itself. If the file's missing, you get a broken-image icon plus the alt text.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>⑤ Questions</h2>
+
+          <div class="callout">
+            <strong>Q1 — Which tag has no closing tag, and why?</strong>
+            <code>&lt;img&gt;</code>. It's a "void" element &mdash; there's nothing to wrap because the picture <em>is</em> the content. The tag points at a file (<code>src</code>) and that's it. Same family as <code>&lt;br&gt;</code>, <code>&lt;hr&gt;</code>, <code>&lt;input&gt;</code>, <code>&lt;meta&gt;</code> &mdash; nothing goes between them, so no closer.
+          </div>
+
+          <div class="callout">
+            <strong>Q2 — What if I deleted &lt;body&gt; but kept its contents?</strong>
+            Browsers are forgiving so it'd <em>still render</em> &mdash; modern parsers will quietly insert a <code>&lt;body&gt;</code> for you. But: any CSS targeting <code>body</code> stops working, JS like <code>document.body</code> gets weird, and you've broken the semantic structure that screen readers and search engines expect. It's the kind of thing that "works" until it really doesn't.
+          </div>
+
+          <div class="callout">
+            <strong>Q3 — Tag I had to look up</strong>
+            <code>&lt;meta charset="UTF-8"&gt;</code>. Asked: "what does <code>&lt;meta&gt;</code> do?" &mdash;
+            <code>&lt;meta&gt;</code> is metadata about the page that lives in <code>&lt;head&gt;</code>.
+            <code>charset</code> tells the browser which character encoding to decode the file with. Without it, weird stuff happens to emoji, accents, em-dashes &mdash; basically anything that isn't basic ASCII. UTF-8 covers everything.
+          </div>
+
+          <h2>⑥ Notes To Self</h2>
+          <ul>
+            <li>HTML is a tree. <code>&lt;html&gt;</code> is the root, <code>&lt;head&gt;</code> + <code>&lt;body&gt;</code> are siblings, everything else nests under one of them.</li>
+            <li>Comments (<code>&lt;!-- ... --&gt;</code>) don't render. Use them like inline notes.</li>
+            <li>"No closing tag" usually = void element. Don't try to write <code>&lt;/img&gt;</code>, it's wrong.</li>
+            <li>Indentation isn't required, but my brain reads nested tags way faster when they line up.</li>
+          </ul>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="./">back to menu</a> · <a href="exercise-2.html">next: build the about-me ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 1 of 2 · made on linux · <a href="/">goolz.org</a></p>
+
+</body>
+</html>
