@@ -1251,6 +1251,10 @@
             <span class="fl-icon">📄</span>
             <span class="fl-name">Week 1 Day 4 — Human Lane vs. AI Lane</span>
           </li>
+          <li onclick="openWindow('win-day5')">
+            <span class="fl-icon">🕯</span>
+            <span class="fl-name">Week 1 Day 5 — GOOLZ.exe Walkthrough</span>
+          </li>
           <li onclick="window.open('/next-chapter/week-02/day-1/','_blank','noopener')">
             <span class="fl-icon">🎮</span>
             <span class="fl-name">Week 2 Day 1 — HTML: Reading &amp; Writing</span>
@@ -1267,7 +1271,7 @@
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">6 object(s)</div>
+      <div class="status-pane">7 object(s)</div>
     </div>
   </div>
 
@@ -2206,6 +2210,89 @@ Features needed:
     </div>
   </div>
 
+  <!-- ═══ WINDOW: Week 1 Day 5 ═══ -->
+  <div class="window hidden" id="win-day5" style="width:560px; top:90px; left:calc(50% - 240px);">
+    <div class="title-bar">
+      <span class="title-bar-icon">🕯</span>
+      <span class="title-bar-text">Week 1 Day 5 — GOOLZ.exe Walkthrough</span>
+      <div class="title-bar-controls">
+        <button class="title-btn" aria-label="Minimize" title="Minimize" onclick="minimizeWindow('win-day5')">_</button>
+        <button class="title-btn" aria-label="Maximize" title="Maximize" onclick="maximizeWindow('win-day5')">□</button>
+        <button class="title-btn" aria-label="Close" title="Close" onclick="closeWindow('win-day5')">✕</button>
+      </div>
+    </div>
+    <div class="menu-bar">
+      <span class="menu-bar-item">File</span>
+      <span class="menu-bar-item">Edit</span>
+      <span class="menu-bar-item">View</span>
+      <span class="menu-bar-item">Help</span>
+    </div>
+    <div class="window-body" style="max-height:540px;">
+      <div class="win-content">
+        <h2>Week 1 Day 5 — GOOLZ.exe Walkthrough</h2>
+        <p>Light day. No new lecture, no new tooling. Today is a tour of <strong>GOOLZ.exe</strong> — a four-wisp parlour game that ships embedded inside this very desktop and also lives standalone at <code>/games/pwg/</code>. The point of the day is to play it, read the loop, and notice what's there.</p>
+
+        <hr class="section-divider">
+
+        <div class="exercise-box">
+          <div class="exercise-num">What It Is</div>
+          <p>Bomberman shape, Lavender-Town mood. Four candle-wisps drift around a graveyard. You set candles, candles knock over gravestones, gravestones fall on rivals. Your own candles will douse you too. Last lantern home wins.</p>
+          <table class="stretch">
+            <thead><tr><th>Move</th><th>Keys</th></tr></thead>
+            <tbody>
+              <tr><td>Drift</td><td>WASD or Arrow keys</td></tr>
+              <tr><td>Set a candle</td><td>Space or K</td></tr>
+              <tr><td>Pause</td><td>Esc</td></tr>
+            </tbody>
+          </table>
+          <div class="info-box">It used to be called <em>PWF3</em>. Got renamed and reskinned in May — same engine, ghostly theme, different identity.</div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="exercise-box">
+          <div class="exercise-num">Where It Lives</div>
+          <table class="stretch">
+            <thead><tr><th>Where</th><th>How to open</th><th>What it is</th></tr></thead>
+            <tbody>
+              <tr><td>This desktop</td><td>Double-click <code>GOOLZ.exe</code> on the desktop, or use the launch button below</td><td>Same game in an iframed Win95 window</td></tr>
+              <tr><td>Standalone</td><td><a href="/games/pwg/" target="_blank" rel="noopener">/games/pwg/</a></td><td>Full-screen client, same backend</td></tr>
+              <tr><td>Source</td><td><code>github.com/melonmelonz/goolz</code></td><td>Lives inside the goolz repo at <code>/pwg-rooms</code> and <code>/games/pwg</code></td></tr>
+            </tbody>
+          </table>
+          <div class="row-actions" style="margin-top:8px;">
+            <button onclick="closeWindow('win-day5'); openWindow('win-pwg');" class="rc-btn">▶ Launch GOOLZ.exe</button>
+            <a class="rc-btn" href="/games/pwg/" target="_blank" rel="noopener">Open Standalone</a>
+          </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="exercise-box">
+          <div class="exercise-num">Today's Assignment</div>
+          <ol>
+            <li>Play three rounds. Lose on purpose at least once to feel where the candles overlap.</li>
+            <li>Draw the level grid on paper. Mark which tiles are stone (block candles), which are gravestones (topple), which are open.</li>
+            <li>Write a short post-game in your notes: which design choice felt good, which felt punishing, and what one tweak you'd ship if it were yours.</li>
+            <li>Open <code>/pwg-rooms</code> in the repo and skim the room file. Don't try to understand all of it — just notice the shape: it's a state object that ticks forward each frame.</li>
+          </ol>
+          <div class="tip-box">💡 No code to write today. The skill being trained is reading a finished thing well enough to describe it back. That's the same muscle Week 2 needs — read AI's code, decide what's good.</div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="exercise-box">
+          <div class="exercise-num">Heads-Up</div>
+          <p>This is the last day of Week 1. Week 2 picks up immediately on HTML and the DOM, then forms, then debugging — and by Day 4 of Week 2 the toy projects start looking less like toys.</p>
+          <div class="info-box">Week 1 was about understanding the tools. Week 2 is about using them on something that talks back.</div>
+        </div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="status-pane">Week 1 · Day 5 · light day</div>
+    </div>
+  </div>
+
   <!-- ═══ WINDOW: Calculator ═══ -->
   <div class="window hidden" id="win-calc" style="top:50px; left:460px;">
     <div class="title-bar">
@@ -2812,7 +2899,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.6.0';
+const NCD_VERSION = 'v2.6.1';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3454,6 +3541,17 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-06',
+      title: 'Week 1 Day 5 — GOOLZ.exe walkthrough added to Course Materials',
+      notes: [
+        'Course Materials now lists Week 1 Day 5 — a light, no-code recap day spent inside GOOLZ.exe',
+        'Inline window (win-day5) explains the parlour game, controls, where it lives (desktop iframe + /games/pwg/), and a 4-step playthrough assignment',
+        'Launch button hands off to the existing GOOLZ.exe window (win-pwg)',
+        'Status bar count bumped 6 -> 7 objects',
+      ]
+    },
+    {
+      version: 'v2.6.0',
       date: '2026-05-06',
       title: 'Week 2 Day 3 — Debugging Day',
       notes: [
