@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warmup — Break D2 / NCD W2D3</title>
+  <meta name="description" content="Warmup: four sabotages on yesterday's greet.html. Observe the symptom, name the cause, fix it.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔨</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="warmup">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ WARMUP / 6</div>
+            <h1>Break D2 on Purpose</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Copy <code>greet.html</code> + <code>greet.js</code> first. Then break,
+              save, refresh, observe. One sabotage at a time. The point is not the fix,
+              it's the symptom <em>pattern</em> — what does each kind of bug actually
+              look like in the wild?
+            </p>
+          </div>
+
+          <h2>① The Setup</h2>
+          <div class="prompt-box">cp greet.html greet.bak.html
+cp greet.js  greet.bak.js
+# now break the live copy. revert from .bak when needed.</div>
+
+          <h2>② Sabotage 1 — Typo on a getElementById</h2>
+          <p>Change <code>document.getElementById("name-input")</code> to
+            <code>document.getElementById("nam-input")</code>. Save. Submit.</p>
+          <ul>
+            <li>Console pops red:
+              <code>Uncaught TypeError: Cannot read properties of null (reading 'value')</code>.</li>
+            <li>The element lookup returned <code>null</code> because no element has that id.
+              The next line tries to read <code>.value</code> on <code>null</code>, which crashes.</li>
+            <li><strong>Pattern to remember:</strong> "Cannot read properties of null" almost always
+              means a query selector / getElementById missed. Check the id spelling against the HTML.</li>
+          </ul>
+
+          <h2>③ Sabotage 2 — Comment Out preventDefault</h2>
+          <p>Restore. Now comment out <code>event.preventDefault();</code>. Submit.</p>
+          <ul>
+            <li>The greeting flashes for a frame, then the page reloads and the greeting is gone.</li>
+            <li>The URL gains <code>?name=penn</code>. That's the browser's default form behavior:
+              GET against the current page with the inputs as query params.</li>
+            <li>No error in the console. The listener fired correctly. The browser then did its
+              own thing on top, and the navigation wiped the DOM.</li>
+            <li><strong>Pattern to remember:</strong> "I see my output for half a second then it
+              vanishes" almost always means an unprevented default. Forms reload. Anchor tags
+              navigate. <code>preventDefault</code> is the off switch.</li>
+          </ul>
+
+          <h2>④ Sabotage 3 — .values Instead of .value</h2>
+          <p>Restore. Now change <code>nameInput.value</code> to <code>nameInput.values</code>. Submit.</p>
+          <ul>
+            <li>The greeting renders as <code>Hello, undefined!</code>. No error.</li>
+            <li><code>.values</code> is not a property of an input element. Reading a missing
+              property gives <code>undefined</code> back, no crash. Template literals happily
+              stringify that as the literal word <code>undefined</code>.</li>
+            <li><strong>Pattern to remember:</strong> if your output literally contains the word
+              <code>undefined</code>, you read a property that doesn't exist. JavaScript will not
+              warn you. The console is silent. <code>console.log</code> the variable to confirm.</li>
+          </ul>
+
+          <h2>⑤ Sabotage 4 — Move the Script into &lt;head&gt;</h2>
+          <p>Restore. Move <code>&lt;script src="greet.js"&gt;&lt;/script&gt;</code> from the
+            bottom of <code>&lt;body&gt;</code> up into <code>&lt;head&gt;</code>. No <code>defer</code>.
+            Save, refresh, click Submit.</p>
+          <ul>
+            <li>Console:
+              <code>Uncaught TypeError: Cannot read properties of null (reading 'addEventListener')</code>.</li>
+            <li>The script ran before the DOM was parsed. <code>getElementById('greet-form')</code>
+              returned <code>null</code> because at that moment, the form didn't exist yet.</li>
+            <li>The fix is either: keep the script at the end of <code>&lt;body&gt;</code> (what we
+              did originally), add <code>defer</code> to the script tag, or wrap the code in a
+              <code>DOMContentLoaded</code> listener.</li>
+            <li><strong>Pattern to remember:</strong> same null-property error as Sabotage 1, but
+              the cause is timing, not spelling. If the id is correct and the element is in the
+              HTML, it's a load-order problem.</li>
+          </ul>
+
+          <h2>⑥ Lab Notes</h2>
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            Two of these four sabotages produced the exact same error string. One was a typo,
+            one was script-order. That's the lesson I actually want: an error message tells you
+            <em>what</em> went wrong, not <em>why</em>. The why is on me, with
+            <code>console.log</code>, the Elements panel, and a slow read.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            File: <code>greet.bak.html</code> + <code>greet.bak.js</code> as safety nets<br>
+            Bugs surfaced: 4 of 4 reproduced and fixed<br>
+            Status: warm. now the real exercises. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="./">menu</a> · <a href="read-error.html">next: read the error ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">warmup of 6 · w2d3 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

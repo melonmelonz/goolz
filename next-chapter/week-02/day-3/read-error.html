@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 1 — Read the Error / NCD W2D3</title>
+  <meta name="description" content="Exercise 1: parse five real error messages. Type, plain-English meaning, line, fix.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📕</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="read-error">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 1 / 5</div>
+            <h1>Read the Error</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Five errors. For each one: what type, what it means in plain English,
+              what line, what to change. The browser is not being cryptic. I just have
+              to slow down and read.
+            </p>
+          </div>
+
+          <h2>① Anatomy of an Error Message</h2>
+          <p>Every error has the same three parts. Memorize them once and the rest gets easier.</p>
+<pre><code>Uncaught ReferenceError: userName is not defined
+    at greeting (script.js:5:22)
+    at main     (script.js:12:3)</code></pre>
+          <ul>
+            <li><code>Uncaught ReferenceError</code> — the <em>type</em>. Used a name that doesn't exist.</li>
+            <li><code>userName is not defined</code> — the <em>message</em>. Tells me which name.</li>
+            <li><code>at greeting (script.js:5:22)</code> — the <em>where</em>. File <code>script.js</code>,
+              line 5, character 22. The lines below are the call stack — read top to bottom, that's
+              the order things actually happened, deepest first.</li>
+          </ul>
+
+          <h2>② The Five Errors</h2>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">A — ReferenceError on <code>username</code></h3>
+<pre><code>Uncaught ReferenceError: username is not defined
+    at script.js:3:18
+
+const userName = "Alex";
+const greeting = "Hello, " + username;
+console.log(greeting);</code></pre>
+          <ul>
+            <li><strong>Type:</strong> ReferenceError.</li>
+            <li><strong>Plain English:</strong> there's no variable called <code>username</code>.</li>
+            <li><strong>Line:</strong> 3.</li>
+            <li><strong>Fix:</strong> JavaScript is case-sensitive. Use the variable that exists:
+              <code>userName</code>, not <code>username</code>.</li>
+          </ul>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">B — TypeError on <code>fruits.length</code></h3>
+<pre><code>Uncaught TypeError: Cannot read properties of undefined (reading 'length')
+    at script.js:2:24
+
+let fruits;
+console.log(fruits.length);</code></pre>
+          <ul>
+            <li><strong>Type:</strong> TypeError.</li>
+            <li><strong>Plain English:</strong> tried to read <code>.length</code> off
+              <code>fruits</code>, but <code>fruits</code> has no value yet (it's <code>undefined</code>),
+              and undefined has no properties.</li>
+            <li><strong>Line:</strong> 2.</li>
+            <li><strong>Fix:</strong> initialize the variable before reading from it:
+              <code>let fruits = [];</code> (or whatever the real list is).</li>
+          </ul>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">C — SyntaxError, extra brace</h3>
+<pre><code>Uncaught SyntaxError: Unexpected token '}'
+    at script.js:4:1
+
+function sayHello(name) {
+  console.log("Hello, " + name)
+}
+}</code></pre>
+          <ul>
+            <li><strong>Type:</strong> SyntaxError.</li>
+            <li><strong>Plain English:</strong> there's a closing brace with no matching opener.
+              The grammar doesn't parse.</li>
+            <li><strong>Line:</strong> 4.</li>
+            <li><strong>Fix:</strong> delete the trailing <code>}</code>. The function already
+              closed on line 3.</li>
+          </ul>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">D — TypeError, capitalization</h3>
+<pre><code>Uncaught TypeError: document.getElementByID is not a function
+    at script.js:1:24
+
+const title = document.getElementByID("main-title");
+title.textContent = "Welcome!";</code></pre>
+          <ul>
+            <li><strong>Type:</strong> TypeError.</li>
+            <li><strong>Plain English:</strong> <code>document.getElementByID</code> isn't a thing.
+              The real method is <code>getElementById</code> — lowercase <code>d</code> at the end.</li>
+            <li><strong>Line:</strong> 1.</li>
+            <li><strong>Fix:</strong> rename to <code>document.getElementById("main-title")</code>.</li>
+          </ul>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">E — SyntaxError, unterminated string</h3>
+<pre><code>Uncaught SyntaxError: Unterminated string literal
+    at script.js:1:20
+
+const message = "Hello, World!;
+console.log(message);</code></pre>
+          <ul>
+            <li><strong>Type:</strong> SyntaxError.</li>
+            <li><strong>Plain English:</strong> a string was opened with <code>"</code> but never
+              closed before the end of the line. The parser kept reading and ran out.</li>
+            <li><strong>Line:</strong> 1.</li>
+            <li><strong>Fix:</strong> close the string before the semicolon:
+              <code>"Hello, World!"</code>.</li>
+          </ul>
+
+          <h2>③ The Fill-In Table</h2>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="border-bottom:2px solid var(--gb-1);text-align:left;">
+                <th style="padding:6px 4px;">#</th>
+                <th style="padding:6px 4px;">Type</th>
+                <th style="padding:6px 4px;">Plain English</th>
+                <th style="padding:6px 4px;">Line</th>
+                <th style="padding:6px 4px;">Fix</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;"><strong>A</strong></td>
+                <td style="padding:6px 4px;">ReferenceError</td>
+                <td style="padding:6px 4px;"><code>username</code> doesn't exist</td>
+                <td style="padding:6px 4px;">3</td>
+                <td style="padding:6px 4px;">use <code>userName</code> (case)</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;"><strong>B</strong></td>
+                <td style="padding:6px 4px;">TypeError</td>
+                <td style="padding:6px 4px;"><code>fruits</code> is undefined, has no <code>.length</code></td>
+                <td style="padding:6px 4px;">2</td>
+                <td style="padding:6px 4px;">init <code>fruits = []</code></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;"><strong>C</strong></td>
+                <td style="padding:6px 4px;">SyntaxError</td>
+                <td style="padding:6px 4px;">extra <code>}</code> with nothing to close</td>
+                <td style="padding:6px 4px;">4</td>
+                <td style="padding:6px 4px;">delete the trailing brace</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;"><strong>D</strong></td>
+                <td style="padding:6px 4px;">TypeError</td>
+                <td style="padding:6px 4px;">no method <code>getElementByID</code> (caps)</td>
+                <td style="padding:6px 4px;">1</td>
+                <td style="padding:6px 4px;">use <code>getElementById</code></td>
+              </tr>
+              <tr>
+                <td style="padding:6px 4px;"><strong>E</strong></td>
+                <td style="padding:6px 4px;">SyntaxError</td>
+                <td style="padding:6px 4px;">string never closed</td>
+                <td style="padding:6px 4px;">1</td>
+                <td style="padding:6px 4px;">add closing <code>"</code></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            Three of these are typos. ReferenceError, the lowercase <code>d</code>, the missing
+            quote. The browser flagged the line every time. I have to stop treating error text
+            as wallpaper and start treating it as a sentence I'm supposed to read.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            Errors surfaced: 5<br>
+            Categories learned: ReferenceError, TypeError, SyntaxError<br>
+            Status: I can name a bug from its message now. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="warmup.html">prev: warmup</a> · <a href="detective.html">next: console.log detective ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 1 of 5 · w2d3 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

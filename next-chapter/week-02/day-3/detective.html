@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 2 — console.log Detective / NCD W2D3</title>
+  <meta name="description" content="Exercise 2: two logic bugs, no errors. Use console.log to find the line where the value goes wrong.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔎</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="detective">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 2 / 5</div>
+            <h1>console.log Detective</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Logic bugs don't crash. The code runs, the browser shrugs, the output is
+              wrong. The only way through is to print every variable at every step until
+              the numbers stop matching what I expect.
+            </p>
+          </div>
+
+          <h2>① Bug A — Average of Three Scores</h2>
+          <p>This function should return the average of <code>80, 90, 70</code>. The right
+            answer is <strong>80</strong>. The actual answer is <strong>120</strong>. No error.</p>
+<pre><code>function calculateAverage(score1, score2, score3) {
+  const sum = score1 + score2 + score3;
+  const average = sum / 2;
+  return average;
+}
+
+const myAverage = calculateAverage(80, 90, 70);
+console.log("Your average score is: " + myAverage);</code></pre>
+
+          <h2>② Instrument the Function</h2>
+          <p>Print every variable. Don't skip steps. The first place the value
+            disagrees with my expectation is the line with the bug.</p>
+<pre><code>function calculateAverage(score1, score2, score3) {
+  console.log("score1:", score1);
+  console.log("score2:", score2);
+  console.log("score3:", score3);
+  const sum = score1 + score2 + score3;
+  console.log("sum:", sum);
+  const average = sum / 2;
+  console.log("average:", average);
+  return average;
+}</code></pre>
+
+          <h2>③ The Trace</h2>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="border-bottom:2px solid var(--gb-1);text-align:left;">
+                <th style="padding:6px 4px;">Variable</th>
+                <th style="padding:6px 4px;">Expected</th>
+                <th style="padding:6px 4px;">Actual</th>
+                <th style="padding:6px 4px;">OK?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;"><code>score1</code></td>
+                <td style="padding:6px 4px;">80</td>
+                <td style="padding:6px 4px;">80</td>
+                <td style="padding:6px 4px;">yes</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;"><code>score2</code></td>
+                <td style="padding:6px 4px;">90</td>
+                <td style="padding:6px 4px;">90</td>
+                <td style="padding:6px 4px;">yes</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;"><code>score3</code></td>
+                <td style="padding:6px 4px;">70</td>
+                <td style="padding:6px 4px;">70</td>
+                <td style="padding:6px 4px;">yes</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;"><code>sum</code></td>
+                <td style="padding:6px 4px;">240</td>
+                <td style="padding:6px 4px;">240</td>
+                <td style="padding:6px 4px;">yes</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 4px;"><code>average</code></td>
+                <td style="padding:6px 4px;">80</td>
+                <td style="padding:6px 4px;">120</td>
+                <td style="padding:6px 4px;"><strong>NO</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>④ Diagnosis + Fix</h2>
+          <p>The break is between <code>sum</code> and <code>average</code>. The line is
+            <code>const average = sum / 2;</code>. Three scores divided by 2 — that's a
+            two-score average, not three. Off-by-one in the divisor.</p>
+<pre><code>// before:
+const average = sum / 2;
+
+// after:
+const average = sum / 3;</code></pre>
+          <p>Or, since the function takes three explicit arguments, hard-code 3 — fine.
+            If the function were variadic, the divisor would be <code>scores.length</code>.</p>
+
+          <h2>⑤ Bug B — 10% Discount</h2>
+          <p>This function applies a 10% discount to prices over $100. A $150 input should
+            return <strong>135</strong>. It's returning <strong>15</strong>. No error.</p>
+<pre><code>function applyDiscount(price) {
+  if (price &gt; 100) {
+    const discounted = price * 0.10;
+    return discounted;
+  }
+  return price;
+}
+
+console.log(applyDiscount(150));  // expected 135 · got 15
+console.log(applyDiscount(80));   // expected 80  · got 80</code></pre>
+
+          <h2>⑥ Trace + Diagnosis</h2>
+          <p>Add a log inside the branch:</p>
+<pre><code>if (price &gt; 100) {
+  console.log("price:", price);          // 150
+  const discounted = price * 0.10;
+  console.log("discounted:", discounted); // 15  ← that's the discount AMOUNT, not the new price
+  return discounted;
+}</code></pre>
+          <p>The variable is misnamed and the math is incomplete. <code>price * 0.10</code> is
+            the dollar value of the discount ($15), not the discounted price ($135). A 10% off
+            sale means the customer pays <strong>90%</strong> of the sticker.</p>
+
+          <h2>⑦ The Fix</h2>
+<pre><code>function applyDiscount(price) {
+  if (price &gt; 100) {
+    return price * 0.90;     // pay 90% of original
+    // or, equivalently:
+    // return price - (price * 0.10);
+  }
+  return price;
+}</code></pre>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            Logic bugs hide in the gap between what I named a variable and what it actually holds.
+            <code>discounted</code> sounded right. It wasn't. The
+            <code>console.log</code> caught the mismatch immediately. Don't trust the variable
+            name; trust the number.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            Bugs found: 2 logic bugs, 0 errors thrown<br>
+            Tools used: <code>console.log</code>, a slow read, a notepad with expected vs actual<br>
+            Status: green. on to DevTools. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="read-error.html">prev: read the error</a> · <a href="devtools.html">next: devtools hunt ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 2 of 5 · w2d3 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

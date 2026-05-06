@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 5 — Multi-File Hunt / NCD W2D3</title>
+  <meta name="description" content="Exercise 5: a three-file task list project. Two bugs. One file is clean. Find them without hints.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="multi-file">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 5 / 5</div>
+            <h1>Multi-File Hunt</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              A small three-file task list. Two bugs spread across them. One file is clean —
+              deciding "this one's fine, move on" is part of the work. Real codebases don't
+              tell me which file the bug is in.
+            </p>
+          </div>
+
+          <h2>① The HTML — <code>debug-challenge.html</code></h2>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;My Task List&lt;/title&gt;
+    &lt;link rel="stylesheet" href="debug-style.css"&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div class="container"&gt;
+      &lt;h1&gt;My Task List&lt;/h1&gt;
+      &lt;div class="input-area"&gt;
+        &lt;input type="text" id="task-input" placeholder="Enter a task..."&gt;
+        &lt;button onclick="addTask()"&gt;Add Task&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;ul id="task-list"&gt;
+      &lt;/ol&gt;
+    &lt;/div&gt;
+    &lt;script src="debug-script.js"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+          <h2>② The CSS — <code>debug-style.css</code> (last rule)</h2>
+<pre><code>#task-list li {
+  background-color: #2d2d44;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  alignitems: center;
+}</code></pre>
+
+          <h2>③ The JS — <code>debug-script.js</code></h2>
+<pre><code>function addTask() {
+  const input    = document.getElementById("task-input");
+  const taskText = input.value;
+
+  if (taskText === "") {
+    alert("Please enter a task!");
+    return;
+  }
+
+  const taskList = document.getElementById("task-list");
+  const li       = document.createElement("li");
+  li.textContent = taskText;
+
+  const deleteBtn       = document.createElement("button");
+  deleteBtn.textContent = "Delete";
+  deleteBtn.onclick     = function () {
+    taskList.removeChild(li);
+  };
+
+  li.appendChild(deleteBtn);
+  taskList.appendChild(li);
+
+  input.value = "";
+}</code></pre>
+
+          <h2>④ How I'd Approach It</h2>
+          <ol>
+            <li>Open <code>debug-challenge.html</code>, open DevTools, refresh.</li>
+            <li>Try to add a task. Whatever's wrong shows up either as a console error,
+              a Network 404, or a visual misbehavior.</li>
+            <li>Triage by panel: Console first (errors), then Elements (broken DOM tree),
+              then Computed (CSS not applying).</li>
+          </ol>
+
+          <h2>⑤ Bug 1 — In the HTML</h2>
+          <p>Look at the list:</p>
+<pre><code>&lt;ul id="task-list"&gt;
+&lt;/ol&gt;</code></pre>
+          <p>Opens with <code>&lt;ul&gt;</code>, closes with <code>&lt;/ol&gt;</code>. Different tag.
+            The browser tries to fix it up but the DOM tree ends up unpredictable, and the
+            <code>id="task-list"</code> element doesn't always end up where the script expects.</p>
+          <p><strong>How I find it:</strong> open the Elements tab, look at the rendered DOM tree.
+            The structure won't match the source. Or, if I'm reading carefully, the closing tag
+            jumps out on a slow visual scan.</p>
+          <p><strong>Fix:</strong> close with <code>&lt;/ul&gt;</code>.</p>
+
+          <h2>⑥ Bug 2 — In the CSS</h2>
+          <p>Last rule:</p>
+<pre><code>alignitems: center;</code></pre>
+          <p>That's not a CSS property. The real one is <code>align-items</code> with a hyphen.
+            Browsers silently ignore unknown CSS properties. No console error, no visual hint
+            beyond the items not being vertically centered in the row.</p>
+          <p><strong>How I find it:</strong> open Elements, click an <code>&lt;li&gt;</code>, look
+            at the Styles panel on the right. <code>alignitems</code> appears with a strikethrough
+            or a yellow warning triangle — DevTools flags unknown properties.</p>
+          <p><strong>Fix:</strong> <code>align-items: center;</code>.</p>
+
+          <h2>⑦ The Clean File</h2>
+          <p><code>debug-script.js</code> is fine. It builds an <code>li</code>, attaches a
+            delete handler, appends, clears the input. Nothing wrong with it.</p>
+          <p>Worth saying out loud: I read the JavaScript first because the bug "felt like JS."
+            It wasn't. Once I confirmed the script's logic, I moved on. Confirming a clean file
+            is part of debugging — the alternative is rewriting code that already worked, which
+            is how new bugs get added.</p>
+
+          <h2>⑧ The Hunt Log</h2>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="border-bottom:2px solid var(--gb-1);text-align:left;">
+                <th style="padding:6px 4px;">Bug</th>
+                <th style="padding:6px 4px;">File</th>
+                <th style="padding:6px 4px;">Found via</th>
+                <th style="padding:6px 4px;">Fix</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;">mismatched list tag</td>
+                <td style="padding:6px 4px;"><code>.html</code></td>
+                <td style="padding:6px 4px;">Elements panel · slow visual read</td>
+                <td style="padding:6px 4px;"><code>&lt;/ol&gt;</code> &rarr; <code>&lt;/ul&gt;</code></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;">unknown CSS property</td>
+                <td style="padding:6px 4px;"><code>.css</code></td>
+                <td style="padding:6px 4px;">Styles panel · strikethrough warning</td>
+                <td style="padding:6px 4px;"><code>alignitems</code> &rarr; <code>align-items</code></td>
+              </tr>
+              <tr>
+                <td style="padding:6px 4px;">(none)</td>
+                <td style="padding:6px 4px;"><code>.js</code></td>
+                <td style="padding:6px 4px;">read top to bottom, decided clean</td>
+                <td style="padding:6px 4px;">no change</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            The CSS property typo is the one I'd miss if I weren't looking at DevTools. The
+            browser doesn't yell. The page just doesn't look right. That's the entire reason
+            today exists: the browser is full of silent failures, and I'm building the eye
+            for them.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            Files inspected: 3<br>
+            Bugs found: 2 (HTML close-tag, CSS property name)<br>
+            Files cleared without edits: 1 (<code>debug-script.js</code>)<br>
+            Status: end of day. tomorrow: harder bugs, sharper eye. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="fix-ai.html">prev: fix AI's bugs</a> · <a href="./">menu ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 5 of 5 · w2d3 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

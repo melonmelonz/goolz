@@ -1198,6 +1198,12 @@
       <div class="icon-img shortcut">📨</div>
       <div class="icon-label">W2D2.gbc</div>
     </div>
+    <div class="icon" tabindex="0" title="Week 2 Day 3 — Debugging Day (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-02/day-3/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-02/day-3/','_blank','noopener')">
+      <div class="icon-img shortcut">🐛</div>
+      <div class="icon-label">W2D3.gbc</div>
+    </div>
     <div class="icon" tabindex="0" title="Study Plan / Report Card" ondblclick="openWindow('win-rc')">
       <div class="icon-img">📊</div>
       <div class="icon-label">Report&nbsp;Card</div>
@@ -1253,11 +1259,15 @@
             <span class="fl-icon">📨</span>
             <span class="fl-name">Week 2 Day 2 — Forms + DOM Basics</span>
           </li>
+          <li onclick="window.open('/next-chapter/week-02/day-3/','_blank','noopener')">
+            <span class="fl-icon">🐛</span>
+            <span class="fl-name">Week 2 Day 3 — Debugging Day</span>
+          </li>
         </ul>
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">5 object(s)</div>
+      <div class="status-pane">6 object(s)</div>
     </div>
   </div>
 
@@ -2802,7 +2812,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.5.0';
+const NCD_VERSION = 'v2.6.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3444,6 +3454,19 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-06',
+      title: 'Week 2 Day 3 — Debugging Day',
+      notes: [
+        'W2D3 lives at /next-chapter/week-02/day-3/ — one warmup + five exercise carts on the same Atomic Purple GBC',
+        'Warmup: break yesterday\'s greet.html on purpose (4 sabotages, observe the symptom pattern)',
+        'Ex1 Read the Error (5 real error messages parsed: type / line / fix), Ex2 console.log Detective (two logic bugs, no thrown errors)',
+        'Ex3 DevTools Hunt (Console / Elements / Computed / Network tour), Ex4 Fix AI\'s Bugs (4 broken programs, find each one before re-prompting)',
+        'Ex5 Multi-File Hunt: 3-file task list, 2 bugs spread across HTML + CSS, JS file is intentionally clean',
+        'Course Materials window + desktop shortcut updated with W2D3.gbc',
+      ]
+    },
+    {
+      version: 'v2.5.0',
       date: '2026-05-04',
       title: 'Week 2 Day 2 — Forms + DOM basics',
       notes: [

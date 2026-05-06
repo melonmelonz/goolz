@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 3 — DevTools Hunt / NCD W2D3</title>
+  <meta name="description" content="Exercise 3: a five-stop tour of the browser DevTools. Console, Elements, Network, Computed, live editing.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="devtools">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 3 / 5</div>
+            <h1>DevTools Hunt</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Open any HTML page I've built this week. Press <kbd>F12</kbd> (or
+              <kbd>Cmd+Opt+I</kbd> on Mac). The dev tools panel is the difference between
+              guessing and seeing. Five challenges, one per panel.
+            </p>
+          </div>
+
+          <h2>① Challenge 1 — Console Tab</h2>
+          <ul>
+            <li><code>2 + 2</code> → <code>4</code>. The console is a live JavaScript REPL on
+              the current page.</li>
+            <li><code>document.title</code> → returns the string in <code>&lt;title&gt;</code>
+              for whatever tab I'm on.</li>
+            <li><code>document.title = "I changed the title!"</code> → the browser tab text
+              updates immediately. The console can mutate live page state.</li>
+            <li><strong>Lesson:</strong> the Console is a sandbox for experiments. If I'm not
+              sure what a function returns, ask it directly here before I write it into a file.</li>
+          </ul>
+
+          <h2>② Challenge 2 — Elements Tab</h2>
+          <ul>
+            <li>Click the main heading. The Styles panel on the right shows every CSS rule
+              touching it, in cascade order — newest, most specific on top.</li>
+            <li>Double-click a color value, change to <code>red</code>. The page repaints
+              instantly. Nothing was saved to disk; the changes live in the browser memory only.</li>
+            <li>Add a new declaration: type <code>text-decoration: underline;</code> in the
+              <code>element.style</code> block. It applies. This is how I prototype CSS
+              tweaks before committing them.</li>
+            <li><strong>Lesson:</strong> Elements + Styles is for "what's actually being applied?"
+              When the page doesn't look right and the CSS file <em>seems</em> correct, the
+              cascade view tells me which rule is winning.</li>
+          </ul>
+
+          <h2>③ Challenge 3 — Box Model</h2>
+          <p>Click any element, switch to the <strong>Computed</strong> tab. Scroll to the
+            box model diagram at the bottom. Four nested rectangles: content, padding, border, margin.</p>
+          <ul>
+            <li>Each side has its own pixel value, not the shorthand. If I wrote
+              <code>padding: 12px;</code>, the diagram still shows <code>12 / 12 / 12 / 12</code>.</li>
+            <li>Hover over the page element while this is open — the same colored overlay highlights
+              the actual content/padding/border/margin regions on screen.</li>
+            <li><strong>Lesson:</strong> the box model is where "why is there extra space here?"
+              questions get answered. It's almost always margin or padding I forgot about.</li>
+          </ul>
+
+          <h2>④ Challenge 4 — Network Tab</h2>
+          <p>Switch to Network, then refresh the page. Every request the browser made appears
+            as a row.</p>
+          <ul>
+            <li>HTML, CSS, JS, images, fonts, API calls — all there with status code, size, time.</li>
+            <li>A <code>404</code> shows up in red. That's how I catch broken image paths or
+              missing CSS files faster than reading my code.</li>
+            <li>Click any row. The right pane has Headers, Response, Preview. For a CSS file,
+              Preview shows my actual stylesheet. For a JSON API call, Preview gives a tree view.</li>
+            <li><strong>Lesson:</strong> if the page is "missing something" and the source code
+              looks fine, Network tells me what the browser actually fetched. Fetched is truth.</li>
+          </ul>
+
+          <h2>⑤ Challenge 5 — Live Editing</h2>
+          <ul>
+            <li>Back to Elements. Find a <code>&lt;p&gt;</code> on the page. Double-click the
+              text content in the panel. Retype it: "the chicken merchant has a knife."</li>
+            <li>The page updates. Take a screenshot. Refresh the page. The change is gone.</li>
+            <li><strong>Why it disappears:</strong> DevTools mutated the in-memory DOM only. The
+              source HTML file on disk is untouched. Refresh re-fetches the original file and
+              starts over. Useful for testing copy changes; useless for persistence.</li>
+            <li><strong>Lesson:</strong> DevTools is a sandbox, not an editor. To save a change,
+              I have to put it in the source file. Same goes for CSS edits in Styles — they
+              evaporate on refresh.</li>
+          </ul>
+
+          <h2>⑥ The Hunt Map</h2>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="border-bottom:2px solid var(--gb-1);text-align:left;">
+                <th style="padding:6px 4px;">When I'm looking for...</th>
+                <th style="padding:6px 4px;">Open this</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;">JS errors and <code>console.log</code> output</td>
+                <td style="padding:6px 4px;">Console</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;">"why is this CSS rule not winning?"</td>
+                <td style="padding:6px 4px;">Elements → Styles</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;">"why is there a gap I didn't ask for?"</td>
+                <td style="padding:6px 4px;">Elements → Computed → box model</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gb-1);">
+                <td style="padding:6px 4px;">"why isn't this image / API / file loading?"</td>
+                <td style="padding:6px 4px;">Network</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 4px;">"what does this code return right now?"</td>
+                <td style="padding:6px 4px;">Console (REPL)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            DevTools is the cheat sheet that comes with every browser, and most beginners
+            never open it. After today I never close it.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            Tabs surveyed: Console, Elements, Computed, Network<br>
+            Trick learned: Network shows <em>truth</em>, source shows <em>intent</em><br>
+            Status: tools at hand. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="detective.html">prev: console.log detective</a> · <a href="fix-ai.html">next: fix AI's bugs ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 3 of 5 · w2d3 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

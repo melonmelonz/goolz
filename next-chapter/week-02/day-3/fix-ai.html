@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 4 — Fix AI's Bugs / NCD W2D3</title>
+  <meta name="description" content="Exercise 4: four AI-generated programs, one bug each. Find each one without re-prompting. Then learn how to describe a bug to AI when I do need help.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="fix-ai">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXERCISE 4 / 5</div>
+            <h1>Fix AI's Bugs</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Four small programs. Each one has exactly one bug. The rule for this
+              exercise: I find it before I ask AI. Re-prompting until something works
+              is the habit I'm specifically training out of.
+            </p>
+          </div>
+
+          <h2>① Program 1 — Greeting Generator</h2>
+<pre><code>&lt;h1 id="greeting"&gt;&lt;/h1&gt;
+&lt;script&gt;
+  const name = prompt("What is your name?");
+  const hour = new Date().getHours();
+  let greeting;
+
+  if (hour &lt; 12) {
+    greeting = "Good morning, " + name + "!";
+  } else if (hour &lt; 18) {
+    greeting = "Good afternoon, " + name + "!";
+  } else {
+    greeting = "Good evening, " + name + "!";
+  }
+
+  document.getElementById("greetng").textContent = greeting;
+&lt;/script&gt;</code></pre>
+          <p><strong>Symptom:</strong> heading stays blank. Console:
+            <code>Cannot set properties of null (setting 'textContent')</code>.</p>
+          <p><strong>Bug:</strong> last line —
+            <code>getElementById("greetng")</code> is missing the <code>i</code>. The lookup
+            returns <code>null</code>, then <code>null.textContent</code> blows up.</p>
+          <p><strong>Fix:</strong> <code>getElementById("greeting")</code>.</p>
+
+          <h2>② Program 2 — Color Changer</h2>
+<pre><code>&lt;button onclick="changeColor()"&gt;Change Color&lt;/button&gt;
+&lt;script&gt;
+  function changeColor() {
+    const colors = ["red","blue","green","purple","orange"];
+    const i = Math.floor(Math.random() * colors.length);
+    const selected = colors[i];
+    document.querySelector("h1").style.colour = selected;
+  }
+&lt;/script&gt;</code></pre>
+          <p><strong>Symptom:</strong> click does nothing. Console: clean. The button isn't broken,
+            the function ran, the color just didn't change.</p>
+          <p><strong>Bug:</strong> <code>style.colour</code>. CSS-in-JS uses American spelling.
+            Setting an unknown property on <code>style</code> doesn't error — JS quietly stores it
+            as a custom property and the browser ignores it.</p>
+          <p><strong>Fix:</strong> <code>style.color = selected;</code>.</p>
+          <p><strong>Pattern:</strong> if a click "does nothing" with no error, log inside the
+            handler first. <code>console.log("ran")</code> at the top of the function tells me
+            whether the listener fired or not. From there I know which half is broken.</p>
+
+          <h2>③ Program 3 — Counter</h2>
+<pre><code>&lt;h1&gt;Count: &lt;span id="count"&gt;0&lt;/span&gt;&lt;/h1&gt;
+&lt;button onclick="increment()"&gt;Add 1&lt;/button&gt;
+&lt;script&gt;
+  let count = 0;
+  function increment() {
+    count = count + 1;
+    document.getElementById("count").textContent = "count";
+  }
+&lt;/script&gt;</code></pre>
+          <p><strong>Symptom:</strong> first click changes the display from <code>0</code> to the
+            literal word <code>count</code> and never changes again. Variable updates fine; the
+            display doesn't reflect it.</p>
+          <p><strong>Bug:</strong> the right-hand side is the string <code>"count"</code>, not the
+            variable <code>count</code>. Quotes turn it from a name into a value.</p>
+          <p><strong>Fix:</strong> drop the quotes:
+            <code>textContent = count;</code>.</p>
+
+          <h2>④ Program 4 — Temperature Message</h2>
+<pre><code>&lt;p id="message"&gt;&lt;/p&gt;
+&lt;script&gt;
+  const temp = prompt("Enter the temperature in Fahrenheit:");
+  if (temp &gt; 85) {
+    message = "It's hot outside!";
+  } else if (temp &gt; 60) {
+    message = "Nice weather!";
+  } else {
+    message = "It's cold! Bundle up!";
+  }
+  document.getElementById("message").textContent = message;
+&lt;/script&gt;</code></pre>
+          <p><strong>Symptom:</strong> entering <code>9</code> still says "It's hot outside!"
+            That should be cold.</p>
+          <p><strong>Bug:</strong> <code>prompt()</code> returns a string, not a number. The
+            comparison <code>"9" &gt; 85</code> coerces both to strings (lexicographic order)
+            because at least one side is a string in some browser paths — and even when JS coerces
+            the other way, the literal trap is that string comparison happens whenever you don't
+            convert the input. <code>"9"</code> &gt; <code>"85"</code> is true: the character
+            <code>9</code> sorts after <code>8</code>.</p>
+          <p><strong>Fix:</strong> coerce the input to a number up front.</p>
+<pre><code>const temp = Number(prompt("Enter the temperature in Fahrenheit:"));</code></pre>
+          <p>Now <code>9 &gt; 85</code> is straight number math and the branches work.</p>
+          <p><strong>Pattern:</strong> any user input that came from <code>prompt</code>,
+            <code>input.value</code>, <code>URL params</code>, <code>localStorage</code> — it's
+            a string. Convert at the boundary. Once it's typed correctly, downstream code stays
+            sane.</p>
+
+          <h2>⑤ How to Describe a Bug to AI</h2>
+          <p>Say I get stuck and AI is the right next step. The format that gets a useful answer:</p>
+<pre><code>I'm working on [project, one sentence].
+
+What I expected:
+  [the correct behavior, in concrete terms]
+
+What actually happens:
+  [the wrong behavior, in concrete terms]
+
+Error message:
+  [paste the full stack trace, or write "no error"]
+
+Code:
+  [the relevant section, not the whole file]</code></pre>
+
+          <h3 style="color:var(--gb-1);font-size:16px;margin-top:14px;">Bad vs good — same bug</h3>
+          <div class="bubble" style="background:#5a1f1f;color:#ffd1d1;border-color:#8a3a3a;">
+            <span class="who" style="color:#ffb1b1;">BAD</span>
+            "my code doesn't work, help"
+          </div>
+          <div class="bubble" style="background:#1f3a5a;color:#cfe3ff;border-color:#3a5a8a;">
+            <span class="who" style="color:#9bc1ff;">GOOD</span>
+            I'm building a tip calculator. When I enter a $50 bill and 20% tip, I expect the tip to
+            be <code>$10</code>. The page shows <code>$1000</code>. There's no error in the console.
+            The relevant line: <code>const tip = bill * tipPercent;</code>.
+          </div>
+
+          <p>The "good" version contains the answer almost on its own. AI's job is to confirm
+            and suggest <code>bill * (tipPercent / 100)</code>. The "bad" version forces AI to
+            guess at twelve possible problems, half of which won't apply.</p>
+
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            Same principle as prompting from Day 2: specifics in, specifics out. Vague in,
+            generic and probably-wrong out. The bug-description format <em>is</em> a prompt;
+            it's just one for a debugging context.
+          </div>
+
+          <h2>⑥ The "I'm Stuck" Protocol</h2>
+          <p>The order I run when I hit a wall. The temptation is to skip to step 5. The skill
+            is in steps 1 - 4.</p>
+          <ol>
+            <li>Read the error message. Actually read it.</li>
+            <li>Check the basics: typos, missing semicolons, unclosed tags, wrong file path.</li>
+            <li>Add <code>console.log</code>. Print the variables. Where does the value go wrong?</li>
+            <li>Search the error string. Someone has had this exact error before.</li>
+            <li>Ask AI with the structured description above.</li>
+            <li>Ask a peer. Even just explaining it out loud often surfaces the answer.</li>
+            <li>Ask a TA.</li>
+            <li>Ask the instructor.</li>
+          </ol>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            AI bugs fixed without re-prompting: 4 / 4<br>
+            Patterns earned: typo · DOM property spelling · string vs variable · string vs number coercion<br>
+            Status: now I argue with AI from a position of evidence. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="devtools.html">prev: devtools hunt</a> · <a href="multi-file.html">next: multi-file hunt ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex 4 of 5 · w2d3 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

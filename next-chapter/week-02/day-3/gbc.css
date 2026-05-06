@@ -1,0 +1,1416 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   ATOMIC PURPLE GAME BOY COLOR
+   Penn's Week 2 Day 1 — translucent grape shell, visible PCB, GB-green LCD
+   ────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Silkscreen:wght@400;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ATOMIC PURPLE — translucent grape, see-through plastic */
+  --shell-1:        rgba(178, 132, 220, 0.62);   /* light purple highlight */
+  --shell-2:        rgba(132,  85, 190, 0.78);   /* mid grape body */
+  --shell-3:        rgba( 92,  52, 150, 0.90);   /* deep grape rim */
+  --shell-edge:     #4a2a82;                     /* solid purple edge */
+  --shell-darker:   #2c1450;                     /* shadow inside */
+  --shell-glint:    rgba(255, 255, 255, 0.55);   /* plastic reflection */
+  --shell-haze:     rgba(220, 195, 255, 0.35);   /* milky tint */
+
+  /* PCB visible THROUGH the translucent plastic */
+  --pcb-green:      #2a5d3c;
+  --pcb-green-dk:   #173825;
+  --pcb-trace:      #c89a26;
+  --pcb-solder:     #7b6b3a;
+  --pcb-cap-blue:   #1a3a78;
+  --pcb-cap-black:  #0c0c10;
+
+  /* Screen — authentic Game Boy 4-color palette */
+  --gb-0: #0f380f;   /* darkest — ink */
+  --gb-1: #306230;   /* dark — shading */
+  --gb-2: #8bac0f;   /* mid — accent */
+  --gb-3: #9bbc0f;   /* lightest — LCD background */
+  --gb-bezel: #1a1410;
+
+  /* Hardware accents */
+  --btn-red:        #6b1530;
+  --btn-red-hi:     #a3284a;
+  --btn-red-lo:     #420a1c;
+  --btn-gray:       #2d2a36;
+  --btn-gray-hi:    #58535f;
+  --led-red:        #ff2030;
+  --led-glow:       #ff8090;
+  --screw:          #4a4554;
+  --screw-slot:     #161318;
+
+  /* Background — outside the console */
+  --room-1: #0a0612;
+  --room-2: #1a0e2e;
+
+  --shadow-deep: 0 30px 60px -10px rgba(0,0,0,0.85), 0 12px 28px -8px rgba(80,30,140,0.4);
+}
+
+html, body { min-height: 100%; }
+
+body {
+  font-family: 'VT323', monospace;
+  background:
+    radial-gradient(ellipse at 20% -10%, rgba(120, 60, 200, 0.25), transparent 55%),
+    radial-gradient(ellipse at 100% 110%, rgba(40, 200, 150, 0.18), transparent 55%),
+    linear-gradient(180deg, var(--room-2) 0%, var(--room-1) 100%);
+  background-attachment: fixed;
+  color: var(--gb-0);
+  min-height: 100vh;
+  padding: 36px 18px 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* faint scanline overlay on the whole room — CRT vibe */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255,255,255,0.018) 0 2px,
+    transparent 2px 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: overlay;
+}
+
+/* tiny dust specks */
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.25), transparent 50%),
+    radial-gradient(1px 1px at 78% 64%, rgba(180,255,200,0.18), transparent 50%),
+    radial-gradient(1px 1px at 33% 88%, rgba(220,180,255,0.18), transparent 50%),
+    radial-gradient(1px 1px at 92% 22%, rgba(255,200,255,0.18), transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* breadcrumb above the console */
+.crumb {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 2;
+}
+.crumb:hover { color: var(--gb-3); text-shadow: 0 0 8px var(--gb-2); }
+.crumb::before { content: "◄ "; color: var(--gb-2); }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CONSOLE
+   ────────────────────────────────────────────────────────────────────────── */
+.gbc {
+  --w: 460px;
+  width: min(var(--w), 96vw);
+  position: relative;
+  border-radius: 14px 14px 60px 14px;
+  padding: 18px 22px 26px;
+  /* the translucent shell — gradient + slight noise */
+  background:
+    /* top glint */
+    linear-gradient(180deg, var(--shell-glint) 0%, transparent 8%),
+    /* main grape body */
+    linear-gradient(165deg,
+      var(--shell-1) 0%,
+      var(--shell-2) 35%,
+      var(--shell-2) 65%,
+      var(--shell-3) 100%
+    );
+  border: 1px solid var(--shell-edge);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.55),
+    inset 0 -3px 0 rgba(40,15,80,0.55),
+    inset 2px 0 0 rgba(255,255,255,0.25),
+    inset -2px 0 0 rgba(40,15,80,0.35),
+    var(--shadow-deep);
+  z-index: 1;
+}
+
+/* PCB GHOSTING — visible internals seen through the translucent purple */
+.gbc::before {
+  content: "";
+  position: absolute;
+  inset: 6px 8px 8px 8px;
+  border-radius: 10px 10px 50px 10px;
+  z-index: -1;
+  background:
+    /* circuit traces (gold) */
+    repeating-linear-gradient(28deg,
+      transparent 0 14px,
+      rgba(200,154, 38, 0.15) 14px 15px,
+      transparent 15px 30px),
+    repeating-linear-gradient(-62deg,
+      transparent 0 22px,
+      rgba(200,154, 38, 0.12) 22px 23px,
+      transparent 23px 46px),
+    /* solder pads */
+    radial-gradient(circle at 12% 18%, rgba(200,154,38,0.45) 0 2px, transparent 3px),
+    radial-gradient(circle at 24% 72%, rgba(200,154,38,0.38) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 36%, rgba(200,154,38,0.42) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 84%, rgba(200,154,38,0.38) 0 2px, transparent 3px),
+    radial-gradient(circle at 58% 22%, rgba(200,154,38,0.32) 0 2px, transparent 3px),
+    /* component shadows */
+    radial-gradient(circle at 18% 64%, rgba(12,12,16,0.55) 0 6px, transparent 8px),
+    radial-gradient(circle at 84% 78%, rgba(26,58,120,0.55) 0 5px, transparent 7px),
+    radial-gradient(circle at 28% 30%, rgba(12,12,16,0.45) 0 4px, transparent 6px),
+    /* PCB green base */
+    radial-gradient(ellipse at 50% 60%, var(--pcb-green) 0%, var(--pcb-green-dk) 90%);
+  filter: blur(0.4px);
+  opacity: 0.85;
+}
+
+/* extra PCB capacitors / chips peeking through (decorative) */
+.gbc-internals {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 14px 14px 60px 14px;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+}
+.gbc-internals span {
+  position: absolute;
+  display: block;
+  background: var(--pcb-cap-black);
+  border: 1px solid rgba(0,0,0,0.6);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.08);
+}
+.gbc-internals span:nth-child(1) { left: 8%;  top: 78%;  width: 22px; height: 10px; background: var(--pcb-cap-blue); }
+.gbc-internals span:nth-child(2) { left: 86%; top: 12%;  width:  8px; height:  8px; border-radius: 50%; background: #d0a020; }
+.gbc-internals span:nth-child(3) { left: 4%;  top: 40%;  width:  6px; height: 14px; background: #c89a26; }
+.gbc-internals span:nth-child(4) { left: 92%; top: 62%;  width: 10px; height:  4px; background: #c89a26; }
+.gbc-internals span:nth-child(5) { left: 50%; top: 92%;  width: 28px; height:  6px; background: var(--pcb-cap-black); transform: translateX(-50%); }
+.gbc-internals span:nth-child(6) { left: 14%; top: 16%;  width:  4px; height:  4px; border-radius: 50%; background: #c89a26; }
+.gbc-internals span:nth-child(7) { left: 78%; top: 88%;  width:  6px; height:  6px; border-radius: 50%; background: #c89a26; }
+
+/* CARTRIDGE SLOT — recessed into the top of the shell, no protrusion */
+.cart-slot {
+  position: absolute;
+  top: 4px; left: 50%;
+  transform: translateX(-50%);
+  width: 52%;
+  height: 4px;
+  background: linear-gradient(180deg, rgba(10,4,24,0.85) 0%, rgba(20,8,40,0.55) 100%);
+  border-radius: 2px;
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,0.7),
+    0 1px 0 rgba(255,255,255,0.18);
+}
+.cart-slot::before, .cart-slot::after {
+  content: "";
+  position: absolute;
+  top: 1px; bottom: 1px; width: 1.5px;
+  background: rgba(255,255,255,0.12);
+}
+.cart-slot::before { left: 8%; }
+.cart-slot::after  { right: 8%; }
+
+/* SCREWS — corners (visible through translucent plastic) */
+.screw {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #6c6478 0%, var(--screw) 60%, #1a1820 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.6),
+    inset 1px 1px 1px rgba(255,255,255,0.2),
+    0 1px 1px rgba(0,0,0,0.4);
+  z-index: 4;
+}
+.screw::before, .screw::after {
+  content: "";
+  position: absolute;
+  background: var(--screw-slot);
+  border-radius: 1px;
+}
+/* phillips-head cross */
+.screw::before { left: 50%; top: 18%; bottom: 18%; width: 1.5px; transform: translateX(-50%); }
+.screw::after  { top: 50%; left: 18%; right: 18%; height: 1.5px; transform: translateY(-50%); }
+
+.screw.tl { top: 7px;  left: 7px; }
+.screw.tr { top: 7px;  right: 7px; }
+.screw.bl { bottom: 9px; left: 7px; }
+.screw.br { bottom: 9px; right: 7px; }
+.screw.ml { top: 50%; left: 7px; transform: translateY(-50%); }
+.screw.mr { top: 50%; right: 7px; transform: translateY(-50%); }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   SCREEN BEZEL  (the dark plastic surrounding the LCD)
+   ────────────────────────────────────────────────────────────────────────── */
+.bezel {
+  position: relative;
+  background: linear-gradient(180deg, #1a1410 0%, #0a0606 100%);
+  border-radius: 8px 8px 22px 22px;
+  padding: 28px 22px 38px;
+  box-shadow:
+    inset 0 0 0 2px #050303,
+    inset 0 3px 6px rgba(0,0,0,0.7),
+    inset 0 -2px 0 rgba(255,255,255,0.04),
+    0 1px 0 rgba(255,255,255,0.18),
+    0 4px 0 rgba(20,8,40,0.45);
+  margin-bottom: 18px;
+  z-index: 2;
+}
+
+/* "GAME BOY COLOR" wordmark above screen */
+.brand {
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.brand .nintendo {
+  color: #d0c5f0;
+  font-style: italic;
+  font-size: 9px;
+  letter-spacing: 0;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+.brand .gb {
+  color: #d0c5f0;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+.brand .color {
+  color: #ff5577;
+  text-shadow: 0 0 4px rgba(255,85,119,0.6), 0 1px 0 rgba(0,0,0,0.6);
+}
+
+/* POWER LED — small red dot, bottom-left of bezel, with tiny label.
+   Real GBC has the LED below-left of the screen, not floating midway. */
+.power {
+  position: absolute;
+  left: 16px; bottom: 12px;
+  display: flex; flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+.power .led {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--led-glow) 0%, var(--led-red) 55%, #5a0010 100%);
+  box-shadow:
+    0 0 4px var(--led-red),
+    0 0 9px rgba(255,40,60,0.45),
+    inset 0 0 1px rgba(255,255,255,0.5);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.power .label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5px;
+  color: #c0b8d8;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.55);
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.62; }
+}
+
+/* THE ACTUAL SCREEN */
+.screen {
+  position: relative;
+  background: var(--gb-3);
+  border: 2px solid var(--gb-bezel);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 2px #1a1410,
+    inset 0 0 24px rgba(15,56,15,0.45),
+    inset 0 0 4px rgba(15,56,15,0.7);
+  overflow: hidden;
+  font-family: 'VT323', monospace;
+  color: var(--gb-0);
+}
+.screen-inner {
+  max-height: 540px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 20px;
+  font-size: 19px;
+  line-height: 1.4;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gb-1) var(--gb-2);
+  position: relative;
+  z-index: 1;
+}
+.screen-inner::-webkit-scrollbar { width: 8px; }
+.screen-inner::-webkit-scrollbar-track { background: var(--gb-2); }
+.screen-inner::-webkit-scrollbar-thumb {
+  background: var(--gb-1);
+  border: 1px solid var(--gb-0);
+}
+
+/* LCD scanlines + pixel grid for authentic dot-matrix feel */
+.screen::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(0deg,
+      transparent 0 2px,
+      rgba(15,56,15,0.07) 2px 3px),
+    repeating-linear-gradient(90deg,
+      transparent 0 2px,
+      rgba(15,56,15,0.05) 2px 3px);
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: multiply;
+}
+/* subtle screen reflection */
+.screen::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 60%; height: 30%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 70%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* "DOT MATRIX WITH STEREO SOUND" tagline below the screen */
+.dot-matrix {
+  position: absolute;
+  bottom: 12px; left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Silkscreen', monospace;
+  font-size: 8px;
+  color: #c0b8d8;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   SCREEN TYPOGRAPHY  — content rendered INSIDE the LCD
+   ────────────────────────────────────────────────────────────────────────── */
+.screen-inner h1, .screen-inner h2, .screen-inner h3 {
+  font-family: 'Press Start 2P', monospace;
+  color: var(--gb-0);
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+.screen-inner h1 { font-size: 14px; letter-spacing: 0.5px; }
+.screen-inner h2 { font-size: 11px; margin-top: 22px; }
+.screen-inner h3 { font-size: 9px;  margin-top: 18px; color: var(--gb-1); }
+
+.screen-inner p {
+  margin-bottom: 12px;
+}
+
+.screen-inner a {
+  color: var(--gb-1);
+  text-decoration: none;
+  border-bottom: 2px solid var(--gb-1);
+  font-weight: bold;
+  padding: 0 1px;
+}
+.screen-inner a:hover {
+  background: var(--gb-1);
+  color: var(--gb-3);
+}
+
+.screen-inner ul, .screen-inner ol {
+  margin: 8px 0 14px 22px;
+}
+.screen-inner li { margin-bottom: 4px; }
+.screen-inner ul { list-style: none; padding-left: 4px; }
+.screen-inner ul li::before {
+  content: "►";
+  color: var(--gb-1);
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.screen-inner code, .screen-inner kbd {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  background: var(--gb-2);
+  color: var(--gb-0);
+  padding: 2px 5px;
+  border: 1px solid var(--gb-1);
+  border-radius: 2px;
+}
+.screen-inner pre {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  background: var(--gb-0);
+  color: var(--gb-3);
+  padding: 12px 14px;
+  border-radius: 4px;
+  margin: 10px 0 16px;
+  overflow-x: auto;
+  line-height: 1.3;
+  white-space: pre;
+  border: 2px solid var(--gb-1);
+}
+.screen-inner pre code {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+
+/* TABLE — for the tag analysis */
+.screen-inner table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 10px 0 16px;
+  background: var(--gb-3);
+  border: 2px solid var(--gb-0);
+  font-size: 16px;
+}
+.screen-inner th, .screen-inner td {
+  padding: 8px 9px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--gb-1);
+  border-right: 1px solid var(--gb-1);
+}
+.screen-inner th:last-child, .screen-inner td:last-child { border-right: none; }
+.screen-inner tr:last-child td { border-bottom: none; }
+.screen-inner thead th {
+  background: var(--gb-0);
+  color: var(--gb-3);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  padding: 10px 9px;
+}
+.screen-inner tbody tr:nth-child(odd) td { background: rgba(48, 98, 48, 0.10); }
+.screen-inner td code {
+  font-size: 9px;
+  background: var(--gb-1);
+  color: var(--gb-3);
+  border-color: var(--gb-0);
+}
+
+/* CALLOUT BOXES — for "questions" sections */
+.callout {
+  background: var(--gb-2);
+  border: 2px solid var(--gb-0);
+  border-left-width: 8px;
+  padding: 12px 14px;
+  margin: 14px 0;
+  font-size: 17px;
+}
+.callout strong {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gb-0);
+  display: block;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* CARTRIDGE — used on the menu page */
+.cart-list {
+  display: grid;
+  gap: 14px;
+  margin: 14px 0 6px;
+  list-style: none !important;
+  padding: 0 !important;
+}
+.cart-list li::before { content: none !important; }
+.cart {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--gb-3);
+  border: 2px solid var(--gb-0);
+  padding: 10px 12px;
+  text-decoration: none !important;
+  color: var(--gb-0) !important;
+  border-bottom-width: 4px !important;
+  border-right-width: 4px !important;
+  transition: transform 0.08s steps(2), background 0.08s;
+}
+.cart:hover {
+  background: var(--gb-2) !important;
+  color: var(--gb-0) !important;
+  transform: translate(2px, 2px);
+  border-bottom-width: 2px !important;
+  border-right-width: 2px !important;
+}
+.cart .cart-pic {
+  width: 38px; height: 32px;
+  background: var(--gb-1);
+  border: 2px solid var(--gb-0);
+  flex: 0 0 auto;
+  position: relative;
+}
+.cart .cart-pic::before {
+  content: "";
+  position: absolute;
+  top: 4px; left: 4px; right: 4px;
+  height: 6px;
+  background: var(--gb-0);
+}
+.cart .cart-pic::after {
+  content: "";
+  position: absolute;
+  bottom: 4px; left: 50%;
+  transform: translateX(-50%);
+  width: 50%; height: 8px;
+  background: var(--gb-2);
+  border: 1px solid var(--gb-0);
+}
+.cart .cart-meta { flex: 1; }
+.cart .cart-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+.cart .cart-sub {
+  font-size: 14px;
+  display: block;
+  color: var(--gb-1);
+}
+
+/* boot/title block */
+.boot {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.boot .ribbon {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  background: var(--gb-0);
+  color: var(--gb-3);
+  padding: 5px 9px;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+/* blinky cursor */
+.blink {
+  display: inline-block;
+  background: var(--gb-0);
+  width: 9px;
+  height: 18px;
+  vertical-align: -3px;
+  animation: blink 1.05s steps(2) infinite;
+  margin-left: 4px;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CONTROLS — D-pad, A/B, Start/Select, speaker
+   ────────────────────────────────────────────────────────────────────────── */
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  margin: 4px 4px 8px;
+  position: relative;
+  z-index: 3;
+}
+
+/* D-PAD */
+.dpad {
+  position: relative;
+  width: 78px; height: 78px;
+  justify-self: start;
+  margin-left: 4px;
+}
+.dpad::before, .dpad::after {
+  content: "";
+  position: absolute;
+  background: linear-gradient(180deg, #2a2530 0%, #0e0c14 100%);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.65),
+    0 1px 0 rgba(255,255,255,0.1),
+    0 2px 4px rgba(0,0,0,0.5);
+}
+.dpad::before { /* horizontal bar */
+  left: 0; right: 0;
+  top: 50%; height: 26px;
+  transform: translateY(-50%);
+}
+.dpad::after { /* vertical bar */
+  top: 0; bottom: 0;
+  left: 50%; width: 26px;
+  transform: translateX(-50%);
+}
+.dpad .dot {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px; height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  z-index: 2;
+}
+/* directional notches */
+.dpad .arrow {
+  position: absolute;
+  width: 0; height: 0;
+  z-index: 2;
+}
+.dpad .arrow.up    { top: 6px;  left: 50%; transform: translateX(-50%); border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 6px solid rgba(255,255,255,0.18); }
+.dpad .arrow.down  { bottom: 6px;left: 50%; transform: translateX(-50%); border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid rgba(255,255,255,0.18); }
+.dpad .arrow.left  { left: 6px; top: 50%; transform: translateY(-50%); border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-right: 6px solid rgba(255,255,255,0.18); }
+.dpad .arrow.right { right: 6px;top: 50%; transform: translateY(-50%); border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 6px solid rgba(255,255,255,0.18); }
+
+/* A / B BUTTONS */
+.ab {
+  position: relative;
+  justify-self: end;
+  width: 130px; height: 78px;
+  transform: rotate(-22deg);
+  transform-origin: center;
+  margin-right: 6px;
+}
+.btn-ab {
+  position: absolute;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, var(--btn-red-hi) 0%, var(--btn-red) 45%, var(--btn-red-lo) 100%);
+  border: 1px solid #1a0008;
+  box-shadow:
+    inset 0 2px 2px rgba(255,255,255,0.35),
+    inset 0 -2px 2px rgba(0,0,0,0.6),
+    0 2px 3px rgba(0,0,0,0.55),
+    0 0 0 4px rgba(40,15,80,0.18);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transform: rotate(22deg);
+}
+.btn-ab.b { left: 0;  top: 22px; }
+.btn-ab.a { right: 0; top: 0; }
+.btn-ab:active {
+  box-shadow:
+    inset 0 -2px 2px rgba(255,255,255,0.25),
+    inset 0 2px 3px rgba(0,0,0,0.6),
+    0 1px 1px rgba(0,0,0,0.4);
+  transform: rotate(22deg) translateY(1px);
+}
+
+/* button labels (small, on shell beside each button) */
+.ab-label {
+  position: absolute;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--shell-edge);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+  transform: rotate(22deg);
+  pointer-events: none;
+}
+.ab-label.b { left: -4px; bottom: 8px; }
+.ab-label.a { right: -4px; bottom: -10px; }
+
+/* START / SELECT */
+.ss {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin: 4px 0 14px;
+  transform: rotate(-22deg);
+  position: relative;
+  z-index: 3;
+}
+.ss .btn-ss {
+  width: 38px; height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--btn-gray-hi) 0%, var(--btn-gray) 60%, #14121a 100%);
+  border: 1px solid #06040a;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 -1px 0 rgba(0,0,0,0.6),
+    0 1px 2px rgba(0,0,0,0.45);
+}
+.ss .btn-label {
+  position: relative;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: var(--shell-edge);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+  margin-top: 22px;
+}
+.ss-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* SPEAKER GRILLE — bottom right */
+.speaker {
+  position: absolute;
+  right: 22px; bottom: 22px;
+  width: 56px; height: 50px;
+  transform: rotate(-22deg);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 2;
+}
+.speaker span {
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(20,8,40,0.55) 20%, rgba(20,8,40,0.7) 80%, transparent 100%);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.6);
+}
+.speaker span:nth-child(1) { width: 70%; align-self: flex-end; }
+.speaker span:nth-child(2) { width: 90%; align-self: flex-end; }
+.speaker span:nth-child(3) { width: 100%; }
+.speaker span:nth-child(4) { width: 90%; }
+.speaker span:nth-child(5) { width: 78%; }
+.speaker span:nth-child(6) { width: 60%; }
+
+/* tiny "headphone / volume" dot on shell side */
+.volume-wheel {
+  position: absolute;
+  right: -3px; top: 36%;
+  width: 6px; height: 32px;
+  background: linear-gradient(180deg, #4a2a82 0%, #2c1450 100%);
+  border-radius: 0 4px 4px 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 -1px 0 rgba(0,0,0,0.5);
+  z-index: 3;
+}
+.volume-wheel::before {
+  content: "";
+  position: absolute;
+  inset: 4px 1px;
+  background: repeating-linear-gradient(0deg,
+    rgba(255,255,255,0.25) 0 1px,
+    transparent 1px 3px);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   FOOTER below the console
+   ────────────────────────────────────────────────────────────────────────── */
+.footer-tag {
+  margin-top: 22px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: rgba(255,255,255,0.32);
+  letter-spacing: 1px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+.footer-tag a {
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(255,255,255,0.4);
+}
+.footer-tag a:hover { color: var(--gb-3); }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   "AI-GENERATED" PLAIN HTML preview window inside the screen
+   shows the community-center page styleless, like a real browser would
+   ────────────────────────────────────────────────────────────────────────── */
+.preview {
+  background: var(--gb-3);
+  border: 2px solid var(--gb-0);
+  margin: 10px 0 16px;
+  font-family: 'VT323', monospace;
+}
+.preview-bar {
+  background: var(--gb-0);
+  color: var(--gb-3);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  padding: 5px 8px;
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.preview-dots {
+  display: inline-flex; gap: 4px;
+}
+.preview-dots span {
+  width: 6px; height: 6px; background: var(--gb-3); border-radius: 50%;
+}
+.preview-body {
+  padding: 12px 14px;
+  font-size: 17px;
+  color: var(--gb-0);
+}
+.preview-body h1 { font-family: 'VT323', monospace; font-size: 26px; margin: 0 0 8px; color: var(--gb-0); }
+.preview-body p  { margin-bottom: 8px; }
+.preview-body ul { margin: 6px 0 8px 22px; padding: 0; list-style: square; }
+.preview-body ul li::before { content: none; }
+.preview-body ul li { margin-bottom: 2px; }
+.preview-body a { color: var(--gb-1); border-bottom: 2px solid var(--gb-1); font-weight: bold; }
+.preview-body .img-placeholder {
+  width: 140px; height: 80px;
+  background:
+    repeating-linear-gradient(45deg,
+      var(--gb-1) 0 8px,
+      var(--gb-2) 8px 16px);
+  border: 2px dashed var(--gb-0);
+  margin: 6px 0 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--gb-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+}
+
+/* IMOTEKH PIXEL ART display (used on exercise-2) */
+.imotekh-frame {
+  display: block;
+  width: 192px;
+  height: 192px;
+  margin: 8px 0 6px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 2px solid var(--gb-0);
+  background: var(--gb-3);
+}
+.img-caption {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--gb-1);
+  margin-bottom: 14px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   RESPONSIVE — scale console down on small screens, keep proportions
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 460px) {
+  body { padding: 22px 8px 36px; }
+  .gbc { padding: 14px 14px 22px; }
+  .bezel { padding: 26px 14px 34px; }
+  .screen-inner { padding: 14px 14px; font-size: 17px; }
+  .screen-inner h1 { font-size: 12px; }
+  .screen-inner h2 { font-size: 10px; }
+  .dpad { width: 64px; height: 64px; }
+  .dpad::before { height: 22px; }
+  .dpad::after  { width: 22px; }
+  .ab { width: 110px; height: 64px; }
+  .btn-ab { width: 32px; height: 32px; font-size: 12px; }
+  .speaker { width: 44px; height: 38px; right: 14px; bottom: 14px; }
+}
+
+/* small reduced-motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .power .led, .blink { animation: none; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   INTERACTIVE STATES — every button on the GBC actually does something
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* hardware is clickable */
+.dpad, .dpad .arrow,
+.btn-ab, .btn-ss,
+.volume-wheel, .cart-slot { cursor: pointer; }
+
+/* enlarge the D-pad arrow hit areas (visual stays small) */
+.dpad .arrow { width: 26px; height: 26px; box-sizing: border-box; }
+.dpad .arrow.up    { border-left: 13px solid transparent; border-right: 13px solid transparent; border-bottom: 14px solid rgba(255,255,255,0.18); top: 0; }
+.dpad .arrow.down  { border-left: 13px solid transparent; border-right: 13px solid transparent; border-top:    14px solid rgba(255,255,255,0.18); bottom: 0; }
+.dpad .arrow.left  { border-top:  13px solid transparent; border-bottom: 13px solid transparent; border-right:  14px solid rgba(255,255,255,0.18); left: 0; }
+.dpad .arrow.right { border-top:  13px solid transparent; border-bottom: 13px solid transparent; border-left:   14px solid rgba(255,255,255,0.18); right: 0; }
+/* tightened nudge so giant hit boxes don't visually overlap the bars */
+.dpad .arrow.up    { transform: translateX(-50%) scale(0.5); top: 1px; }
+.dpad .arrow.down  { transform: translateX(-50%) scale(0.5); bottom: 1px; }
+.dpad .arrow.left  { transform: translateY(-50%) scale(0.5); left: 1px; }
+.dpad .arrow.right { transform: translateY(-50%) scale(0.5); right: 1px; }
+
+/* keyboard / programmatic press feedback */
+.dpad .arrow.pressing {
+  filter: brightness(2);
+}
+.dpad .arrow.up.pressing    { transform: translateX(-50%) scale(0.5) translateY(-2px); }
+.dpad .arrow.down.pressing  { transform: translateX(-50%) scale(0.5) translateY(2px); }
+.dpad .arrow.left.pressing  { transform: translateY(-50%) scale(0.5) translateX(-2px); }
+.dpad .arrow.right.pressing { transform: translateY(-50%) scale(0.5) translateX(2px); }
+
+.btn-ab.press {
+  box-shadow:
+    inset 0 -2px 2px rgba(255,255,255,0.25),
+    inset 0 2px 3px rgba(0,0,0,0.6),
+    0 1px 1px rgba(0,0,0,0.4) !important;
+  transform: rotate(22deg) translateY(2px) !important;
+}
+.btn-ss.press {
+  box-shadow:
+    inset 0 -1px 0 rgba(255,255,255,0.2),
+    inset 0 2px 3px rgba(0,0,0,0.6) !important;
+  transform: translateY(1px) !important;
+}
+
+/* ── cartridge focus on menu ──────────────────────────────────────────── */
+.cart.focused {
+  background: var(--gb-2) !important;
+  outline: 3px solid var(--gb-0);
+  outline-offset: 2px;
+  animation: cartFlash 1.1s steps(2) infinite;
+}
+.cart.focused .cart-pic {
+  background: var(--gb-0);
+}
+@keyframes cartFlash {
+  50% { outline-color: var(--gb-1); background: var(--gb-3) !important; }
+}
+
+/* ── PAUSE overlay ────────────────────────────────────────────────────── */
+.pause-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 56, 15, 0.86);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s steps(2);
+}
+.pause-overlay.on { opacity: 1; pointer-events: auto; }
+.pause-overlay .pause-card {
+  background: var(--gb-3);
+  border: 3px solid var(--gb-0);
+  padding: 18px 24px;
+  font-family: 'Press Start 2P', monospace;
+  color: var(--gb-0);
+  font-size: 16px;
+  letter-spacing: 1px;
+  box-shadow: 4px 4px 0 var(--gb-1);
+  text-align: center;
+}
+.pause-overlay .pause-card .sub {
+  display: block;
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  margin-top: 10px;
+  letter-spacing: 0;
+  color: var(--gb-1);
+}
+.pause-overlay .pause-card .blink-pause {
+  display: inline-block;
+  background: var(--gb-0);
+  width: 9px; height: 14px;
+  vertical-align: -1px;
+  margin-left: 4px;
+  animation: blink 0.7s steps(2) infinite;
+}
+
+/* the screen needs to be a positioning context for the overlay */
+.screen { isolation: isolate; }
+
+/* ── volume-wheel mute click ──────────────────────────────────────────── */
+.volume-wheel.spin::before {
+  animation: wheelspin 0.4s linear;
+}
+@keyframes wheelspin {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-6px); }
+}
+body.muted .volume-wheel {
+  filter: grayscale(0.6) brightness(0.7);
+}
+body.muted .volume-wheel::after {
+  content: "✕";
+  position: absolute;
+  right: -10px; top: -2px;
+  color: var(--led-red);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  text-shadow: 0 0 3px rgba(0,0,0,0.6);
+}
+.volume-wheel { position: absolute; }
+
+/* ── cart-slot eject click ────────────────────────────────────────────── */
+.cart-slot.eject {
+  animation: eject 0.4s ease-out;
+}
+@keyframes eject {
+  0%   { transform: translateX(-50%) translateY(0); }
+  40%  { transform: translateX(-50%) translateY(-10px); }
+  100% { transform: translateX(-50%) translateY(0); }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   LCD PALETTES — Select cycles classic → pocket → color
+   ────────────────────────────────────────────────────────────────────────── */
+body[data-palette="pocket"] {
+  --gb-0: #0a0a0a;
+  --gb-1: #555555;
+  --gb-2: #a8a8a8;
+  --gb-3: #e0e0d8;
+}
+body[data-palette="color"] {
+  /* original Game Boy Color tinted-LCD vibe — slightly warm off-white */
+  --gb-0: #2a1640;
+  --gb-1: #5d4486;
+  --gb-2: #c8b6e0;
+  --gb-3: #f0e6ff;
+}
+
+/* keep PCB green visible regardless of LCD palette by NOT inheriting --gb-* into shell */
+body[data-palette="pocket"] .gbc::before,
+body[data-palette="color"]  .gbc::before {
+  background:
+    repeating-linear-gradient(28deg, transparent 0 14px, rgba(200,154,38,0.15) 14px 15px, transparent 15px 30px),
+    repeating-linear-gradient(-62deg, transparent 0 22px, rgba(200,154,38,0.12) 22px 23px, transparent 23px 46px),
+    radial-gradient(circle at 12% 18%, rgba(200,154,38,0.45) 0 2px, transparent 3px),
+    radial-gradient(circle at 24% 72%, rgba(200,154,38,0.38) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 36%, rgba(200,154,38,0.42) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 84%, rgba(200,154,38,0.38) 0 2px, transparent 3px),
+    radial-gradient(circle at 58% 22%, rgba(200,154,38,0.32) 0 2px, transparent 3px),
+    radial-gradient(circle at 18% 64%, rgba(12,12,16,0.55) 0 6px, transparent 8px),
+    radial-gradient(circle at 84% 78%, rgba(26,58,120,0.55) 0 5px, transparent 7px),
+    radial-gradient(circle at 28% 30%, rgba(12,12,16,0.45) 0 4px, transparent 6px),
+    radial-gradient(ellipse at 50% 60%, #2a5d3c 0%, #173825 90%);
+}
+
+/* tiny help bar at the top of the screen explaining controls */
+.controls-help {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6.5px;
+  letter-spacing: 0.5px;
+  color: var(--gb-1);
+  margin-top: 12px;
+  padding: 6px 8px;
+  border: 1px dashed var(--gb-1);
+  line-height: 1.6;
+}
+.controls-help b { color: var(--gb-0); font-weight: normal; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   DAY 2 — FORMS + INTERACTIVE PREVIEWS
+   working form widgets styled in the GB green palette
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* exercises live in a "demo" frame inside the LCD */
+.demo {
+  background: var(--gb-3);
+  border: 2px solid var(--gb-0);
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  margin: 12px 0 18px;
+  padding: 14px 14px 16px;
+  font-family: 'VT323', monospace;
+}
+.demo-bar {
+  background: var(--gb-0);
+  color: var(--gb-3);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  padding: 5px 8px;
+  letter-spacing: 1px;
+  margin: -14px -14px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.demo-bar .led-dot {
+  width: 6px; height: 6px;
+  background: var(--led-red);
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 4px var(--led-red);
+  animation: pulse 2s ease-in-out infinite;
+  margin-right: 4px;
+}
+
+/* form layout in demos */
+.demo form {
+  display: flex; flex-direction: column;
+  gap: 10px;
+}
+.demo label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--gb-0);
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* GB-flavored input */
+.demo input[type="text"],
+.demo input[type="email"],
+.demo input[type="number"],
+.demo input[type="password"],
+.demo textarea,
+.demo select {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: var(--gb-0);
+  background: var(--gb-3);
+  border: 2px solid var(--gb-0);
+  padding: 7px 9px;
+  width: 100%;
+  box-shadow: inset 1px 1px 0 var(--gb-1);
+  outline: none;
+}
+.demo textarea { min-height: 70px; resize: vertical; }
+.demo input:focus,
+.demo textarea:focus,
+.demo select:focus {
+  background: var(--gb-2);
+  box-shadow: inset 1px 1px 0 var(--gb-0), 0 0 0 2px var(--gb-1);
+}
+.demo input:invalid:not(:placeholder-shown) {
+  border-color: var(--btn-red);
+  background:
+    linear-gradient(135deg, transparent 50%, rgba(107, 21, 48, 0.18) 50%);
+}
+
+/* GB button */
+.demo button,
+.btn-gb {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  background: var(--gb-3);
+  color: var(--gb-0);
+  border: 2px solid var(--gb-0);
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  padding: 9px 14px;
+  cursor: pointer;
+  align-self: flex-start;
+  text-transform: uppercase;
+  transition: transform 0.05s steps(2), background 0.05s;
+}
+.demo button:hover,
+.btn-gb:hover {
+  background: var(--gb-2);
+}
+.demo button:active,
+.btn-gb:active {
+  transform: translate(2px, 2px);
+  border-bottom-width: 2px;
+  border-right-width: 2px;
+  background: var(--gb-1);
+  color: var(--gb-3);
+}
+
+.demo button[type="reset"],
+.btn-gb.alt {
+  background: var(--gb-3);
+}
+
+/* output/result blocks inside demos */
+.demo-result {
+  margin-top: 12px;
+  min-height: 28px;
+  font-size: 17px;
+  color: var(--gb-0);
+  border-top: 2px dashed var(--gb-1);
+  padding-top: 10px;
+}
+.demo-result:empty::before {
+  content: "(no output yet)";
+  color: var(--gb-1);
+  font-style: italic;
+  font-size: 14px;
+}
+.demo-result.error {
+  color: var(--btn-red-hi);
+  font-weight: bold;
+}
+
+/* live counter / number readout */
+.demo-readout {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 28px;
+  color: var(--gb-0);
+  background: var(--gb-2);
+  border: 3px solid var(--gb-0);
+  padding: 14px;
+  text-align: center;
+  margin: 6px 0 12px;
+  letter-spacing: 2px;
+  box-shadow: inset 0 -4px 0 rgba(15,56,15,0.18);
+}
+
+/* todo / splits list */
+.demo-list {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 10px 0 0 !important;
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: var(--gb-0);
+  border-top: 2px dashed var(--gb-1);
+}
+.demo-list li {
+  margin: 0 !important;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(48, 98, 48, 0.4);
+  display: flex; gap: 10px; align-items: baseline;
+  animation: slidein 0.18s steps(3);
+}
+.demo-list li::before { content: none !important; }
+.demo-list li .num {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--gb-1);
+  min-width: 22px;
+}
+.demo-list li .text { flex: 1; }
+@keyframes slidein {
+  from { transform: translateX(-8px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* AI chat-bubble look (for "GPT said:" and "Penn replied:" sections) */
+.bubble {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: 2px solid var(--gb-0);
+  font-size: 16px;
+  position: relative;
+}
+.bubble.ai {
+  background: var(--gb-3);
+  border-style: dashed;
+}
+.bubble.me {
+  background: var(--gb-2);
+}
+.bubble .who {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--gb-0);
+  display: block;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+.bubble.ai .who::before  { content: "▲ "; }
+.bubble.me .who::before  { content: "● "; }
+
+/* Decision table: tighter columns, color-coded */
+.decision-table th:nth-child(1) { width: 38%; }
+.decision-table th:nth-child(2) { width: 22%; }
+.decision-table th:nth-child(3) { width: 18%; }
+.decision-table .acc { color: var(--gb-1); font-weight: bold; }
+.decision-table .rej { color: var(--btn-red-hi); font-weight: bold; }
+.decision-table .mod { color: #5a3300; font-weight: bold; }
+
+/* small "browser address bar" style for prompt boxes */
+.prompt-box {
+  background: var(--gb-0);
+  color: var(--gb-3);
+  border: 2px solid var(--gb-0);
+  padding: 10px 12px;
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  margin: 10px 0 14px;
+  white-space: pre-wrap;
+  position: relative;
+}
+.prompt-box::before {
+  content: "PROMPT >";
+  display: block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--gb-2);
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+
+/* small toggle for live demos that need on/off */
+.toggle-row {
+  display: flex; gap: 8px; margin: 8px 0 0;
+  flex-wrap: wrap;
+}
+
+/* fade-in helper used by some exercises (going-deeper) */
+.fade {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.fade.visible { opacity: 1; }
+
+/* verdict pills used in decision tables (ACCEPT / REJECT / MODIFY) */
+.verdict {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  padding: 4px 6px;
+  border: 2px solid var(--gb-0);
+  background: var(--gb-3);
+  color: var(--gb-0);
+  white-space: nowrap;
+}
+.verdict.acc { background: var(--gb-2); color: var(--gb-0); }
+.verdict.rej { background: var(--btn-red-hi); color: #fff; border-color: #5a0000; }
+.verdict.mod { background: #f0c33c; color: #5a3300; border-color: #5a3300; }
+
+/* speedrun split logger (Ex 5) */
+.splits-clock {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 24px;
+  text-align: center;
+  color: var(--gb-3);
+  background: var(--gb-0);
+  border: 2px solid var(--gb-0);
+  padding: 12px 8px;
+  margin: 6px 0 12px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 6px rgba(155,188,15,0.4);
+}
+.splits-buttons {
+  display: flex; gap: 8px; margin-top: 8px;
+}
+.splits-buttons button {
+  flex: 1;
+}
+#splits-reset {
+  background: var(--btn-red-hi) !important;
+  color: #fff !important;
+  border-color: #5a0000 !important;
+}
+.demo-list .split-name {
+  flex: 1;
+  font-weight: bold;
+}
+.demo-list .split-total {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gb-1);
+  min-width: 80px;
+  text-align: right;
+}
+.demo-list .split-seg {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gb-0);
+  min-width: 80px;
+  text-align: right;
+}
