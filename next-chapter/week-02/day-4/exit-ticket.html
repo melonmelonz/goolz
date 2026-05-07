@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exit Ticket — W2D4 / NCD</title>
+  <meta name="description" content="Five free-response answers for Week 2 Day 4 — JavaScript fundamentals.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟️</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="exit">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EXIT TICKET — W2D4</div>
+            <h1>Five Free Responses</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              My answers, in my voice. Each one explains the call, not just the
+              rule.
+            </p>
+          </div>
+
+          <h2>① const vs let — when do you reach for each?</h2>
+          <p>Both declare a block-scoped binding. The difference is reassignment: <code>const</code>
+            forbids it, <code>let</code> allows it. With <code>const fruits = []</code> I can still
+            <code>fruits.push(...)</code> all day — <code>const</code> protects the binding, not
+            the contents of the object the binding points at. I default to <code>const</code>
+            because it makes intent obvious at the declaration site: "this name will keep
+            pointing at the same value." I only reach for <code>let</code> when I genuinely
+            need to reassign — loop counters in a classic <code>for</code>, accumulators like
+            <code>let total = 0</code>, a <code>let highest = arr[0]</code> that gets replaced
+            as I walk a list. <code>var</code> I do not use; it has function scope and gets
+            hoisted in ways that surprise me, and there is no situation where it does
+            something <code>const</code>/<code>let</code> cannot.</p>
+
+          <h2>② What does triple do? What is triple(4)?</h2>
+          <div class="prompt-box">function triple(n) {
+  if (n &lt; 0) {
+    return 0;
+  }
+  return n * 3;
+}</div>
+          <p>Takes a number <code>n</code>, returns <code>0</code> if <code>n</code> is negative,
+            otherwise returns <code>n * 3</code>. So it is "triple, but clamped at zero on the
+            low end." <code>triple(4)</code> returns <code>12</code> — <code>4</code> is not less
+            than zero, so the guard does not fire and we hit <code>return n * 3</code>. Worth
+            noting: <code>triple(0)</code> returns <code>0</code> because <code>0 &lt; 0</code> is
+            false, so it falls through to <code>0 * 3</code>. Both paths happen to give the
+            same answer at zero, which is the kind of accident I would write a comment about
+            if I were keeping this function.</p>
+
+          <h2>③ Loop fruits and log "1. apple", "2. banana", "3. cherry"</h2>
+          <div class="prompt-box">const fruits = ['apple', 'banana', 'cherry'];
+
+for (let i = 0; i &lt; fruits.length; i++) {
+  console.log(`${i + 1}. ${fruits[i]}`);
+}</div>
+          <p>Used the classic <code>for</code> because the position is part of the output, so
+            I want the index. <code>i + 1</code> because the human-readable list starts at one
+            but the array starts at zero. If the prefix were not required I would have used
+            <code>for (const fruit of fruits)</code> — cleaner when the index does not matter.</p>
+
+          <h2>④ Why === over ==? Give a divergent example.</h2>
+          <p><code>==</code> does type coercion before comparing, which gives results that look
+            correct in casual reading but hide bugs. <code>===</code> requires both type and
+            value to match, so the comparison means what it looks like it means. The classic
+            gotcha: <code>0 == false</code> is <code>true</code> (both coerce to the same falsy
+            thing), but <code>0 === false</code> is <code>false</code> because <code>0</code>
+            is a number and <code>false</code> is a boolean. The same trap fires on
+            <code>"" == 0</code>, <code>null == undefined</code>, <code>"5" == 5</code>. If I
+            write <code>if (status == 0)</code> and <code>status</code> ever lands as
+            <code>false</code> or <code>""</code>, that branch fires even though I meant "the
+            number zero." <code>===</code> makes me handle that conversion deliberately or not
+            at all. The cost of typing one extra character beats the cost of a silent
+            type-coercion bug at 2am.</p>
+
+          <h2>⑤ Render people as &lt;li&gt; items: "Alex (Austin)" etc.</h2>
+          <div class="prompt-box">const people = [
+  { name: 'Alex', city: 'Austin' },
+  { name: 'Sam',  city: 'Boston' },
+];
+
+const list = document.getElementById('people-list');
+
+for (const person of people) {
+  const li = document.createElement('li');
+  li.textContent = `${person.name} (${person.city})`;
+  list.appendChild(li);
+}</div>
+          <p>Used <code>for...of</code> because I do not need the index, just each object.
+            <code>textContent</code> not <code>innerHTML</code> — the strings here are mine, but
+            the habit of treating every dynamic string as untrusted means I never have to
+            remember which paths got user input. Same <code>createElement → textContent →
+            appendChild</code> three-line pattern from the books exercise, which is the move I
+            expect to keep using.</p>
+
+          <h2>⑥ Verbal demo function (peer activity)</h2>
+          <p>Picking the 5-line <code>getHighest</code> from <code>clean.js</code>:</p>
+          <div class="prompt-box">function getHighest(arr) {
+  let best = arr[0];
+  for (const n of arr) {
+    if (n &gt; best) {
+      best = n;
+    }
+  }
+  return best;
+}</div>
+          <ul>
+            <li><strong>Read literally:</strong> function <code>getHighest</code> takes <code>arr</code>,
+              declares <code>best</code> initialized to <code>arr</code> at index zero, walks each
+              <code>n</code> in <code>arr</code>, replaces <code>best</code> when <code>n</code>
+              is greater, returns <code>best</code>.</li>
+            <li><strong>Plain English:</strong> walk the array, remember the largest value seen so
+              far, return it.</li>
+            <li><strong>One thing I'd change:</strong> <code>best = arr[0]</code> quietly returns
+              <code>undefined</code> if the array is empty, which then propagates through any
+              later comparison. I would either guard at the top
+              (<code>if (arr.length === 0) return null;</code>) or document that the function
+              assumes a non-empty array. Same conversation as the divide-by-zero in
+              <code>getAverage</code>. Boundaries are where bugs live.</li>
+          </ul>
+
+          <div class="callout">
+            <strong>► Day 4 status</strong>
+            Variables · functions · conditionals · loops · arrays · objects: read &amp; modify on sight<br>
+            Mini-app shipped. Refactor with AI scored. Exit ticket answered in my voice.<br>
+            Next up: Vibe Code Friday. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="todo.html">prev: todo mini-app</a> ·
+            <a href="./">menu</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">exit · w2d4 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

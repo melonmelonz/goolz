@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex2 — Loop an Array / NCD W2D4</title>
+  <meta name="description" content="for and for...of over an array of names. Number them, filter them, collect them.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔁</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="loops">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EX2 / 6 — LOOP AN ARRAY</div>
+            <h1>The Same Loop, Four Ways</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              An array of five names. The page logs every variant to the console
+              live. Open DevTools → Console to see four <code>console.group</code>s,
+              one per step. The point: notice when I want the index and when I don't.
+            </p>
+          </div>
+
+          <h2>① The data</h2>
+          <div class="prompt-box">const names = ["Alex", "Sam", "Jordan", "Riley", "Casey"];</div>
+
+          <h2>② Step 2 — basic for...of</h2>
+          <p>Default loop for arrays. No index, no length-checking. Reads like English.</p>
+          <div class="prompt-box">for (const name of names) {
+  console.log(`Hello, ${name}!`);
+}</div>
+
+          <h2>③ Step 3a — classic for with 1-based index</h2>
+          <p>The position is part of the output, so I want the index. <code>i + 1</code> because
+            the human-readable list starts at one but the array starts at zero.</p>
+          <div class="prompt-box">for (let i = 0; i &lt; names.length; i++) {
+  console.log(`${i + 1}. Hello, ${names[i]}!`);
+}</div>
+
+          <h2>④ Step 3b — for...of, only names &gt; 4 chars</h2>
+          <p>The same loop, with an <code>if</code> inside it. <code>continue</code> would be
+            equivalent for negation but reads worse here.</p>
+          <div class="prompt-box">for (const name of names) {
+  if (name.length &gt; 4) {
+    console.log(`Hello, ${name}!`);
+  }
+}</div>
+
+          <h2>⑤ Step 3c — collect into a new array</h2>
+          <p>Build a parallel array, log it after. This is the shape of every transform
+            I'll later write as <code>.map</code>. Same idea, hand-rolled.</p>
+          <div class="prompt-box">const greetings = [];
+for (const name of names) {
+  greetings.push(`Hello, ${name}!`);
+}
+console.log(greetings);</div>
+
+          <h2>⑥ Step 4 — my own array</h2>
+          <p>Five things I want to remember from this week.</p>
+          <div class="prompt-box">const week2Lessons = [
+  "DOM glue is not the language - functions/loops/arrays/objects are",
+  "default to const, reach for let only when reassigning",
+  "=== always; == has weird coercion rules I do not want to memorize",
+  "for...of for arrays unless I genuinely need the index",
+  "data lives in an array, render the array, mutate, re-render",
+];
+
+for (const lesson of week2Lessons) {
+  console.log(lesson);
+}</div>
+
+          <h2>⑦ Lab notes</h2>
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            <code>for...of</code> is the right default. The classic <code>for</code> earns its
+            keep when the index is part of the output (numbering, "remove every other",
+            walking two arrays in lockstep). If the body never reads <code>i</code>,
+            <code>for...of</code> beats it for clarity. Save the cleverness for when it pays.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            File: <code>loops.html</code> (this page) — script runs on load<br>
+            Console output: 4 <code>console.group</code> blocks<br>
+            Status: I can read both loop shapes now. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="console-warmup.html">prev: console warmup</a> ·
+            <a href="./">menu</a> ·
+            <a href="books.html">next: array of objects ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex2 of 6 · w2d4 · <a href="/">goolz.org</a></p>
+
+  <script>
+    // live demo: every loop variant runs on page load and logs to the console.
+    const names = ["Alex", "Sam", "Jordan", "Riley", "Casey"];
+
+    console.group("step 2 - basic for...of");
+    for (const name of names) {
+      console.log(`Hello, ${name}!`);
+    }
+    console.groupEnd();
+
+    console.group("step 3a - classic for with index");
+    for (let i = 0; i < names.length; i++) {
+      console.log(`${i + 1}. Hello, ${names[i]}!`);
+    }
+    console.groupEnd();
+
+    console.group("step 3b - filter inside loop");
+    for (const name of names) {
+      if (name.length > 4) {
+        console.log(`Hello, ${name}!`);
+      }
+    }
+    console.groupEnd();
+
+    console.group("step 3c - build greetings array");
+    const greetings = [];
+    for (const name of names) {
+      greetings.push(`Hello, ${name}!`);
+    }
+    console.log(greetings);
+    console.groupEnd();
+
+    const week2Lessons = [
+      "DOM glue is not the language - functions/loops/arrays/objects are",
+      "default to const, reach for let only when reassigning",
+      "=== always; == has weird coercion rules I do not want to memorize",
+      "for...of for arrays unless I genuinely need the index",
+      "data lives in an array, render the array, mutate, re-render",
+    ];
+
+    console.group("step 4 - week 2 takeaways");
+    for (const lesson of week2Lessons) {
+      console.log(lesson);
+    }
+    console.groupEnd();
+  </script>
+  <script src="gbc.js" defer></script>
+</body>
+</html>

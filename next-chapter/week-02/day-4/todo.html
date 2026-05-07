@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex5 — Todo Mini-App / NCD W2D4</title>
+  <meta name="description" content="Mini-app combining functions, arrays of objects, conditionals, and DOM updates. Render/mutate/re-render pattern.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+  <style>
+    /* todo widgets styled to live inside the LCD screen */
+    .todo-widget {
+      background: rgba(15, 56, 15, 0.06);
+      border: 1px solid var(--gb-1);
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .todo-row { display: flex; gap: 8px; }
+    .todo-row input[type="text"] {
+      flex: 1;
+      padding: 6px 8px;
+      font: inherit;
+      background: var(--gb-3);
+      border: 1px solid var(--gb-1);
+      color: var(--gb-0);
+    }
+    .todo-row button {
+      padding: 6px 12px;
+      font: inherit;
+      cursor: pointer;
+      background: var(--gb-2);
+      border: 1px solid var(--gb-1);
+      color: var(--gb-0);
+    }
+    .todo-row button:hover { background: var(--gb-3); }
+    #message { color: #7a1818; min-height: 1.2em; font-size: 14px; margin: 6px 0 0; }
+    #task-list { list-style: none; padding: 0; margin: 8px 0 0; }
+    #task-list li {
+      padding: 6px 4px;
+      border-bottom: 1px dashed var(--gb-1);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 17px;
+    }
+    #task-list li.done span.text { text-decoration: line-through; color: var(--gb-1); }
+    .todo-actions { display: flex; gap: 16px; margin-top: 10px; align-items: center; }
+    .todo-actions .count { color: var(--gb-1); font-size: 14px; }
+  </style>
+</head>
+<body data-page="todo">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EX5 / 6 — TODO MINI-APP</div>
+            <h1>Render · Mutate · Re-render</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              The pattern: data lives in <code>tasks</code>, <code>render()</code> reflects
+              it, handlers mutate then call <code>render()</code> again. Same loop I'll hit
+              again in React next phase, hand-rolled here so I see the moving parts.
+            </p>
+          </div>
+
+          <h2>① Try it</h2>
+          <div class="todo-widget">
+            <div class="todo-row">
+              <input id="task-input" type="text" placeholder="what needs doing">
+              <button id="add-btn" type="button">Add</button>
+            </div>
+            <p id="message"></p>
+            <ul id="task-list"></ul>
+            <div class="todo-actions">
+              <button id="clear-btn" type="button">Clear all</button>
+              <span class="count" id="count"></span>
+            </div>
+          </div>
+
+          <h2>② Shape of the data</h2>
+          <p>Each task is an object so I can carry <code>done</code> state alongside the text.
+            Plain strings would have made the stretch goal (cross-out-on-check) impossible
+            without lookup gymnastics.</p>
+          <div class="prompt-box">// each task: { text: "thing to do", done: false }
+const tasks = [];</div>
+
+          <h2>③ The render</h2>
+          <p>Wipes children, walks <code>tasks</code>, builds an <code>&lt;li&gt;</code> per task.
+            The checkbox toggles <code>task.done</code> directly and adds/removes the
+            <code>done</code> class on its <code>&lt;li&gt;</code> — no full re-render for a
+            cosmetic flip, since the data is already updated.</p>
+          <div class="prompt-box">function render() {
+  while (list.firstChild) {
+    list.removeChild(list.firstChild);
+  }
+  for (const task of tasks) {
+    const li = document.createElement("li");
+    if (task.done) li.classList.add("done");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.done;
+    checkbox.addEventListener("change", () =&gt; {
+      task.done = checkbox.checked;
+      li.classList.toggle("done", task.done);
+    });
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "text";
+    textSpan.textContent = task.text;
+
+    li.appendChild(checkbox);
+    li.appendChild(textSpan);
+    list.appendChild(li);
+  }
+  // count line - small UX nicety, also a sanity check while building
+}</div>
+
+          <h2>④ Add / Clear handlers</h2>
+          <div class="prompt-box">addBtn.addEventListener("click", () =&gt; {
+  const newTask = input.value.trim();
+  if (newTask === "") {
+    setMessage("type something first");
+    return;
+  }
+  setMessage("");
+  tasks.push({ text: newTask, done: false });
+  input.value = "";
+  input.focus();
+  render();
+});
+
+input.addEventListener("keydown", (event) =&gt; {
+  if (event.key === "Enter") addBtn.click();
+});
+
+clearBtn.addEventListener("click", () =&gt; {
+  if (tasks.length === 0) return;
+  tasks.length = 0;   // truncate in place; const forbids reassigning tasks
+  render();
+});</div>
+
+          <h2>⑤ Design notes</h2>
+          <ul>
+            <li><strong><code>tasks.length = 0</code> vs <code>tasks = []</code>.</strong>
+              <code>const</code> forbids reassigning the binding but allows mutating the
+              array. Truncating in place keeps any other reference to the same array
+              valid. Today nothing else holds a reference, but the habit is correct.</li>
+            <li><strong>Empty input shows a message instead of silently doing nothing.</strong>
+              Silent failures are the kind of thing that wastes 30 seconds before you
+              realize the click did nothing. A one-line message is cheaper than confusion.</li>
+            <li><strong>Enter-in-input fires Add.</strong> Without it you have to mouse over
+              every time. Small thing, big quality-of-life win — exactly the kind of
+              friction I'd notice as a user immediately.</li>
+            <li><strong>The checkbox toggle does not call <code>render()</code>.</strong>
+              The data is already updated; the only DOM work needed is the
+              <code>classList.toggle</code> on that one <code>&lt;li&gt;</code>. Cheaper, and
+              the input focus does not jump.</li>
+          </ul>
+
+          <h2>⑥ Lab notes</h2>
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            "Data lives in an array, render the array, mutate the array, re-render" —
+            this is the same shape as React's <code>useState</code> + JSX, just with
+            <code>render()</code> called manually and the diffing done by reading the
+            DOM blank slate every time. The framework version is faster, but it is
+            literally the loop I just wrote. That demystifies a lot.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            Files: <code>todo.html</code> + <code>todo.js</code><br>
+            Features: add · clear · check off · empty-input guard · Enter-to-add<br>
+            Status: combined functions + arrays + conditionals + DOM into one app. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="refactor.html">prev: AI refactor</a> ·
+            <a href="./">menu</a> ·
+            <a href="exit-ticket.html">next: exit ticket ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex5 of 6 · w2d4 · <a href="/">goolz.org</a></p>
+
+  <script src="todo.js" defer></script>
+  <script src="gbc.js" defer></script>
+</body>
+</html>

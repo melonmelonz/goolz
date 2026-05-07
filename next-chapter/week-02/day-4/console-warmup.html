@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex1 — Console Warmup / NCD W2D4</title>
+  <meta name="description" content="Console-only drill: square, shout, isLong. The morning warmup before the page-based exercises.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟣</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="warmup">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EX1 / 6 — CONSOLE WARMUP</div>
+            <h1>Pure-JS Drill, No Page</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              No HTML, no DOM, no event listeners. Just the language itself in
+              the DevTools console. Three given functions, three of mine. The
+              point is to feel the shape of <code>function</code>, parameter,
+              <code>return</code> before I wrap it in any UI.
+            </p>
+          </div>
+
+          <h2>① Given</h2>
+          <div class="prompt-box">function greet(name) { return `Hello, ${name}!`; }
+greet("Alex");                  // "Hello, Alex!"
+greet("Sam");                   // "Hello, Sam!"
+
+function addNumbers(a, b) { return a + b; }
+addNumbers(3, 4);               // 7
+addNumbers(10, 25);             // 35
+
+function isEven(n) { return n % 2 === 0; }
+isEven(4);                      // true
+isEven(7);                      // false</div>
+
+          <h2>② My turn</h2>
+          <div class="prompt-box">function square(n) { return n * n; }
+square(5);                      // 25
+square(-3);                     // 9
+
+function shout(message) { return message.toUpperCase(); }
+shout("hello");                 // "HELLO"
+shout("don't yell at me");      // "DON'T YELL AT ME"
+
+function isLong(text) { return text.length > 10; }
+isLong("short");                // false
+isLong("this string is long");  // true</div>
+
+          <h2>③ Notes</h2>
+          <ul>
+            <li><code>n * n</code> vs <code>Math.pow(n, 2)</code> vs <code>n ** 2</code> all work.
+              <code>n * n</code> reads cleanest for the squared case. <code>**</code> is what I'd
+              reach for if the exponent were variable.</li>
+            <li><code>isLong</code> boundary: <code>&gt; 10</code> means an 11-char string returns
+              <code>true</code>, exactly 10 returns <code>false</code>. Spec said "more than 10",
+              so <code>&gt;</code> is right. <code>&gt;=</code> would be a bug.</li>
+            <li><code>shout</code> blows up on non-strings (<code>shout(5)</code> → TypeError).
+              For console drills I'm not guarding it. In real code I'd type-check at the
+              boundary or coerce with <code>String(message).toUpperCase()</code>.</li>
+          </ul>
+
+          <h2>④ What I felt</h2>
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            Functions are tiny machines. The console is a workbench. Type a definition,
+            the prompt comes back. Type a call, the return value comes back. No HTML,
+            no event glue, no surprise reload. This is the layer that was hiding under
+            yesterday's debugging.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            Drill: <code>console-warmup.md</code> (artifact in the repo)<br>
+            Functions written: 3 of 3<br>
+            Status: warm. on to loops. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="./">menu</a> · <a href="loops.html">next: loop an array ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex1 of 6 · w2d4 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

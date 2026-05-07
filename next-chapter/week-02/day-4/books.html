@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex3 — Array of Objects → DOM / NCD W2D4</title>
+  <meta name="description" content="Render an array of book objects into a list. createElement, textContent, appendChild. Same render() called twice on different arrays.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+  <style>
+    /* small overrides for the rendered list inside the LCD screen */
+    #book-list, #book-list-b { list-style: none; padding: 0; margin: 8px 0 0; }
+    #book-list li, #book-list-b li {
+      padding: 6px 8px;
+      border-bottom: 1px dashed var(--gb-1);
+      font-size: 17px;
+    }
+    #book-list strong, #book-list-b strong { color: var(--gb-0); }
+  </style>
+</head>
+<body data-page="books">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EX3 / 6 — ARRAY OF OBJECTS → DOM</div>
+            <h1>Data In, List Out</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              An array of <code>{title, author}</code> objects. The page builds the
+              <code>&lt;li&gt;</code>s from the data using <code>createElement</code> and
+              <code>appendChild</code>. The render is wrapped in a function so the
+              same code renders two different lists below.
+            </p>
+          </div>
+
+          <h2>① Reading list (6 books)</h2>
+          <ul id="book-list"></ul>
+
+          <h2>② Second call, different data (2 books)</h2>
+          <p style="font-size:15px;color:var(--gb-1);">
+            Same <code>renderBooks(arr, listEl)</code> function, different array, different
+            target <code>&lt;ul&gt;</code>. This is the part that proves the function actually
+            takes its inputs seriously.
+          </p>
+          <ul id="book-list-b"></ul>
+
+          <h2>③ The render function</h2>
+          <div class="prompt-box">function renderBooks(bookArray, listEl) {
+  while (listEl.firstChild) {
+    listEl.removeChild(listEl.firstChild);
+  }
+
+  for (const book of bookArray) {
+    const li = document.createElement("li");
+
+    const titleEl = document.createElement("strong");
+    titleEl.textContent = book.title;
+
+    const authorText = document.createTextNode(` -- ${book.author}`);
+
+    li.appendChild(titleEl);
+    li.appendChild(authorText);
+    listEl.appendChild(li);
+  }
+}</div>
+
+          <h2>④ Why I built it this way</h2>
+          <ul>
+            <li><strong>Two child nodes, not innerHTML.</strong> None of these strings are
+              user input today, but treating every dynamic string as untrusted means I
+              never have to remember which paths got user input. Habit is cheap.</li>
+            <li><strong><code>removeChild</code> loop instead of <code>innerHTML = ""</code>.</strong>
+              Both empty the list. The loop never parses anything, so there is no path
+              for an HTML string to sneak in if I later refactor.</li>
+            <li><strong>Function takes the target list as a parameter.</strong> Letting
+              <code>renderBooks</code> reach into the global DOM by ID would couple the
+              function to one specific page. Passing in the <code>&lt;ul&gt;</code> means
+              the same function works for both lists on this page.</li>
+          </ul>
+
+          <h2>⑤ Lab notes</h2>
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            "Data lives in an array, render the array" is the same shape every framework
+            I'll touch later (React, Svelte, Vue) automates. Doing it by hand once means
+            the framework version is no longer magic — it's just the loop I already
+            wrote, with re-renders driven by state changes instead of a refresh.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            Files: <code>books.html</code> + <code>books.js</code><br>
+            Render calls: 2 (different arrays, different ULs)<br>
+            Status: array of objects → DOM, no help from a framework. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="loops.html">prev: loops</a> ·
+            <a href="./">menu</a> ·
+            <a href="refactor.html">next: AI refactor my code ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex3 of 6 · w2d4 · <a href="/">goolz.org</a></p>
+
+  <script src="books.js" defer></script>
+  <script src="gbc.js" defer></script>
+</body>
+</html>

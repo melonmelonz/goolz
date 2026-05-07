@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex4 — AI Refactor My Code / NCD W2D4</title>
+  <meta name="description" content="Take procedural mess to ChatGPT, accept/reject/modify each suggested change, defend every line.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+  <style>
+    table.refactor {
+      border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 15px;
+    }
+    table.refactor th, table.refactor td {
+      border: 1px solid var(--gb-1); padding: 6px 8px; text-align: left; vertical-align: top;
+    }
+    table.refactor th { background: rgba(15, 56, 15, 0.12); font-weight: 700; }
+    table.refactor td:nth-child(3) { white-space: nowrap; }
+    .accept   { color: #1c5f1c; font-weight: 700; }
+    .modify   { color: #8a5a00; font-weight: 700; }
+    .reject   { color: #7a1818; font-weight: 700; }
+  </style>
+</head>
+<body data-page="refactor">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ EX4 / 6 — AI REFACTOR MY CODE</div>
+            <h1>Accept / Reject / Modify</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              The whole point of this exercise: AI hands you a "better" version,
+              and your job is to score it line by line. Keep what's clearer for
+              <em>you</em>. Reject the cleverness you can't yet defend.
+            </p>
+          </div>
+
+          <h2>① The starting mess</h2>
+          <p>Five hardcoded scores, two repetitive blocks. Works. Hard to extend.</p>
+          <div class="prompt-box">const score1 = 85;
+const score2 = 92;
+const score3 = 78;
+const score4 = 88;
+const score5 = 95;
+
+const sum = score1 + score2 + score3 + score4 + score5;
+const average = sum / 5;
+console.log("Average:", average);
+
+let highest = score1;
+if (score2 &gt; highest) highest = score2;
+if (score3 &gt; highest) highest = score3;
+if (score4 &gt; highest) highest = score4;
+if (score5 &gt; highest) highest = score5;
+console.log("Highest:", highest);</div>
+
+          <h2>② The prompt I sent</h2>
+          <div class="prompt-box">Refactor this JavaScript so the scores live in an array, and use
+functions to compute the average and the highest score. Use for...of
+loops if needed. Add comments. Modern JS only — const/let, no var.
+
+[paste of messy.js]</div>
+
+          <h2>③ The decision table</h2>
+          <table class="refactor">
+            <thead>
+              <tr><th>AI's change</th><th>What it does</th><th>My call</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Moved the five <code>score1..score5</code> into a single <code>scores</code> array</td>
+                <td>One source of data, length not hardcoded</td>
+                <td><span class="accept">Accept</span></td>
+                <td>The whole point of the exercise. Adding a sixth score now means appending, not editing five places.</td>
+              </tr>
+              <tr>
+                <td>Wrapped sum/divide in <code>getAverage(arr)</code></td>
+                <td>Reusable, named, testable</td>
+                <td><span class="accept">Accept</span></td>
+                <td>Naming the operation documents intent better than a comment ever could.</td>
+              </tr>
+              <tr>
+                <td>Used <code>arr.reduce((a,b) =&gt; a+b, 0)</code> for the sum</td>
+                <td>Concise, idiomatic JS</td>
+                <td><span class="modify">Modify</span> → swapped to <code>for...of</code></td>
+                <td>I cannot read <code>reduce</code> fluently yet. Loop is obvious; reduce makes me stop and parse it. Phase 2 problem.</td>
+              </tr>
+              <tr>
+                <td>Wrapped the highest-finder in <code>getHighest(arr)</code></td>
+                <td>Reusable, named</td>
+                <td><span class="accept">Accept</span></td>
+                <td>Same logic as average — good split.</td>
+              </tr>
+              <tr>
+                <td>Used <code>Math.max(...scores)</code></td>
+                <td>One line, idiomatic</td>
+                <td><span class="modify">Modify</span> → <code>for...of</code> with running max</td>
+                <td>Spread is Phase 2. I can defend a <code>for...of</code> in a verbal demo today; <code>...</code> I cannot.</td>
+              </tr>
+              <tr>
+                <td>Added JSDoc comment blocks above each function</td>
+                <td>Documentation</td>
+                <td><span class="modify">Modify</span> → trimmed to one-line comments</td>
+                <td>Full JSDoc is overkill for two private helpers in a 25-line file. Single intent line is the right dose.</td>
+              </tr>
+              <tr>
+                <td>No empty-array guard in <code>getAverage</code></td>
+                <td>n/a — it's an omission</td>
+                <td><span class="reject">Reject the omission</span> → added guard</td>
+                <td>Dividing by zero gives <code>NaN</code>, which silently propagates. Cheap guard, fewer surprises. Boundaries are where bugs live.</td>
+              </tr>
+              <tr>
+                <td>Used <code>let total = 0</code> as accumulator</td>
+                <td>Reassignment is real here</td>
+                <td><span class="accept">Accept</span></td>
+                <td>Correct use of <code>let</code>. <code>const</code> would throw on the reassignment.</td>
+              </tr>
+              <tr>
+                <td>Kept <code>console.log</code> calls identical</td>
+                <td>Output unchanged</td>
+                <td><span class="accept">Accept</span></td>
+                <td>Behavior preservation. Verified: both files print <code>Average: 87.6</code>, <code>Highest: 95</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>④ My final version (clean.js)</h2>
+          <div class="prompt-box">const scores = [85, 92, 78, 88, 95];
+
+function getAverage(arr) {
+  if (arr.length === 0) {
+    return 0; // guard so we never divide by zero
+  }
+  let total = 0;
+  for (const n of arr) {
+    total += n;
+  }
+  return total / arr.length;
+}
+
+function getHighest(arr) {
+  let best = arr[0];
+  for (const n of arr) {
+    if (n &gt; best) {
+      best = n;
+    }
+  }
+  return best;
+}
+
+console.log("Average:", getAverage(scores));
+console.log("Highest:", getHighest(scores));</div>
+
+          <h2>⑤ Verification</h2>
+          <div class="prompt-box">$ node messy.js
+Average: 87.6
+Highest: 95
+
+$ node clean.js
+Average: 87.6
+Highest: 95</div>
+
+          <h2>⑥ What I learned about the workflow</h2>
+          <div class="bubble me">
+            <span class="who">PENN</span>
+            AI defaults to whatever is fanciest. <code>reduce</code> and spread are not
+            wrong — they're above my reading level today, and "code I cannot debug at
+            2am" is worse than verbose code. The boundary checks (empty array) are the
+            kind of thing AI skips and I have to add. That's the part of this exercise
+            that maps to systems thinking: what happens at the edges.
+          </div>
+
+          <div class="callout">
+            <strong>► Save state</strong>
+            Files: <code>messy.js</code> · <code>clean.js</code> · <code>refactor-notes.md</code><br>
+            Decisions: 9 changes · 5 accept · 3 modify · 1 reject<br>
+            Behavior preserved: <code>87.6</code> / <code>95</code>. <span class="blink"></span>
+          </div>
+
+          <p style="margin-top:24px;font-size:15px;color:var(--gb-1);">
+            ◄ <a href="books.html">prev: array of objects</a> ·
+            <a href="./">menu</a> ·
+            <a href="todo.html">next: todo mini-app ►</a>
+          </p>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">ex4 of 6 · w2d4 · <a href="/">goolz.org</a></p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

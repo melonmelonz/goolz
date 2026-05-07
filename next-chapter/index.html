@@ -1204,6 +1204,12 @@
       <div class="icon-img shortcut">🐛</div>
       <div class="icon-label">W2D3.gbc</div>
     </div>
+    <div class="icon" tabindex="0" title="Week 2 Day 4 — JavaScript Fundamentals (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-02/day-4/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-02/day-4/','_blank','noopener')">
+      <div class="icon-img shortcut">📦</div>
+      <div class="icon-label">W2D4.gbc</div>
+    </div>
     <div class="icon" tabindex="0" title="Study Plan / Report Card" ondblclick="openWindow('win-rc')">
       <div class="icon-img">📊</div>
       <div class="icon-label">Report&nbsp;Card</div>
@@ -1267,11 +1273,15 @@
             <span class="fl-icon">🐛</span>
             <span class="fl-name">Week 2 Day 3 — Debugging Day</span>
           </li>
+          <li onclick="window.open('/next-chapter/week-02/day-4/','_blank','noopener')">
+            <span class="fl-icon">📦</span>
+            <span class="fl-name">Week 2 Day 4 — JavaScript Fundamentals</span>
+          </li>
         </ul>
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">7 object(s)</div>
+      <div class="status-pane">8 object(s)</div>
     </div>
   </div>
 
@@ -2899,7 +2909,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.6.1';
+const NCD_VERSION = 'v2.6.2';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3541,6 +3551,20 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-07',
+      title: 'Week 2 Day 4 — JavaScript Fundamentals',
+      notes: [
+        'W2D4 lives at /next-chapter/week-02/day-4/ — six carts on the same Atomic Purple GBC: console warmup + four exercises + exit ticket',
+        'Ex1 Console Warmup (square / shout / isLong, no page needed), Ex2 Loop an Array (for + for...of, four variants logged to console)',
+        'Ex3 Render Array of Objects (books -> li, createElement + appendChild, renderBooks(arr, listEl) called twice)',
+        'Ex4 AI Refactor My Code: 9-row accept/reject/modify table — rejected reduce and Math.max(...spread), kept for...of, added empty-array guard. Behavior preserved (87.6 / 95)',
+        'Ex5 Todo Mini-App: array of {text, done} objects, render/mutate/re-render pattern, Enter-to-add, checkbox cross-out via classList.toggle',
+        'Exit Ticket: five free-response answers in my voice, plus the verbal-demo function (getHighest)',
+        'Course Materials window + desktop shortcut updated with W2D4.gbc; status bar count bumped 7 -> 8 objects',
+      ]
+    },
+    {
+      version: 'v2.6.1',
       date: '2026-05-06',
       title: 'Week 1 Day 5 — GOOLZ.exe walkthrough added to Course Materials',
       notes: [

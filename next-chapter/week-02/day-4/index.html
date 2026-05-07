@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Week 2 — Day 4 / NCD</title>
+  <meta name="description" content="Next Chapter Daily — Week 2 Day 4. JavaScript Fundamentals: variables, functions, conditionals, loops, arrays, objects.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="menu">
+
+  <a class="crumb" href="/next-chapter/">back to desktop</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">▶ NCD · WK2 · D4</div>
+            <h1>JavaScript Fundamentals<span class="blink"></span></h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Yesterday: read errors, fix AI's bugs. Today: stop being DOM glue and
+              learn the language. Functions, loops, arrays, objects — the four shapes
+              AI keeps generating that I want to be able to read on sight.
+            </p>
+          </div>
+
+          <ul class="cart-list">
+            <li>
+              <a class="cart" href="console-warmup.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX1 — CONSOLE WARMUP</span>
+                  <span class="cart-sub">square · shout · isLong, no page needed</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="loops.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX2 — LOOP AN ARRAY</span>
+                  <span class="cart-sub">for · for...of · filter inside · collect</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="books.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX3 — RENDER ARRAY OF OBJECTS</span>
+                  <span class="cart-sub">books → li · createElement · renderBooks(arr, list)</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="refactor.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX4 — AI REFACTOR MY CODE</span>
+                  <span class="cart-sub">accept / reject / modify · 9 changes scored</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="todo.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EX5 — TODO MINI-APP</span>
+                  <span class="cart-sub">array of objects · render · mutate · re-render</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="cart" href="exit-ticket.html">
+                <span class="cart-pic" aria-hidden="true"></span>
+                <span class="cart-meta">
+                  <span class="cart-title">EXIT TICKET</span>
+                  <span class="cart-sub">five free-response answers · my voice</span>
+                </span>
+              </a>
+            </li>
+          </ul>
+
+          <div class="callout" style="margin-top:18px;">
+            <strong>► Loadout</strong>
+            Player: <code>PENN</code><br>
+            Tools: <code>vim</code> · <code>Firefox DevTools</code> · <code>node</code><br>
+            Mood: today the language stops being a wall of unfamiliar shapes.
+          </div>
+
+          <p style="font-size:15px;color:var(--gb-1);margin-top:18px;">
+            ▼ press A to load · D-pad ↑↓ to pick
+          </p>
+
+          <div class="controls-help">
+            <b>↑↓</b> move · <b>← →</b> page · <b>A</b> select · <b>B</b> back<br>
+            <b>START</b> pause · <b>SELECT</b> palette · <b>vol</b> mute<br>
+            keyboard: arrows / Z / X / Enter / Shift / M
+          </div>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND ▸</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">w2d4 · made on linux · <a href="/">goolz.org</a> · ncd</p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>
