@@ -1180,6 +1180,18 @@
       <div class="icon-img shortcut">🕯</div>
       <div class="icon-label">Goolz&nbsp;Online</div>
     </div>
+    <div class="icon" tabindex="0" title="PEEK Examines Embedded Kernels — eldritch tamagotchi TUI for systems study (opens in a new tab)"
+         ondblclick="window.open('https://github.com/melonmelonz/peek','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('https://github.com/melonmelonz/peek','_blank','noopener')">
+      <div class="icon-img shortcut">🥚</div>
+      <div class="icon-label">PEEK.exe</div>
+    </div>
+    <div class="icon" tabindex="0" title="PEEK releases — download the static-musl binary (opens in a new tab)"
+         ondblclick="window.open('https://github.com/melonmelonz/peek/releases','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('https://github.com/melonmelonz/peek/releases','_blank','noopener')">
+      <div class="icon-img shortcut">📦</div>
+      <div class="icon-label">PEEK&nbsp;Releases</div>
+    </div>
     <div class="icon" tabindex="0" title="CSS Class — surface intro to CSS (opens in a new tab)"
          ondblclick="window.open('/next-chapter/css-class/','_blank','noopener')"
          onkeydown="if(event.key==='Enter')window.open('/next-chapter/css-class/','_blank','noopener')">
@@ -1277,11 +1289,15 @@
             <span class="fl-icon">📦</span>
             <span class="fl-name">Week 2 Day 4 — JavaScript Fundamentals</span>
           </li>
+          <li onclick="window.open('https://github.com/melonmelonz/peek','_blank','noopener')">
+            <span class="fl-icon">🥚</span>
+            <span class="fl-name">Capstone Companion — PEEK Examines Embedded Kernels</span>
+          </li>
         </ul>
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">8 object(s)</div>
+      <div class="status-pane">9 object(s)</div>
     </div>
   </div>
 
@@ -2909,7 +2925,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.6.2';
+const NCD_VERSION = 'v2.7.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3551,6 +3567,18 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-08',
+      title: 'PEEK Examines Embedded Kernels — capstone companion lands on the desktop',
+      notes: [
+        'PEEK is the engagement layer for the rust-spi-tinydoom Slack Next Chapter capstone — an offline, neon-eldritch tamagotchi TUI for systems-curriculum study',
+        'Source: github.com/melonmelonz/peek; static-musl binaries on Releases for x86_64 + aarch64 Linux and Apple Silicon + Intel macOS',
+        'Three-stat care model (nourishment / tether / lucidity), six creature stages, permadeath with append-only memorials; lazy decay via cron + peek tick',
+        'Two new desktop shortcuts: PEEK.exe links to the GitHub repo, PEEK Releases links to downloadable binaries',
+        'Course Materials window also lists Capstone Companion entry; status bar count bumped 8 -> 9 objects',
+      ]
+    },
+    {
+      version: 'v2.6.2',
       date: '2026-05-07',
       title: 'Week 2 Day 4 — JavaScript Fundamentals',
       notes: [
