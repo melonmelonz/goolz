@@ -48,10 +48,17 @@
 <span class="h">CARE KEYS</span>
   <span class="k">f</span>   feed it a question         <span class="k">t</span>   tend (steady the tether)
   <span class="k">r</span>   read a chapter together    <span class="k">z</span>   drill (procedurally generated)
+  <span class="k">w</span>   wander (text adventure: 10 rooms, 16 items, find rare drops)
+
+<span class="h">WANDER KEYS</span>
+  <span class="k">n s e w</span>   move (or arrow keys)    <span class="k">t</span>   take the room's pending drop
+  <span class="k">l</span>       look                    <span class="k">h</span>   listen (atmospheric prose)
+  <span class="k">c</span>       call out to your creature
+  <span class="k">1-9</span>     use an inventory slot   <span class="k">q</span>   leave the field
 
 <span class="h">SHOW OFF</span>
   <span class="k">d</span>   demo (cycle stages, moods, mutations &mdash; doesn't save your run)
-  <span class="k">i</span>   replay the intro
+  <span class="k">i</span>   replay the intro (multi-beat: void, sighting, rules, naming)
 
 <span class="h">META</span>
   <span class="k">?</span>   help                       <span class="k">Q</span>   quit (closes the native CLI)
@@ -83,8 +90,8 @@
 </div>
 
 <script type="module">
-  import init, * as bindings from './peek-web-2826cdb30c90a03f.js';
-  await init({ module_or_path: './peek-web-2826cdb30c90a03f_bg.wasm' });
+  import init, * as bindings from './peek-web-54518de45870f949.js';
+  await init({ module_or_path: './peek-web-54518de45870f949_bg.wasm' });
   window.wasmBindings = bindings;
 </script>
 
