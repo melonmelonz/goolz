@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PEEK — Examines Embedded Kernels</title>
+<meta name="description" content="An eldritch tamagotchi TUI for offline systems study. Raise a small creature; tend its tether; read with it." />
+<meta name="color-scheme" content="dark" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="PEEK — Examines Embedded Kernels" />
+<meta property="og:description" content="An eldritch tamagotchi TUI for offline systems study, in the browser." />
+<meta property="og:url" content="https://goolz.org/peek/" />
+<meta property="og:site_name" content="goolz.org" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0814'/%3E%3Ctext x='2.5' y='13' font-family='ui-monospace,monospace' font-size='12' font-weight='bold' fill='%23ff5cc8'%3E%F0%9F%A5%9A%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="page.css" />
+</head>
+<body>
+
+<header class="page-banner">
+  <div class="page-banner-inner">
+    <a class="brand" href="/" title="back to goolz.org">goolz.org</a>
+    <span class="sep">/</span>
+    <span class="here">peek</span>
+    <span class="tag">examines embedded kernels</span>
+  </div>
+  <button id="peek-reset" class="reset" type="button" title="bury everything and start fresh">reset</button>
+</header>
+
+<main class="page-main">
+
+  <section class="terminal-wrap">
+    <div id="grid" aria-label="PEEK terminal"></div>
+  </section>
+
+  <section class="help-grid">
+    <div class="card">
+      <h2>care keys</h2>
+      <dl>
+        <dt><kbd>f</kbd></dt><dd>feed it a question</dd>
+        <dt><kbd>t</kbd></dt><dd>tend (steady the tether)</dd>
+        <dt><kbd>r</kbd></dt><dd>read a chapter together</dd>
+        <dt><kbd>z</kbd></dt><dd>drill (procedurally generated)</dd>
+        <dt><kbd>?</kbd></dt><dd>help</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h2>show off</h2>
+      <dl>
+        <dt><kbd>d</kbd></dt><dd>demo (cycle stages, moods, mutations &mdash; doesn't save)</dd>
+        <dt><kbd>i</kbd></dt><dd>replay the intro</dd>
+      </dl>
+      <p class="aside">
+        the demo scene snapshots your creature on entry and restores it on exit
+        unless you press <kbd>Enter</kbd>, so you can show off without disturbing
+        your run.
+      </p>
+    </div>
+    <div class="card">
+      <h2>how it works</h2>
+      <p>
+        three stats decay on a half-life model:
+        <strong>nourishment</strong>, <strong>tether</strong>, <strong>lucidity</strong>.
+        feed correct answers, tend the creature, and read together to keep it
+        alive. neglect it and it goes.
+      </p>
+      <p class="aside">
+        state lives in your browser (<code>localStorage</code>). the native CLI
+        runs the same scenes from a single static-musl binary.
+      </p>
+    </div>
+    <div class="card">
+      <h2>where it lives</h2>
+      <ul>
+        <li><a href="https://github.com/melonmelonz/peek" target="_blank" rel="noopener">source on github</a></li>
+        <li><a href="https://github.com/melonmelonz/peek/releases" target="_blank" rel="noopener">native binaries (linux, macos)</a></li>
+        <li><a href="/next-chapter/" >next chapter desktop</a></li>
+        <li><a href="/" >goolz.org home</a></li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="page-footer">
+  built with
+  <a href="https://github.com/orhun/ratzilla" target="_blank" rel="noopener">ratzilla</a>
+  &middot;
+  <a href="https://ratatui.rs/" target="_blank" rel="noopener">ratatui</a>
+  &middot; rust on wasm
+  &middot; offline by design
+</footer>
+
+<script type="module">
+  import init, * as bindings from './peek-web-2826cdb30c90a03f.js';
+  await init({ module_or_path: './peek-web-2826cdb30c90a03f_bg.wasm' });
+  window.wasmBindings = bindings;
+</script>
+
+<script>
+  // Reset button — confirm, clear localStorage via the wasm export, reload.
+  // If the wasm bundle hasn't initialized yet, fall back to clearing the
+  // two known keys directly so the button is never dead.
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('peek-reset');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      if (!confirm('clear PEEK state and memorials?')) return;
+      const b = window.wasmBindings;
+      if (b && typeof b.peek_reset === 'function') {
+        b.peek_reset();
+      } else {
+        try {
+          localStorage.removeItem('peek/state');
+          localStorage.removeItem('peek/memorials');
+        } catch (_) { /* private mode / disabled storage */ }
+      }
+      location.reload();
+    });
+  });
+</script>
+
+</body>
+</html>

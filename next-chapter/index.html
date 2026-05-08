@@ -882,13 +882,6 @@
     #pwg-frame-slot { width: 100%; height: 540px; background: #0a0814; }
     #pwg-frame-slot iframe { display: block; width: 100%; height: 100%; border: 0; background: #0a0814; }
 
-    /* ── PEEK — same-origin iframe of /next-chapter/peek/ ── */
-    /* Browser build of the PEEK tamagotchi TUI; ratzilla DOM backend.
-       Slot fills the window-body; the iframe inside fills the slot. */
-    #win-peek .peek-body { padding: 0; background: #0a0814; }
-    #peek-frame-slot { width: 100%; height: 540px; background: #0a0814; }
-    #peek-frame-slot iframe { display: block; width: 100%; height: 100%; border: 0; background: #0a0814; }
-
     /* ── REPORT CARD / STUDY PLAN ── */
     #win-rc .rc-body { background: var(--gray); padding: 6px; }
     #win-rc .rc-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--gray-darker); padding: 4px 4px 0; }
@@ -1187,10 +1180,10 @@
       <div class="icon-img shortcut">🕯</div>
       <div class="icon-label">Goolz&nbsp;Online</div>
     </div>
-    <div class="icon" tabindex="0" title="PEEK — Examines Embedded Kernels (browser build, runs in this window)"
-         ondblclick="openWindow('win-peek')"
-         onkeydown="if(event.key==='Enter')openWindow('win-peek')">
-      <div class="icon-img">🥚</div>
+    <div class="icon" tabindex="0" title="PEEK — Examines Embedded Kernels (browser build, opens at goolz.org/peek)"
+         ondblclick="window.open('/peek/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/peek/','_blank','noopener')">
+      <div class="icon-img shortcut">🥚</div>
       <div class="icon-label">PEEK.exe</div>
     </div>
     <div class="icon" tabindex="0" title="PEEK releases — download the static-musl binary (opens in a new tab)"
@@ -1296,7 +1289,7 @@
             <span class="fl-icon">📦</span>
             <span class="fl-name">Week 2 Day 4 — JavaScript Fundamentals</span>
           </li>
-          <li onclick="openWindow('win-peek')">
+          <li onclick="window.open('/peek/','_blank','noopener')">
             <span class="fl-icon">🥚</span>
             <span class="fl-name">Capstone Companion — PEEK Examines Embedded Kernels (browser build)</span>
           </li>
@@ -2587,33 +2580,6 @@ Features needed:
     </div>
   </div>
 
-  <!-- ═══ WINDOW: PEEK ═══ -->
-  <div class="window hidden" id="win-peek" style="width:720px; top:50px; left:calc(50% - 360px);">
-    <div class="title-bar">
-      <span class="title-bar-icon">🥚</span>
-      <span class="title-bar-text">PEEK — Examines Embedded Kernels</span>
-      <div class="title-bar-controls">
-        <button class="title-btn" aria-label="Minimize" title="Minimize" onclick="minimizeWindow('win-peek')">_</button>
-        <button class="title-btn" aria-label="Close" title="Close" onclick="closeWindow('win-peek')">✕</button>
-      </div>
-    </div>
-    <div class="menu-bar">
-      <span class="menu-bar-item" onclick="ndAlert('PEEK','Examines Embedded Kernels.\n\nAn eldritch tamagotchi TUI for offline systems-curriculum study. The browser build runs the same scenes the native CLI uses; state lives in localStorage.\n\nKeys:\n  f feed · t tend · r read · z drill\n  d demo · i intro · ? help · Q quit\n\nFirst launch plays the intro and hatches an egg. Care for it; it grows in stages. Neglect it; it goes.','🥚')">Help</span>
-      <span class="menu-bar-item" onclick="window.open('/next-chapter/peek/','_blank','noopener')">Open in Tab</span>
-      <span class="menu-bar-item" onclick="window.open('https://github.com/melonmelonz/peek','_blank','noopener')">Source</span>
-      <span class="menu-bar-item" onclick="window.open('https://github.com/melonmelonz/peek/releases','_blank','noopener')">Releases</span>
-    </div>
-    <div class="window-body peek-body">
-      <!-- iframe is created lazily by peekOnOpen so the wasm module +
-           ratzilla render loop don't start until the user opens the
-           window, and torn down by peekTeardown when the window closes. -->
-      <div id="peek-frame-slot"></div>
-    </div>
-    <div class="status-bar">
-      <div class="status-pane">Browser build · localStorage state</div>
-    </div>
-  </div>
-
   <!-- ═══ WINDOW: Study Plan / Report Card ═══ -->
   <div class="window hidden" id="win-rc" style="width:680px; top:50px; left:calc(50% - 340px);">
     <div class="title-bar">
@@ -2959,7 +2925,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.7.1';
+const NCD_VERSION = 'v2.7.2';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3040,7 +3006,6 @@ const winMeta  = {
   'win-recycle': { icon: '🗑️', title: 'Recycle Bin' },
   'win-mines':   { icon: '💣', title: 'Minesweeper' },
   'win-pwg':    { icon: '🕯', title: 'Playing With Goolz' },
-  'win-peek':   { icon: '🥚', title: 'PEEK' },
   'win-rc':      { icon: '📊', title: 'Report Card' },
 };
 
@@ -3054,7 +3019,6 @@ const APPS = {
   'win-mycomp':  { init: () => mycompInit() },
   'win-mines':   { init: () => msInit(),      teardown: () => msStopTimer() },
   'win-pwg':    { init: () => pwgInit(),    onOpen: () => pwgOnOpen(),  teardown: () => pwgTeardown() },
-  'win-peek':   { init: () => peekInit(),   onOpen: () => peekOnOpen(), teardown: () => peekTeardown() },
   'win-rc':      { init: () => rcInit(),      onOpen: () => rcRefresh() },
 };
 
@@ -3603,6 +3567,18 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-08',
+      title: 'PEEK gets its own page — adventure-shaped tamagotchi at goolz.org/peek',
+      notes: [
+        'PEEK.exe and the Course Materials Capstone Companion entry now open the standalone landing at /peek/ in a new tab — no more iframe inside a Win95 window, the terminal gets the whole canvas',
+        'New stage-advance gates: recall count + chapters read + average stat thresholds drive the creature from Sprout up through Cogent, with a four-phase EvolveScene (fade → vortex → reveal → hold) marking each transition',
+        'Idle care menu now lists [d] demo and [i] replay-intro so they are discoverable; footer hint updated to match',
+        'Win95 desktop: removed the win-peek window, its CSS, lazy-iframe lifecycle (peekInit/peekOnOpen/peekTeardown), and the orphaned next-chapter/peek/ bundle',
+        'Standalone page is built with neon-eldritch chrome (radial vignette, glowing terminal-wrap, kbd glyphs) around the same wasm bundle the native CLI scenes drive; reset button calls peek_reset to clear localStorage',
+      ]
+    },
+    {
+      version: 'v2.7.1',
       date: '2026-05-08',
       title: 'PEEK boots in a window — full browser build of the capstone tamagotchi',
       notes: [
@@ -5120,40 +5096,6 @@ function pwgTeardown() {
   // event listeners in one shot, with no per-app teardown helpers to
   // keep in sync.
   slot.innerHTML = '';
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// PEEK — browser build of the eldritch tamagotchi TUI (ratzilla on wasm).
-// Same lazy-mount pattern as PWG: the iframe doesn't exist until the
-// window opens, and goes away when it closes — that stops the wasm
-// render loop without needing per-app teardown helpers.
-//
-// Source: github.com/melonmelonz/peek (peek-web crate). The bundle in
-// /next-chapter/peek/ is a Trunk dist; refresh it via
-// scripts/pull-peek-web.sh.
-// ═══════════════════════════════════════════════════════════════════════
-function peekEnsureFrame() {
-  const slot = document.getElementById('peek-frame-slot');
-  if (!slot) return null;
-  let f = slot.querySelector('iframe');
-  if (f) return f;
-  f = document.createElement('iframe');
-  f.src = '/next-chapter/peek/';
-  f.title = 'PEEK';
-  f.setAttribute('allowfullscreen', '');
-  f.setAttribute('referrerpolicy', 'same-origin');
-  // Same-origin: the wasm needs localStorage and same-origin scripts.
-  slot.appendChild(f);
-  return f;
-}
-function peekInit() { /* lazy — wait for first open */ }
-function peekOnOpen() { peekEnsureFrame(); }
-function peekTeardown() {
-  const slot = document.getElementById('peek-frame-slot');
-  if (!slot) return;
-  // Tear down by detaching child nodes — same effect as the PWG slot
-  // teardown, but avoids tripping the innerHTML XSS lint.
-  while (slot.firstChild) slot.removeChild(slot.firstChild);
 }
 
 // ══════════════ Report Card / Study Plan ══════════════
