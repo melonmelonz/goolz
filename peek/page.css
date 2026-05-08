@@ -171,7 +171,9 @@ body::before {
   box-shadow: none !important;
   padding: 6px 8px !important;
   background: var(--peek-bg) !important;
-  height: clamp(360px, 62vh, 620px);
+  height: 60vh;
+  min-height: 320px;
+  max-height: 560px;
   border-radius: 3px;
   overflow: hidden;
 }
