@@ -29,16 +29,17 @@ html, body {
                ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 14px;
   line-height: 1.5;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 body {
   background:
     radial-gradient(ellipse at 50% -10%, #1a1238 0%, var(--peek-bg) 55%, #03020a 100%);
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
-  padding: 28px 18px 40px;
+  padding: 16px;
 }
 
 /* Subtle scanlines for the CRT-y feel — kept low contrast so the inner
@@ -72,6 +73,8 @@ body::before {
     0 14px 60px rgba(177, 108, 255, 0.22),
     inset 0 0 40px rgba(92, 231, 255, 0.04);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .term-titlebar {
@@ -132,12 +135,18 @@ body::before {
 /* ── body of the terminal: stacked prompts and command output ── */
 .term-body {
   padding: 14px 16px 18px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .prompt {
   margin: 8px 0 6px;
   white-space: pre-wrap;
   word-break: break-all;
+  flex: 0 0 auto;
 }
 .prompt .user  { color: var(--peek-mint); }
 .prompt .at    { color: var(--peek-dim); }
@@ -171,8 +180,10 @@ body::before {
   box-shadow: none !important;
   padding: 6px 8px !important;
   background: var(--peek-bg) !important;
-  min-height: 540px;
+  flex: 1 1 auto;
+  min-height: 240px;
   border-radius: 3px;
+  overflow: hidden;
 }
 
 /* `peek --help` output — rendered like the man page output you'd see
@@ -183,6 +194,11 @@ body::before {
   font: inherit;
   color: var(--peek-fg);
   white-space: pre-wrap;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  font-size: 12.5px;
+  line-height: 1.4;
 }
 .help-out .h    { color: var(--peek-cyan); font-weight: 700; }
 .help-out .k    { color: var(--peek-pink); font-weight: 700; }
@@ -197,10 +213,10 @@ body::before {
 
 /* ── narrow screens ── */
 @media (max-width: 640px) {
-  body { padding: 14px 8px 24px; }
+  body { padding: 8px; }
   .term-titlebar { padding: 6px 10px; gap: 8px; }
   .term-title { font-size: 12px; }
   .term-body { padding: 10px 12px 14px; }
-  #grid { min-height: 420px; }
-  .help-out { font-size: 12.5px; }
+  #grid { min-height: 200px; }
+  .help-out { font-size: 11.5px; }
 }
