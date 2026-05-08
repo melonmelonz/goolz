@@ -171,11 +171,8 @@ body::before {
   box-shadow: none !important;
   padding: 6px 8px !important;
   background: var(--peek-bg) !important;
-  height: 60vh;
-  min-height: 320px;
-  max-height: 560px;
+  min-height: 540px;
   border-radius: 3px;
-  overflow: hidden;
 }
 
 /* `peek --help` output — rendered like the man page output you'd see
@@ -204,6 +201,6 @@ body::before {
   .term-titlebar { padding: 6px 10px; gap: 8px; }
   .term-title { font-size: 12px; }
   .term-body { padding: 10px 12px 14px; }
-  #grid { height: clamp(320px, 58vh, 520px); }
+  #grid { min-height: 420px; }
   .help-out { font-size: 12.5px; }
 }
