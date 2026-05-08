@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PEEK — Examines Embedded Kernels</title>
+<title>peek@goolz</title>
 <meta name="description" content="An eldritch tamagotchi TUI for offline systems study. Raise a small creature; tend its tether; read with it." />
 <meta name="color-scheme" content="dark" />
 <meta property="og:type" content="website" />
@@ -18,79 +18,69 @@
 </head>
 <body>
 
-<header class="page-banner">
-  <div class="page-banner-inner">
-    <a class="brand" href="/" title="back to goolz.org">goolz.org</a>
-    <span class="sep">/</span>
-    <span class="here">peek</span>
-    <span class="tag">examines embedded kernels</span>
+<div class="term" role="application" aria-label="PEEK — Examines Embedded Kernels">
+
+  <div class="term-titlebar">
+    <span class="dots" aria-hidden="true">
+      <i class="dot red"></i><i class="dot amber"></i><i class="dot green"></i>
+    </span>
+    <span class="term-title">
+      peek<span class="at">@</span>goolz<span class="colon">:</span>~<em>examines embedded kernels</em>
+    </span>
+    <button id="peek-reset" class="term-action" type="button" title="bury everything and start fresh">[ reset ]</button>
   </div>
-  <button id="peek-reset" class="reset" type="button" title="bury everything and start fresh">reset</button>
-</header>
 
-<main class="page-main">
+  <div class="term-body">
 
-  <section class="terminal-wrap">
-    <div id="grid" aria-label="PEEK terminal"></div>
-  </section>
-
-  <section class="help-grid">
-    <div class="card">
-      <h2>care keys</h2>
-      <dl>
-        <dt><kbd>f</kbd></dt><dd>feed it a question</dd>
-        <dt><kbd>t</kbd></dt><dd>tend (steady the tether)</dd>
-        <dt><kbd>r</kbd></dt><dd>read a chapter together</dd>
-        <dt><kbd>z</kbd></dt><dd>drill (procedurally generated)</dd>
-        <dt><kbd>?</kbd></dt><dd>help</dd>
-      </dl>
+    <div class="prompt">
+      <span class="user">peek</span><span class="at">@</span><span class="host">goolz</span><span class="colon">:</span><span class="path">~</span><span class="dollar">$</span><span class="cmd">./peek</span>
     </div>
-    <div class="card">
-      <h2>show off</h2>
-      <dl>
-        <dt><kbd>d</kbd></dt><dd>demo (cycle stages, moods, mutations &mdash; doesn't save)</dd>
-        <dt><kbd>i</kbd></dt><dd>replay the intro</dd>
-      </dl>
-      <p class="aside">
-        the demo scene snapshots your creature on entry and restores it on exit
-        unless you press <kbd>Enter</kbd>, so you can show off without disturbing
-        your run.
-      </p>
-    </div>
-    <div class="card">
-      <h2>how it works</h2>
-      <p>
-        three stats decay on a half-life model:
-        <strong>nourishment</strong>, <strong>tether</strong>, <strong>lucidity</strong>.
-        feed correct answers, tend the creature, and read together to keep it
-        alive. neglect it and it goes.
-      </p>
-      <p class="aside">
-        state lives in your browser (<code>localStorage</code>). the native CLI
-        runs the same scenes from a single static-musl binary.
-      </p>
-    </div>
-    <div class="card">
-      <h2>where it lives</h2>
-      <ul>
-        <li><a href="https://github.com/melonmelonz/peek" target="_blank" rel="noopener">source on github</a></li>
-        <li><a href="https://github.com/melonmelonz/peek/releases" target="_blank" rel="noopener">native binaries (linux, macos)</a></li>
-        <li><a href="/next-chapter/" >next chapter desktop</a></li>
-        <li><a href="/" >goolz.org home</a></li>
-      </ul>
-    </div>
-  </section>
 
-</main>
+    <div id="grid" tabindex="0" aria-label="PEEK terminal"></div>
 
-<footer class="page-footer">
-  built with
-  <a href="https://github.com/orhun/ratzilla" target="_blank" rel="noopener">ratzilla</a>
-  &middot;
-  <a href="https://ratatui.rs/" target="_blank" rel="noopener">ratatui</a>
-  &middot; rust on wasm
-  &middot; offline by design
-</footer>
+    <div class="prompt">
+      <span class="user">peek</span><span class="at">@</span><span class="host">goolz</span><span class="colon">:</span><span class="path">~</span><span class="dollar">$</span><span class="cmd">peek</span> <span class="arg">--help</span>
+    </div>
+
+<pre class="help-out"><span class="h">USAGE</span>
+  peek [scene] [flags]            run the eldritch tamagotchi TUI
+
+<span class="h">CARE KEYS</span>
+  <span class="k">f</span>   feed it a question         <span class="k">t</span>   tend (steady the tether)
+  <span class="k">r</span>   read a chapter together    <span class="k">z</span>   drill (procedurally generated)
+
+<span class="h">SHOW OFF</span>
+  <span class="k">d</span>   demo (cycle stages, moods, mutations &mdash; doesn't save your run)
+  <span class="k">i</span>   replay the intro
+
+<span class="h">META</span>
+  <span class="k">?</span>   help                       <span class="k">Q</span>   quit (closes the native CLI)
+
+<span class="h">HOW IT WORKS</span>
+  three stats decay on a half-life model: <span class="k">nourishment</span>, <span class="k">tether</span>, <span class="k">lucidity</span>.
+  feed correct answers, tend the creature, and read together to keep it
+  alive. neglect it and it goes. progression gates on recalls + chapters
+  read + average stat — keep showing up and your creature evolves.
+
+<span class="h">PERSISTENCE</span>
+  state lives in your browser (<span class="k">localStorage</span>). use [ reset ] in the title bar
+  to clear state and memorials. the native CLI runs the same scenes from a
+  single static-musl binary.
+
+<span class="h">LINKS</span>
+  source ......... <a href="https://github.com/melonmelonz/peek" target="_blank" rel="noopener">github.com/melonmelonz/peek</a>
+  releases ....... <a href="https://github.com/melonmelonz/peek/releases" target="_blank" rel="noopener">github.com/melonmelonz/peek/releases</a> <span class="dim">(linux, macos)</span>
+  next chapter ... <a href="/next-chapter/">/next-chapter/</a>
+  goolz home ..... <a href="/">/</a>
+
+<span class="dim">built with ratzilla + ratatui &middot; rust on wasm &middot; offline by design</span></pre>
+
+    <div class="prompt">
+      <span class="user">peek</span><span class="at">@</span><span class="host">goolz</span><span class="colon">:</span><span class="path">~</span><span class="dollar">$</span><span class="cursor" aria-hidden="true"></span>
+    </div>
+
+  </div>
+</div>
 
 <script type="module">
   import init, * as bindings from './peek-web-2826cdb30c90a03f.js';

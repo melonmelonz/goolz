@@ -1,17 +1,21 @@
-/* PEEK standalone page — neon-eldritch chrome around the ratzilla terminal.
-   The base style.css from peek-web styles the #grid (terminal) itself. This
-   file styles the page surrounding it. */
+/* PEEK standalone — the whole page is one faux terminal window. The
+   real ratzilla terminal (#grid) lives inside it. Base #grid colors and
+   font come from style.css (shipped with the wasm bundle); this file
+   adds the surrounding chrome and overrides the default violet border
+   so the embedded terminal sits flush inside the outer frame. */
 
 :root {
-  --peek-bg: #0a0814;
-  --peek-bg-2: #110d1f;
+  --peek-bg: #07060f;
+  --peek-bg-2: #0e0c1c;
   --peek-fg: #e6e1f5;
-  --peek-dim: #7d6fa5;
-  --peek-violet: #b16cff;
-  --peek-cyan: #5ce7ff;
-  --peek-mint: #5cffb1;
-  --peek-pink: #ff5cc8;
-  --peek-border: #2b1f4a;
+  --peek-dim: #6f649c;
+  --peek-violet: #b58cff;
+  --peek-cyan: #6ad8ff;
+  --peek-mint: #6affc6;
+  --peek-pink: #ff8cf2;
+  --peek-amber: #ffd166;
+  --peek-red: #ff6b9a;
+  --peek-border: #2c2253;
 }
 
 * { box-sizing: border-box; }
@@ -21,178 +25,182 @@ html, body {
   padding: 0;
   background: var(--peek-bg);
   color: var(--peek-fg);
-  font-family: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code",
+               ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 14px;
   line-height: 1.5;
   min-height: 100vh;
 }
 
-/* radial bg vignette so the terminal feels like it's emerging from a void */
 body {
   background:
-    radial-gradient(ellipse at top, #1a1230 0%, var(--peek-bg) 55%, #050310 100%);
+    radial-gradient(ellipse at 50% -10%, #1a1238 0%, var(--peek-bg) 55%, #03020a 100%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 28px 18px 40px;
 }
 
-/* ── header ── */
-.page-banner {
+/* Subtle scanlines for the CRT-y feel — kept low contrast so the inner
+   terminal text stays sharp. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.014) 0px,
+    rgba(255, 255, 255, 0.014) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 1;
+}
+
+/* ── the terminal window itself ── */
+.term {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1080px;
+  background: var(--peek-bg-2);
+  border: 1px solid var(--peek-violet);
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 1px rgba(177, 108, 255, 0.18),
+    0 14px 60px rgba(177, 108, 255, 0.22),
+    inset 0 0 40px rgba(92, 231, 255, 0.04);
+  overflow: hidden;
+}
+
+.term-titlebar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 22px;
+  gap: 12px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #1a1338 0%, #120c28 100%);
   border-bottom: 1px solid var(--peek-border);
-  background: rgba(10, 8, 20, 0.85);
-  backdrop-filter: blur(4px);
 }
-.page-banner-inner { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.brand {
+.dots { display: inline-flex; gap: 6px; }
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 6px currentColor;
+}
+.dot.red    { background: var(--peek-red);    color: var(--peek-red);   }
+.dot.amber  { background: var(--peek-amber);  color: var(--peek-amber); }
+.dot.green  { background: var(--peek-mint);   color: var(--peek-mint);  }
+
+.term-title {
+  flex: 1 1 auto;
+  text-align: center;
   color: var(--peek-mint);
-  text-decoration: none;
   font-weight: 700;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.brand:hover { color: var(--peek-cyan); }
-.sep { color: var(--peek-dim); }
-.here {
-  color: var(--peek-pink);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.tag {
-  color: var(--peek-dim);
-  font-style: italic;
-  margin-left: 6px;
-}
-.reset {
-  background: transparent;
+.term-title .at,
+.term-title .colon { color: var(--peek-dim); font-weight: 400; }
+.term-title em {
   color: var(--peek-violet);
-  border: 1px solid var(--peek-violet);
-  padding: 4px 14px;
+  font-style: normal;
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+.term-action {
+  background: transparent;
+  color: var(--peek-cyan);
+  border: 1px solid var(--peek-cyan);
+  padding: 2px 10px;
   font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   cursor: pointer;
   border-radius: 2px;
-  letter-spacing: 0.06em;
 }
-.reset:hover {
-  background: var(--peek-violet);
-  color: var(--peek-bg);
-}
-
-/* ── main layout ── */
-.page-main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px 22px 40px;
+.term-action:hover {
+  background: rgba(106, 216, 255, 0.12);
+  box-shadow: 0 0 8px rgba(106, 216, 255, 0.4);
 }
 
-.terminal-wrap {
-  margin: 8px auto 28px;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--peek-border);
-  border-radius: 4px;
-  box-shadow:
-    0 0 0 1px rgba(177, 108, 255, 0.15),
-    0 8px 40px rgba(177, 108, 255, 0.18),
-    inset 0 0 30px rgba(92, 231, 255, 0.04);
+/* ── body of the terminal: stacked prompts and command output ── */
+.term-body {
+  padding: 14px 16px 18px;
 }
 
-/* The ratzilla #grid styling lives in style.css from peek-web; this
-   block just gives it a sensible minimum size on the page. */
+.prompt {
+  margin: 8px 0 6px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.prompt .user  { color: var(--peek-mint); }
+.prompt .at    { color: var(--peek-dim); }
+.prompt .host  { color: var(--peek-cyan); }
+.prompt .colon { color: var(--peek-dim); }
+.prompt .path  { color: var(--peek-violet); }
+.prompt .dollar { color: var(--peek-pink); margin: 0 6px 0 2px; }
+.prompt .cmd   { color: var(--peek-fg); }
+.prompt .arg   { color: var(--peek-amber); }
+.prompt .cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  vertical-align: text-bottom;
+  background: var(--peek-pink);
+  margin-left: 4px;
+  animation: blink 1.05s steps(1) infinite;
+  box-shadow: 0 0 6px rgba(255, 140, 242, 0.55);
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* The ratzilla terminal: kill the default violet border from style.css
+   so it sits flush inside our outer frame, and let it grow to a
+   sensible minimum height. */
 #grid {
   width: 100%;
-  min-height: 520px;
+  max-width: none;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 6px 8px !important;
+  background: var(--peek-bg) !important;
+  min-height: 540px;
+  border-radius: 3px;
 }
 
-/* ── help cards ── */
-.help-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
-  margin-top: 18px;
-}
-.card {
-  background: var(--peek-bg-2);
-  border: 1px solid var(--peek-border);
-  border-radius: 4px;
-  padding: 14px 16px;
-}
-.card h2 {
-  margin: 0 0 10px;
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--peek-cyan);
-  font-weight: 700;
-}
-.card p { margin: 6px 0; }
-.card .aside {
-  margin-top: 10px;
-  color: var(--peek-dim);
-  font-size: 12.5px;
-  font-style: italic;
-}
-.card ul { margin: 0; padding-left: 18px; }
-.card ul li { margin: 4px 0; }
-.card a {
-  color: var(--peek-mint);
-  text-decoration: none;
-  border-bottom: 1px dashed rgba(92, 255, 177, 0.4);
-}
-.card a:hover { color: var(--peek-cyan); border-bottom-color: var(--peek-cyan); }
-.card code {
-  background: rgba(92, 231, 255, 0.08);
-  color: var(--peek-cyan);
-  padding: 0 4px;
-  border-radius: 2px;
-}
-
-/* dl rows for keybindings */
-.card dl {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  column-gap: 12px;
-  row-gap: 6px;
+/* `peek --help` output — rendered like the man page output you'd see
+   if you piped help to less. */
+.help-out {
   margin: 0;
-}
-.card dt { margin: 0; }
-.card dd { margin: 0; }
-
-/* unified kbd treatment */
-kbd {
-  display: inline-block;
-  min-width: 22px;
-  text-align: center;
-  padding: 1px 6px;
-  background: var(--peek-bg);
-  border: 1px solid var(--peek-violet);
-  border-radius: 2px;
-  color: var(--peek-pink);
+  padding: 0;
   font: inherit;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  box-shadow: 0 1px 0 rgba(177, 108, 255, 0.4);
+  color: var(--peek-fg);
+  white-space: pre-wrap;
 }
-
-/* ── footer ── */
-.page-footer {
-  border-top: 1px solid var(--peek-border);
-  margin-top: 30px;
-  padding: 14px 22px;
-  text-align: center;
-  color: var(--peek-dim);
-  font-size: 12.5px;
-}
-.page-footer a {
+.help-out .h    { color: var(--peek-cyan); font-weight: 700; }
+.help-out .k    { color: var(--peek-pink); font-weight: 700; }
+.help-out .desc { color: var(--peek-fg); }
+.help-out .dim  { color: var(--peek-dim); }
+.help-out a {
   color: var(--peek-mint);
   text-decoration: none;
+  border-bottom: 1px dashed rgba(106, 255, 198, 0.4);
 }
-.page-footer a:hover { color: var(--peek-cyan); }
+.help-out a:hover { color: var(--peek-cyan); border-bottom-color: var(--peek-cyan); }
 
 /* ── narrow screens ── */
 @media (max-width: 640px) {
-  .page-banner { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 14px; }
-  .page-main { padding: 16px 12px 30px; }
-  #grid { min-height: 380px; }
+  body { padding: 14px 8px 24px; }
+  .term-titlebar { padding: 6px 10px; gap: 8px; }
+  .term-title { font-size: 12px; }
+  .term-body { padding: 10px 12px 14px; }
+  #grid { min-height: 420px; }
+  .help-out { font-size: 12.5px; }
 }
