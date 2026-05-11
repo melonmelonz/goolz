@@ -1,0 +1,1 @@
+import{Store as n}from"../store.js";export const hintStore=new n(null);export function setHint(e,t){hintStore.set({route:e,text:t})}export function clearHint(e){const t=hintStore.get();(!t||t.route===e)&&hintStore.set(null)}
