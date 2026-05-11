@@ -1828,7 +1828,7 @@ function Us(e) {
 }
 async function Qn(e) {
   if (R !== void 0) return R;
-  e !== void 0 && (Object.getPrototypeOf(e) === Object.prototype ? { module_or_path: e } = e : console.warn("using deprecated parameters for the initialization function; pass a single object instead")), e === void 0 && (e = new URL("/v2/assets/scry_core_bg-DqZbL9aM.wasm", import.meta.url));
+  e !== void 0 && (Object.getPrototypeOf(e) === Object.prototype ? { module_or_path: e } = e : console.warn("using deprecated parameters for the initialization function; pass a single object instead")), e === void 0 && (e = new URL("" + new URL("scry_core_bg-DqZbL9aM.wasm", import.meta.url).href, import.meta.url));
   const t = Xn();
   (typeof e == "string" || typeof Request == "function" && e instanceof Request || typeof URL == "function" && e instanceof URL) && (e = fetch(e));
   const { instance: n, module: r } = await zs(await e, t);
