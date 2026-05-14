@@ -75,6 +75,11 @@
 <script>
   window.GameBoyAdvance = GameBoyAdvance;
   window.biosBin = biosBin;
+  // Expose the software renderer so game.js can swap it in. The bundled
+  // proxy.js does `new Worker('js/video/worker.js')` — under our deployment
+  // that 404s. Worker fetch errors fire async, so video.js's sync try/catch
+  // doesn't fall back. We force software ourselves at construction time.
+  window.GameBoyAdvanceSoftwareRenderer = GameBoyAdvanceSoftwareRenderer;
 </script>
 <script type="module" src="js/main.js"></script>
 </body>
