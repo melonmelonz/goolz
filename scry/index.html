@@ -229,8 +229,8 @@ iframe.surface.ready {
     </button>
   </div>
 
-  <button class="demo-btn" id="demo-btn" type="button" title="Load the bundled RV32 demo ELF">DEMO</button>
   <a class="scope-link" href="scope.html">Scope &amp; wireframes &rarr;</a>
+  <a class="scope-link" href="breakdown.html">Tech breakdown &rarr;</a>
   <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">
     <span class="icon" id="icon-moon" aria-hidden="true">&#x263E;</span>
     <span class="icon" id="icon-sun" aria-hidden="true">&#x263C;</span>
@@ -258,7 +258,6 @@ iframe.surface.ready {
   var btnV1    = document.getElementById('mode-v1');
   var btnV2    = document.getElementById('mode-v2');
   var btnT     = document.getElementById('theme-toggle');
-  var btnDemo  = document.getElementById('demo-btn');
   var iconMoon = document.getElementById('icon-moon');
   var iconSun  = document.getElementById('icon-sun');
   var mq       = window.matchMedia('(prefers-color-scheme: dark)');
@@ -350,10 +349,6 @@ iframe.surface.ready {
     activeSlot  = incoming;
     currentMode = m;
   }
-
-  btnDemo.addEventListener('click', function () {
-    postToVisible({ type: 'scry-load-demo' });
-  });
 
   btnV1.addEventListener('click', function () { setMode('v1'); });
   btnV2.addEventListener('click', function () { setMode('v2'); });
