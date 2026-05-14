@@ -6,17 +6,81 @@
 <title>Scry — Workbench</title>
 <meta name="description" content="Scry takes a binary and shows you what it would do, without leaving your browser tab.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23f6f1e8'/%3E%3Crect y='6' width='16' height='4' fill='%23a8e0c8'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/empty.css">
+<link rel="stylesheet" href="css/hex.css">
+<link rel="stylesheet" href="css/inspect.css">
+<link rel="stylesheet" href="css/disasm.css">
+<link rel="stylesheet" href="css/emu.css">
+<link rel="stylesheet" href="css/trace.css">
+<link rel="stylesheet" href="css/wave.css">
+<link rel="stylesheet" href="css/game.css">
 <script>
-  // v1 was a separate vanilla-JS SPA. It drifted from v2 (Svelte+WASM) in
-  // ways that the demo cares about (no PC follow, broken big-cart layout,
-  // identical-looking UI that wasn't actually identical). Until a clean
-  // vanilla-JS rewrite mirrors v2 1-to-1, both /scry/v1/ and /scry/v2/
-  // serve the v2 bundle. The parent shell's v1/v2 toggle still works —
-  // the iframe just lands on the same surface from both sides.
-  var qs = location.search || '';
-  var hs = location.hash || '';
-  location.replace('../v2/' + qs + hs);
+  // Apply stored theme synchronously to avoid a light-flash on first paint.
+  // Allowed values are "light" and "dark"; anything else falls through to the
+  // OS preference handled by the @media query in tokens.css.
+  try {
+    var t = localStorage.getItem('scry-theme');
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  } catch (e) { /* storage blocked — fall back to system pref */ }
+  // Tag the document when embedded inside the unified shell so it can hide
+  // its own brand + theme toggle (the parent provides both).
+  if (/[?&]embed=1\b/.test(location.search)) {
+    document.documentElement.setAttribute('data-embedded', '1');
+  }
+  // Accept theme updates pushed by the parent shell.
+  window.addEventListener('message', function (ev) {
+    if (ev.origin !== location.origin) return;
+    var m = ev.data;
+    if (m && m.type === 'scry-theme' && (m.value === 'light' || m.value === 'dark')) {
+      document.documentElement.setAttribute('data-theme', m.value);
+    }
+  });
 </script>
 </head>
-<body></body>
+<body>
+<div id="app"></div>
+<!-- Vendored gbajs2 (BSD-2, endrift + andychase) — see
+     vendor/gbajs/NOTICE.md. Classic <script> tags because gbajs is
+     non-module and registers globals (GameBoyAdvance, biosBin, etc.)
+     that the GAME module reads. Load order mirrors upstream's
+     index.html. biosbin.js bakes the 220-byte HLE BIOS into a global
+     `biosBin` ArrayBuffer so the emulator boots synchronously. -->
+<script src="vendor/gbajs/js/util.js"></script>
+<script src="vendor/gbajs/js/core.js"></script>
+<script src="vendor/gbajs/js/arm.js"></script>
+<script src="vendor/gbajs/js/thumb.js"></script>
+<script src="vendor/gbajs/js/mmu.js"></script>
+<script src="vendor/gbajs/js/io.js"></script>
+<script src="vendor/gbajs/js/audio.js"></script>
+<script src="vendor/gbajs/js/video.js"></script>
+<script src="vendor/gbajs/js/video/proxy.js"></script>
+<script src="vendor/gbajs/js/video/software.js"></script>
+<script src="vendor/gbajs/js/irq.js"></script>
+<script src="vendor/gbajs/js/keypad.js"></script>
+<script src="vendor/gbajs/js/sio.js"></script>
+<script src="vendor/gbajs/js/savedata.js"></script>
+<script src="vendor/gbajs/js/gpio.js"></script>
+<script src="vendor/gbajs/js/gba.js"></script>
+<script src="vendor/gbajs/resources/xhr.js"></script>
+<script src="vendor/gbajs/resources/biosbin.js"></script>
+<!-- gbajs2 modernized everything to `class` declarations and a top-level
+     `let biosBin`. Those bindings live in the shared classic-script
+     lexical scope but are NOT window properties, so an ES module can't
+     reach them. Re-publish what the GAME module needs. -->
+<script>
+  window.GameBoyAdvance = GameBoyAdvance;
+  window.biosBin = biosBin;
+  // Expose the software renderer so game.js can swap it in. The bundled
+  // proxy.js does `new Worker('js/video/worker.js')` — under our deployment
+  // that 404s. Worker fetch errors fire async, so video.js's sync try/catch
+  // doesn't fall back. We force software ourselves at construction time.
+  window.GameBoyAdvanceSoftwareRenderer = GameBoyAdvanceSoftwareRenderer;
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
 </html>
