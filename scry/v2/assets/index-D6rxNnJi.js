@@ -2667,7 +2667,7 @@ var _l = N('<section class="mh-host svelte-sq0dz7"><div class="mh-bar svelte-sq0
 function hl(e, t) {
   tt(t, true);
   let n = Qn(t, "cursor", 3, null), r = Qn(t, "follow", 3, false);
-  const s = 16, a = 20, l = 6, c = 2e6;
+  const s = 16, a = 20, l = 6, c = 14e6;
   let o, v, u, h = 0, _ = [], A = null, x = { physicalPx: 0, scale: 1 }, I = -1;
   function g(m) {
     return (m >>> 0).toString(16).padStart(2, "0").toUpperCase();
