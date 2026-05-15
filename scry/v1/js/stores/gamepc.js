@@ -1,1 +1,1 @@
-import{Store as l}from"../store.js";export const gamePcStore=new l({follow:!1,running:!1,liveAddress:null,label:"IDLE",mode:"ARM",inCart:!1,offset:null,mirrored:!1,trail:[],ts:0});export function publishGamePc(e){gamePcStore.update({...e,ts:performance.now()})}
+import{Store as r}from"../store.js";export const gamePcStore=new r({follow:!0,running:!1,liveAddress:null,label:"IDLE",mode:"ARM",inCart:!1,offset:null,mirrored:!1,trail:[],ts:0});export function publishGamePc(e){gamePcStore.update({...e,ts:performance.now()})}
