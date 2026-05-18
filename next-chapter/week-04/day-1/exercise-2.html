@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 2 -- Stress Test / NCD W4D1</title>
+  <meta name="description" content="Exercise 2: stress test the ideas, pick the strongest, write the problem statement.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="ex2">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">&#9654; EXERCISE 2 / 5</div>
+            <h1>Stress Test</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              My partner tried to break my ideas. Here's what survived.
+            </p>
+          </div>
+
+          <h2>Problem 1: Digital literacy gap for returning citizens</h2>
+
+          <h3>"Who would actually use this?"</h3>
+          <p>
+            People in the first months after release. I can name the population: anyone coming out of state or federal prison who went in before ~2015, when smartphones and cloud-everything became the default. That's not hypothetical. Reentry orgs exist in every city specifically because this population needs help with exactly this kind of thing.
+          </p>
+
+          <h3>"How is this different from what exists?"</h3>
+          <p>
+            Digital literacy sites exist (GCFGlobal, Khan Academy, Northstar). But they're built for a general audience. They assume you have a device, an email, a baseline of context. They don't account for the specific gap: someone who missed 5-15 years of gradual tech evolution all at once. And they definitely don't account for the emotional weight of it, feeling stupid for not knowing how to do things a 12-year-old can do.
+          </p>
+
+          <h3>"Real problem or mild inconvenience?"</h3>
+          <p>
+            Real problem. People lose job opportunities because they can't fill out online applications. They miss benefits enrollment deadlines because they can't navigate a state portal. They get scammed because they don't recognize phishing. This isn't "I wish my app was nicer." This is "I can't participate in society."
+          </p>
+
+          <h3>"Could you build a basic version in a few weeks?"</h3>
+          <p>
+            Yes. The core is an AI-powered Q&A that explains tech concepts in plain, no-jargon language, plus a handful of step-by-step walkthroughs for the most common tasks (set up email, use a phone, apply for a job online). That's buildable. The hard parts (offline mode, case worker dashboards, SMS integration) can come later.
+          </p>
+
+          <h2>Verdict</h2>
+          <div class="callout">
+            <strong>&#9654; Problem 1 survives.</strong>
+            Problem 2 (kernel docs) is real but too niche for a class project, and the audience is already technical enough to help themselves. Problem 3 (community org inventory) has existing tools. Problem 1 has real pain, a specific underserved audience, and a scope I can actually build.
+          </div>
+
+          <h2>Problem Statement</h2>
+          <div class="callout">
+            <strong>&#9654; Final</strong>
+            People returning to their communities after incarceration struggle with basic digital literacy because the technology landscape changed completely while they were inside, and right now they deal with it by relying on whoever is nearby to walk them through it one confusing task at a time.
+          </div>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND &#9654;</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">made on linux . <a href="/">goolz.org</a> . ncd</p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

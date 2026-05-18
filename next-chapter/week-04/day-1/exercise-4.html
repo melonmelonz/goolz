@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 4 -- Feature Prioritization / NCD W4D1</title>
+  <meta name="description" content="Exercise 4: sort features into must-have, nice-to-have, and later. Define the MVP.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9878;</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="ex4">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">&#9654; EXERCISE 4 / 5</div>
+            <h1>Feature Prioritization</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              What's essential, what's nice, what can wait.
+            </p>
+          </div>
+
+          <h2>The Buckets</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Must Have (MVP)</th>
+                <th>Nice to Have</th>
+                <th>Later</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>AI Q&A chat (plain language, no jargon)</td>
+                <td>Case worker dashboard</td>
+                <td>Offline mode (downloadable guides)</td>
+              </tr>
+              <tr>
+                <td>Step-by-step walkthrough modules</td>
+                <td>Module assignment system</td>
+                <td>Multi-language support</td>
+              </tr>
+              <tr>
+                <td>Progress tracking (resume where you left off)</td>
+                <td>Custom local resource guides</td>
+                <td>SMS notifications / reminders</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Built-in glossary sidebar</td>
+                <td>Integration with reentry services APIs</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>Why these three</h2>
+          <p>
+            <b>AI Q&A:</b> This is the thing that makes the tool different from a static tutorial site. Someone can type "how do I make a gmail" and get a real, patient, step-by-step answer in language they understand. Without this the app is just another FAQ page.
+          </p>
+          <p>
+            <b>Walkthrough modules:</b> The Q&A handles questions, but people also need structured guidance for the big tasks. Setting up email. Using a smartphone. Filling out an online job application. These need to be pre-built, tested, and clear.
+          </p>
+          <p>
+            <b>Progress tracking:</b> People in reentry are juggling a hundred things. They might use this tool for 10 minutes at the library, then come back two days later. They need to know what they've done and where they left off without starting over.
+          </p>
+
+          <h2>My MVP</h2>
+          <div class="callout">
+            <strong>&#9654; Scope</strong>
+            <b>App:</b> ReEntry Tech (working name)<br>
+            <b>Problem:</b> Returning citizens struggle with digital literacy because the tech landscape changed while they were incarcerated.<br>
+            <b>MVP features:</b><br>
+            1. AI-powered Q&A that answers tech questions in plain, patient language<br>
+            2. Guided step-by-step modules for 3-5 essential tasks<br>
+            3. Progress tracking so users can resume where they left off
+          </div>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND &#9654;</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">made on linux . <a href="/">goolz.org</a> . ncd</p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>

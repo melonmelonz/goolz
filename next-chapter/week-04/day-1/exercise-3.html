@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ex 3 -- User Stories / NCD W4D1</title>
+  <meta name="description" content="Exercise 3: write user stories for the digital literacy tool and map them to features.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+  <link rel="stylesheet" href="gbc.css">
+</head>
+<body data-page="ex3">
+
+  <a class="crumb" href="./">back to menu</a>
+
+  <div class="gbc">
+    <div class="cart-slot"></div>
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+
+    <div class="gbc-internals" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="bezel">
+      <div class="brand">
+        <span class="nintendo">Nintendo</span>
+        <span class="gb">GAME BOY</span>
+        <span class="color">COLOR.</span>
+      </div>
+
+      <div class="power" aria-hidden="true">
+        <span class="led"></span>
+        <span class="label">POWER</span>
+      </div>
+
+      <div class="screen">
+        <div class="pause-overlay" aria-hidden="true">
+          <div class="pause-card">
+            PAUSED
+            <span class="sub">press <b>ENTER</b> or <b>START</b> to resume<span class="blink-pause"></span></span>
+          </div>
+        </div>
+        <div class="screen-inner">
+
+          <div class="boot">
+            <div class="ribbon">&#9654; EXERCISE 3 / 5</div>
+            <h1>User Stories</h1>
+            <p style="font-size:16px;color:var(--gb-1);margin-top:6px;">
+              Who uses this, what do they need, and what does the app have to do.
+            </p>
+          </div>
+
+          <h2>The Users</h2>
+          <p>
+            Two main types: <b>returning citizens</b> (the people who need help) and <b>case workers / mentors</b> (the people supporting them). The tool needs to work for both, but the returning citizen's experience is the priority.
+          </p>
+
+          <h2>Stories + Features</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th>User Story</th>
+                <th>Feature</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>As a returning citizen, I want to ask questions about technology in plain language so I don't need to know jargon to get help.</td>
+                <td>AI-powered Q&A chat (plain-language, no-jargon responses)</td>
+              </tr>
+              <tr>
+                <td>As a returning citizen, I want step-by-step guides for essential tasks (set up email, use a smartphone, apply for jobs online) so I can do them on my own.</td>
+                <td>Guided walkthrough modules for common tasks</td>
+              </tr>
+              <tr>
+                <td>As a returning citizen, I want to track what I've already learned so I can pick up where I left off and see my progress.</td>
+                <td>Progress tracker / completion state per module</td>
+              </tr>
+              <tr>
+                <td>As a returning citizen, I want explanations that don't assume I know what "cloud" or "two-factor" means so I don't feel lost or stupid.</td>
+                <td>Built-in glossary / context-aware definitions (AI handles this)</td>
+              </tr>
+              <tr>
+                <td>As a case worker, I want to see which clients are stuck on specific steps so I know where to focus my time.</td>
+                <td>Case worker dashboard with per-user progress view</td>
+              </tr>
+              <tr>
+                <td>As a case worker, I want to assign specific modules to clients so they have a clear starting point.</td>
+                <td>Module assignment system</td>
+              </tr>
+              <tr>
+                <td>As a case worker, I want to add guides for local resources (city bus app, county benefits portal) so the tool is useful for our specific community.</td>
+                <td>Custom guide editor / local resource library</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>Which stories matter most?</h2>
+          <div class="callout">
+            <strong>&#9654; Critical path</strong>
+            If I remove the AI Q&A, the app is just a static tutorial site. If I remove the walkthroughs, there's no structured learning. If I remove progress tracking, people can't resume. Those three are the core. Everything else makes it better but doesn't make or break it.
+          </div>
+
+        </div>
+      </div>
+
+      <div class="dot-matrix">DOT MATRIX WITH STEREO SOUND &#9654;</div>
+    </div>
+
+    <div class="controls">
+      <div class="dpad" aria-hidden="true">
+        <span class="dot"></span>
+        <span class="arrow up"></span>
+        <span class="arrow down"></span>
+        <span class="arrow left"></span>
+        <span class="arrow right"></span>
+      </div>
+      <div class="ab" aria-hidden="true">
+        <button class="btn-ab b" type="button" aria-label="B button">B</button>
+        <button class="btn-ab a" type="button" aria-label="A button">A</button>
+      </div>
+    </div>
+
+    <div class="ss" aria-hidden="true">
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">SELECT</span></div>
+      <div class="ss-wrap"><span class="btn-ss"></span><span class="btn-label">START</span></div>
+    </div>
+
+    <div class="speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="volume-wheel" aria-hidden="true"></div>
+  </div>
+
+  <p class="footer-tag">made on linux . <a href="/">goolz.org</a> . ncd</p>
+
+  <script src="gbc.js" defer></script>
+</body>
+</html>
