@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 3 -- Project Week / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 3 was project week. I built Scry, a binary workbench that runs entirely in the browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<style>
+  :root {
+    --bg: #F2F1EC; --paper: #FAF8F2; --grey: #DEDDD7; --rule: #C7C5BF;
+    --ink: #1F2421; --muted: #8A8E87;
+    --mint: #A6C9B5; --mint-deep: #5E957A; --mint-pale: #E2EEE7;
+    --mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171A; --paper: #1B1F23; --grey: #2A2F33; --rule: #3B4146;
+      --ink: #E8E7E1; --muted: #8A8E87;
+      --mint: #6B9F84; --mint-deep: #8FC2A8; --mint-pale: #243A30;
+      color-scheme: dark;
+    }
+  }
+  html { color-scheme: light dark; accent-color: var(--mint-deep); }
+  ::selection { background: var(--mint-deep); color: var(--paper); }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 28px 100px;
+  }
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--mint-deep); z-index: 100; pointer-events: none;
+  }
+
+  a { color: var(--mint-deep); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .back {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-bottom: 36px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    margin-bottom: 40px;
+  }
+
+  h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  p { margin-bottom: 14px; }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 18px 22px;
+    margin-bottom: 14px;
+  }
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mint-deep);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .card p:last-child { margin-bottom: 0; }
+
+  ul { margin: 8px 0 14px 18px; }
+  li { margin-bottom: 6px; }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mint-deep);
+    border: 1px solid var(--mint-deep);
+    padding: 3px 10px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  .foot {
+    margin-top: 56px;
+    padding-top: 18px;
+    border-top: 1px solid var(--grey);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  @media (max-width: 500px) {
+    body { padding: 32px 18px 60px; }
+    h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Week 3 -- Project Week</h1>
+<div class="subtitle">NCD . May 12-16, 2026 . all five days on one thing</div>
+
+<p>
+  Week 3 was project week. No lectures, no exercises, no cartridges. Just build something. I built Scry.
+</p>
+
+<h2>What is Scry</h2>
+
+<p>
+  <a href="/scry/">Scry</a> is a binary workbench that runs entirely in the browser. Drop in a ROM or any binary file and it shows you what's inside: hex dump, disassembly, header breakdown, and a live emulator that actually runs the thing. No installs, no uploads, nothing leaves your tab.
+</p>
+
+<p>
+  The pitch is simple: take a binary and show you what it would do. The kind of tool you'd want if you were learning how programs work at the level below source code. Or if you just wanted to poke at a GBA ROM without setting up a whole dev environment.
+</p>
+
+<h2>What I built</h2>
+
+<div class="card">
+  <div class="card-label">Modes</div>
+  <ul>
+    <li><b>Inspect</b> -- file metadata, header fields, entry point, section table</li>
+    <li><b>Hex</b> -- scrollable hex dump with offset markers and ASCII sidebar</li>
+    <li><b>Disasm</b> -- ARM/Thumb disassembly with address labels and instruction highlighting</li>
+    <li><b>Emu</b> -- live emulator (GBA via gbajs fork), runs the binary right in the page</li>
+    <li><b>Trace</b> -- step-by-step execution trace, register state, memory reads/writes</li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="card-label">Stack</div>
+  <p>
+    Vanilla JS, no framework. The parent shell at <code>/scry/</code> hosts tab-switched iframes (v1/v2). Design tokens in a shared <code>tokens.css</code>. The emulator is a forked gbajs compiled to wasm. Everything else is hand-rolled parsers and renderers.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">Design</div>
+  <p>
+    Mint-and-paper palette. Monospace everything. Light/dark mode with system preference detection. The whole thing looks like a document, not an app. Intentional: the tool should feel like reading, not like configuring.
+  </p>
+</div>
+
+<h2>What I learned</h2>
+
+<p>
+  Binary formats are surprisingly readable once you have a hex view and a spec side by side. The GBA header is 192 bytes and tells you almost everything you need to know about what the ROM expects. Writing a disassembler from scratch is tedious but educational in the "oh, so that's what an instruction encoding actually is" way.
+</p>
+
+<p>
+  The hardest part was the emulator integration. Getting a gbajs fork to compile cleanly to wasm, render into a canvas inside an iframe, and respond to the parent shell's theme changes without race conditions took most of days 3 and 4.
+</p>
+
+<p>
+  The tutorial page and scope document came last, on day 5. Writing docs for your own tool is a different kind of thinking than building it.
+</p>
+
+<h2>Links</h2>
+
+<p>
+  <span class="tag">Live</span> <a href="/scry/">goolz.org/scry</a>
+</p>
+<p>
+  <span class="tag">Tutorial</span> <a href="/scry/tutorial.html">goolz.org/scry/tutorial</a>
+</p>
+<p>
+  <span class="tag">Scope</span> <a href="/scry/scope.html">goolz.org/scry/scope</a>
+</p>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
