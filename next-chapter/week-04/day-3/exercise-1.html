@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Read a Database Diagram / NCD W4D3</title>
+<meta name="description" content="Exercise 1: read the blog app schema, trace primary and foreign keys, answer questions about table relationships.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F50D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Read a Database Diagram</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 20 min</div>
+
+<p>
+  The blog schema from the lecture. Three tables, a handful of foreign keys. The goal is to trace the connections and understand what data lives where.
+</p>
+
+<h2>The schema</h2>
+
+<pre><code>USERS                    POSTS                    COMMENTS
+-----------              -----------              -----------
+id (PK)                  id (PK)                  id (PK)
+name                     title                    body
+email                    body                     created_at
+created_at               published_at             post_id (FK -> posts.id)
+                         user_id (FK -> users.id) user_id (FK -> users.id)</code></pre>
+
+<h2>Questions</h2>
+
+<div class="answer">
+  <strong>1. How many tables are in this database?</strong>
+  <p>Three. <code>users</code>, <code>posts</code>, <code>comments</code>.</p>
+</div>
+
+<div class="answer">
+  <strong>2. What is the primary key of the posts table?</strong>
+  <p><code>id</code>. Same as every table here. Each post gets a unique integer that never changes and never repeats.</p>
+</div>
+
+<div class="answer">
+  <strong>3. How are posts connected to users? Which column creates that connection?</strong>
+  <p><code>user_id</code> in the <code>posts</code> table. It's a foreign key pointing to <code>users.id</code>. It says "this post was written by user #X." One user can have many posts (one-to-many).</p>
+</div>
+
+<div class="answer">
+  <strong>4. How are comments connected to posts? Which column creates that connection?</strong>
+  <p><code>post_id</code> in the <code>comments</code> table. Foreign key pointing to <code>posts.id</code>. "This comment was written on post #X." One post can have many comments.</p>
+</div>
+
+<div class="answer">
+  <strong>5. If user #2 (Student B) writes a new post titled "My Database Journey", what data gets stored in the posts table?</strong>
+  <p>A new row:</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Column</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>id</code></td><td><code>4</code> (next available, assuming 3 posts already exist)</td></tr>
+    <tr><td><code>title</code></td><td><code>"My Database Journey"</code></td></tr>
+    <tr><td><code>body</code></td><td>(whatever Student B writes as the post content)</td></tr>
+    <tr><td><code>published_at</code></td><td><code>2026-05-20</code> (today's date, or whenever they hit publish)</td></tr>
+    <tr><td><code>user_id</code></td><td><code>2</code> (Student B's ID from the users table)</td></tr>
+  </tbody>
+</table>
+
+<div class="answer">
+  <strong>6. If user #1 (Student A) writes a comment on that post saying "Great post!", what gets stored in comments?</strong>
+  <p>A new row:</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Column</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>id</code></td><td><code>1</code> (first comment, or whatever the next ID is)</td></tr>
+    <tr><td><code>body</code></td><td><code>"Great post!"</code></td></tr>
+    <tr><td><code>created_at</code></td><td><code>2026-05-20</code> (timestamp of when the comment was posted)</td></tr>
+    <tr><td><code>post_id</code></td><td><code>4</code> (the ID of "My Database Journey" -- the post it's on)</td></tr>
+    <tr><td><code>user_id</code></td><td><code>1</code> (Student A wrote this comment)</td></tr>
+  </tbody>
+</table>
+
+<div class="answer">
+  <strong>7. Can a post have multiple comments? How do you know?</strong>
+  <p>Yes. Multiple rows in the <code>comments</code> table can have the same <code>post_id</code>. There's no rule saying a post_id can only appear once. If three people comment on post #4, there are three rows in comments all with <code>post_id = 4</code>. That's the "many" side of one-to-many.</p>
+</div>
+
+<div class="answer">
+  <strong>8. Can a comment belong to multiple posts? How do you know?</strong>
+  <p>No. Each comment row has exactly one <code>post_id</code> value. A single comment can't have two values in that column -- it's one cell, one value. If someone wanted to post the same text on two different posts, that would be two separate rows, two separate comments with two different IDs, that just happen to have the same body text.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">What clicked</div>
+  <p>
+    Foreign keys always live on the "many" side. Comments is the "many" side of posts-to-comments, so <code>post_id</code> lives in comments. Posts is the "many" side of users-to-posts, so <code>user_id</code> lives in posts. The table that can have many rows per parent is the one that holds the foreign key. That's the pattern.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="./">Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Edge Cases / NCD W4D3</title>
+<meta name="description" content="Exercise 5: think through edge cases -- user deletion, duplicate emails, required vs optional fields.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26A1;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Edge Cases</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 3 . 30 min</div>
+
+<p>
+  The schema works when everything goes right. Now: what happens when it doesn't?
+</p>
+
+<h2>Scenario 1: User deletes their account</h2>
+
+<p>User #7 decides they're done. They hit "Delete Account." What happens to their data?</p>
+
+<div class="card">
+  <div class="card-label">Tables affected</div>
+  <p>
+    <b>progress</b> -- every row where <code>user_id = 7</code><br>
+    <b>questions</b> -- every row where <code>user_id = 7</code><br>
+    <b>resources</b> -- every row where <code>created_by = 7</code> (if they were a case worker)<br>
+    <b>assignments</b> -- every row where <code>caseworker_id = 7</code> or <code>client_id = 7</code>
+  </p>
+</div>
+
+<div class="answer">
+  <strong>My decision: Soft delete</strong>
+  <p>Add an <code>is_active</code> column to the <code>users</code> table. Default <code>true</code>. When they "delete" their account, flip it to <code>false</code>. Don't actually remove anything.</p>
+  <p>Why: cascading delete is too destructive. If a case worker deletes their account, wiping all the resources they added hurts every other user who relies on those links. If a returning citizen deletes their account, their progress data might still be useful for aggregate reporting ("how many people completed module 3 this quarter?"). Soft delete keeps the data while hiding the person.</p>
+  <p>For the AI chat history (questions), I'd actually let the user hard-delete those if they want. That's personal. Someone who was incarcerated has a real reason to want their conversation history gone. So: soft delete the user row, offer hard delete of their questions.</p>
+</div>
+
+<h2>Scenario 2: Duplicate data</h2>
+
+<p>Two users sign up with the same email. Should the database allow it?</p>
+
+<div class="answer">
+  <strong>No. UNIQUE constraint on users.email.</strong>
+  <p>Already handled this in Exercise 3 (the AI caught it). Without it, you could have two accounts for <code>jane@email.com</code> and the login system wouldn't know which one to authenticate. Password reset would break. The database should reject the second signup at the database level, not just in the app code. Defense in depth -- even if the app code has a bug, the database itself won't allow it.</p>
+</div>
+
+<div class="answer">
+  <strong>What about duplicate glossary terms?</strong>
+  <p>Also add UNIQUE on <code>glossary_terms.term</code>. Two different definitions for "cloud" would confuse the AI and the user. If someone wants to update a definition, that's an UPDATE, not a second INSERT.</p>
+</div>
+
+<div class="answer">
+  <strong>What about duplicate progress entries?</strong>
+  <p>Tricky. Should a user be able to have two progress rows for the same step? No. Add a UNIQUE constraint on the combination of <code>(user_id, step_id)</code>. One user, one progress row per step. If they complete it, that's an UPDATE on the existing row, not a new row. This also prevents the app from accidentally double-counting completions.</p>
+</div>
+
+<h2>Scenario 3: Required vs. optional fields</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Table</th>
+      <th>Column</th>
+      <th>Required?</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>users</code></td>
+      <td><code>name</code></td>
+      <td>Required</td>
+      <td>Case workers need to see who they're working with. Can't have a nameless row.</td>
+    </tr>
+    <tr>
+      <td><code>users</code></td>
+      <td><code>email</code></td>
+      <td>Required</td>
+      <td>Used for login. No email, no account.</td>
+    </tr>
+    <tr>
+      <td><code>users</code></td>
+      <td><code>role</code></td>
+      <td>Required</td>
+      <td>Determines what they can access. Default to 'citizen' if not specified.</td>
+    </tr>
+    <tr>
+      <td><code>modules</code></td>
+      <td><code>title</code></td>
+      <td>Required</td>
+      <td>A module without a title is useless in a list.</td>
+    </tr>
+    <tr>
+      <td><code>modules</code></td>
+      <td><code>description</code></td>
+      <td>Optional</td>
+      <td>Nice to have, but a module can function without it.</td>
+    </tr>
+    <tr>
+      <td><code>modules</code></td>
+      <td><code>difficulty</code></td>
+      <td>Optional</td>
+      <td>Default to 'beginner' if not set. Not a showstopper.</td>
+    </tr>
+    <tr>
+      <td><code>resources</code></td>
+      <td><code>url</code></td>
+      <td>Required</td>
+      <td>A resource without a link is just a sentence. The link is the point.</td>
+    </tr>
+    <tr>
+      <td><code>resources</code></td>
+      <td><code>category</code></td>
+      <td>Required</td>
+      <td>Without it, the resource can't be filtered. Default to 'general' if needed.</td>
+    </tr>
+    <tr>
+      <td><code>resources</code></td>
+      <td><code>description</code></td>
+      <td>Optional</td>
+      <td>Some resources are self-explanatory from the title.</td>
+    </tr>
+    <tr>
+      <td><code>progress</code></td>
+      <td><code>completed_at</code></td>
+      <td>Optional</td>
+      <td>Null until the step is completed. That's the whole point of nullable here -- null means "hasn't happened yet."</td>
+    </tr>
+    <tr>
+      <td><code>questions</code></td>
+      <td><code>ai_response</code></td>
+      <td>Optional</td>
+      <td>Could be null briefly while the AI is generating. The question exists before the answer does.</td>
+    </tr>
+    <tr>
+      <td><code>questions</code></td>
+      <td><code>session_id</code></td>
+      <td>Optional</td>
+      <td>Standalone questions don't need a session. Only follow-ups do.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="card">
+  <div class="card-label">What I learned</div>
+  <p>
+    Edge cases are design decisions, not bugs. There's no single right answer for what happens when a user gets deleted or whether a field is required. But there IS an unconsidered answer, and that's worse than any of the options. The soft delete decision for ReEntry Tech is specific to this app's context -- people coming out of incarceration have real privacy concerns, and case workers adding resources are contributing to a shared pool. Both of those facts shaped the design. A different app would make different choices.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9654; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

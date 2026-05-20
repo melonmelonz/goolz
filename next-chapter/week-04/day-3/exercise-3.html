@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- AI-Assisted Schema Review / NCD W4D3</title>
+<meta name="description" content="Exercise 3: paste the ReEntry Tech schema into ChatGPT, evaluate AI suggestions, accept/reject/modify.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F916;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>AI-Assisted Schema Review</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Pasted my schema into ChatGPT with the prompt template from the assignment. Described ReEntry Tech as "an AI-powered digital literacy tool for people returning from incarceration, with guided modules, progress tracking, AI Q&A, a glossary, and local community resources."
+</p>
+
+<h2>What AI suggested</h2>
+
+<h3>Suggestion 1: Add an updated_at column to every table</h3>
+
+<div class="card">
+  <div class="card-label">AI said</div>
+  <p>
+    "You have <code>created_at</code> on every table but no <code>updated_at</code>. If a case worker edits a resource's URL, you'll want to know when that change happened. Add <code>updated_at</code> to at least <code>resources</code>, <code>glossary_terms</code>, <code>users</code>, and <code>modules</code>."
+  </p>
+</div>
+
+<div class="answer">
+  <strong>Decision: Accept</strong>
+  <p>Fair point. If a resource URL changes, knowing when it was last updated matters. Case workers need to know if a resource link is stale. Adding <code>updated_at</code> to <code>resources</code>, <code>glossary_terms</code>, <code>users</code>, and <code>modules</code>. Not adding it to <code>progress</code> or <code>questions</code> -- those are events, not things you edit.</p>
+</div>
+
+<h3>Suggestion 2: Add a category column to resources</h3>
+
+<div class="card">
+  <div class="card-label">AI said</div>
+  <p>
+    "Your resources table has title, URL, and description, but no category. If a returning citizen is looking for transportation help versus job listings versus benefits, they'd need to filter. Add a <code>category</code> column (e.g., 'transportation', 'employment', 'benefits', 'housing')."
+  </p>
+</div>
+
+<div class="answer">
+  <strong>Decision: Accept</strong>
+  <p>This one is obvious in hindsight. My Day 2 API design already had <code>GET /resources</code> returning all resources, but with no category column there's no way to filter them. A returning citizen looking for bus info shouldn't have to scroll through thirty links about housing assistance. Adding <code>category</code> as a text column.</p>
+</div>
+
+<h3>Suggestion 3: Create a sessions table for AI conversations</h3>
+
+<div class="card">
+  <div class="card-label">AI said</div>
+  <p>
+    "Your questions table stores individual Q&A pairs, but there's no concept of a conversation. If a user asks a follow-up question, the AI has no context. Create a <code>sessions</code> table and link each question to a session, so the AI can maintain conversational context."
+  </p>
+</div>
+
+<div class="answer">
+  <strong>Decision: Modify</strong>
+  <p>The idea is right but a whole sessions table feels like over-engineering for a Phase 2 prototype. Instead, I'll add a <code>session_id</code> column to the <code>questions</code> table. It groups related questions together without a separate table. Multiple questions with the same <code>session_id</code> = one conversation. Simple. If I need session metadata later (start time, which module they were in), I can pull it out into its own table then.</p>
+</div>
+
+<h3>Suggestion 4: Add a unique constraint on users.email</h3>
+
+<div class="card">
+  <div class="card-label">AI said</div>
+  <p>
+    "Nothing in your schema prevents two users from registering with the same email. Add a unique constraint on the <code>email</code> column in the <code>users</code> table."
+  </p>
+</div>
+
+<div class="answer">
+  <strong>Decision: Accept</strong>
+  <p>Didn't even think about this. Two people with the same email would break login, password reset, everything. Email has to be unique. This is the kind of thing that's invisible until it's a catastrophe. Marking <code>email</code> as UNIQUE.</p>
+</div>
+
+<h3>Suggestion 5: Add a "tags" system for modules using a join table</h3>
+
+<div class="card">
+  <div class="card-label">AI said</div>
+  <p>
+    "Consider adding tags to modules (e.g., 'beginner', 'smartphone', 'email', 'employment') with a many-to-many relationship via a <code>module_tags</code> join table. This lets users browse modules by topic."
+  </p>
+</div>
+
+<div class="answer">
+  <strong>Decision: Reject</strong>
+  <p>I already have a <code>difficulty</code> column on modules. For a Phase 2 prototype with maybe 10-15 modules, a full tagging system with a join table is premature. Case workers can describe what each module covers in the <code>description</code> field. If the app grows to 100+ modules, yeah, tags would matter. But right now it's complexity I don't need and wouldn't demonstrate in the Phase 2 gate.</p>
+</div>
+
+<h2>Updated schema (changes highlighted)</h2>
+
+<pre><code>USERS
+-----------
+id (PK)
+name
+email (UNIQUE)           -- added unique constraint
+role
+created_at
+updated_at               -- added
+
+RESOURCES
+-----------
+id (PK)
+title
+url
+description
+category                 -- added: 'transportation', 'employment', etc.
+created_by (FK -> users.id)
+created_at
+updated_at               -- added
+
+QUESTIONS
+-----------
+id (PK)
+user_id (FK -> users.id)
+session_id               -- added: groups follow-up questions
+body
+ai_response
+created_at
+
+GLOSSARY_TERMS
+-----------
+id (PK)
+term
+definition
+created_at
+updated_at               -- added
+
+MODULES
+-----------
+id (PK)
+title
+description
+difficulty
+created_at
+updated_at               -- added
+
+(steps, progress, assignments unchanged)</code></pre>
+
+<div class="card">
+  <div class="card-label">Takeaway</div>
+  <p>
+    Three accepted, one modified, one rejected. The AI was most useful for the things I didn't think about -- the unique constraint on email and the missing category column. The session table idea was directionally right but over-scoped for this stage. The tags suggestion was pure scope creep. Accept/reject/modify is a good framework. It forces you to actually evaluate instead of just copying.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9654; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

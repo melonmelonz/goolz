@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Peer Review Round 2 / NCD W4D3</title>
+<meta name="description" content="Exercise 4: tougher peer review questions about search, sort, and CRUD operations on the ReEntry Tech schema.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F91D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Peer Review Round 2</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 20 min</div>
+
+<p>
+  Different partner this time. They got the updated schema (post-AI review). Tougher questions -- not just "does the data exist" but "can you actually do things with it."
+</p>
+
+<h2>Questions they asked me</h2>
+
+<div class="answer">
+  <strong>"If I wanted to search for all resources about transportation, which table and column would I look in?"</strong>
+  <p>The <code>resources</code> table, filtering by the <code>category</code> column where <code>category = 'transportation'</code>. Before the AI review I wouldn't have been able to answer this because I didn't have a category column. I would've had to search the <code>description</code> text for the word "transportation" which is slow and unreliable.</p>
+</div>
+
+<div class="answer">
+  <strong>"If I wanted to show a list of modules sorted by difficulty, can your schema do that?"</strong>
+  <p>Yes. The <code>modules</code> table has a <code>difficulty</code> column. Sort by it. But there's a wrinkle: difficulty is stored as text ('beginner', 'intermediate'), and alphabetical sort would put 'beginner' before 'intermediate' which happens to be correct. But if I add 'advanced' later, alphabetical gives me 'advanced', 'beginner', 'intermediate' -- wrong order. I'd either need to store difficulty as a number (1, 2, 3) or define a custom sort order. For now with two levels it works, but it's a landmine.</p>
+</div>
+
+<div class="answer">
+  <strong>"If a user completes step 3 of module 1, what rows get created or changed?"</strong>
+  <p>One row gets created in the <code>progress</code> table: <code>user_id</code> = that user, <code>step_id</code> = the ID of step 3 in module 1, <code>completed = true</code>, <code>completed_at</code> = now. If a progress row for that user/step combo already exists with <code>completed = false</code>, then it gets updated instead of created -- flip <code>completed</code> to <code>true</code> and set <code>completed_at</code>. No other tables change. The modules table, the steps table, the users table -- all untouched. Progress is the only table that moves.</p>
+</div>
+
+<div class="answer">
+  <strong>"How would the case worker dashboard work? Walk me through the query."</strong>
+  <p>Start in <code>assignments</code>: get all rows where <code>caseworker_id</code> = the logged-in case worker. That gives me a list of client IDs and module IDs. For each client+module pair, look up the module's steps (from the <code>steps</code> table where <code>module_id</code> matches), then check the <code>progress</code> table for that client's entries on those steps. Steps with no progress row or <code>completed = false</code> = that's where they're stuck. Three tables touched: <code>assignments</code>, <code>steps</code>, <code>progress</code>. Plus <code>users</code> to get the client's name for display.</p>
+</div>
+
+<h2>Questions I asked my partner</h2>
+
+<div class="card">
+  <div class="card-label">Their app</div>
+  <p>
+    They're building a community events board -- people post events, others RSVP. I asked: "If an event gets cancelled, what happens to the RSVPs?" They hadn't thought about it. Their <code>rsvps</code> table has <code>event_id</code> as a foreign key, but no status column on the events table. They'd need an <code>is_cancelled</code> column or a <code>status</code> column ('active', 'cancelled') so the app knows not to show it. The RSVPs would need to be handled too -- notify people, or just hide the event and let the RSVPs become orphans. Same kind of edge case thinking we're doing in Exercise 5.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9654; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

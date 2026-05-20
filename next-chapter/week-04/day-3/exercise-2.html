@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Design Your App's Tables / NCD W4D3</title>
+<meta name="description" content="Exercise 2: design the database schema for ReEntry Tech based on user stories from Day 1.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4D0;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Design Your App's Tables</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 30 min</div>
+
+<p>
+  Starting from the user stories I wrote on Day 1. Each one implies data that needs a home. The core three: AI Q&A chat, guided walkthrough modules, and progress tracking. Plus: glossary, local resources, and case worker features.
+</p>
+
+<h2>The schema</h2>
+
+<pre><code>USERS
+-----------
+id (PK)
+name
+email
+role                 -- 'citizen' or 'caseworker'
+created_at
+
+MODULES
+-----------
+id (PK)
+title                -- "Setting Up Email", "Using a Smartphone"
+description
+difficulty           -- 'beginner', 'intermediate'
+created_at
+
+STEPS
+-----------
+id (PK)
+module_id (FK -> modules.id)
+title                -- "Open the Gmail app", "Tap Create Account"
+content              -- the actual instruction text
+step_order           -- 1, 2, 3... display order within the module
+created_at
+
+PROGRESS
+-----------
+id (PK)
+user_id (FK -> users.id)
+step_id (FK -> steps.id)
+completed            -- true/false
+completed_at         -- timestamp, null if not completed yet
+
+QUESTIONS
+-----------
+id (PK)
+user_id (FK -> users.id)
+body                 -- what the user typed
+ai_response          -- what the AI sent back
+created_at
+
+GLOSSARY_TERMS
+-----------
+id (PK)
+term                 -- "cloud", "two-factor authentication"
+definition           -- plain-language explanation
+created_at
+
+RESOURCES
+-----------
+id (PK)
+title                -- "County Benefits Portal", "City Bus App"
+url
+description
+created_by (FK -> users.id)   -- the case worker who added it
+created_at
+
+ASSIGNMENTS
+-----------
+id (PK)
+caseworker_id (FK -> users.id)
+client_id (FK -> users.id)
+module_id (FK -> modules.id)
+assigned_at</code></pre>
+
+<h2>User story check</h2>
+
+<div class="answer">
+  <strong>"As a returning citizen, I want to ask questions in plain language"</strong>
+  <p>Covered by the <code>questions</code> table. Each row stores what they asked (<code>body</code>) and what the AI said back (<code>ai_response</code>). Linked to the user by <code>user_id</code>.</p>
+</div>
+
+<div class="answer">
+  <strong>"As a returning citizen, I want step-by-step guides"</strong>
+  <p>Covered by <code>modules</code> + <code>steps</code>. A module is the guide ("Setting Up Email"). Steps are the individual instructions within it, ordered by <code>step_order</code>. One module has many steps.</p>
+</div>
+
+<div class="answer">
+  <strong>"As a returning citizen, I want to track what I've learned"</strong>
+  <p>Covered by the <code>progress</code> table. One row per user per step. <code>completed = true</code> means they finished that step. To see overall progress for a module, query all steps for that module and check which ones have progress rows for that user.</p>
+</div>
+
+<div class="answer">
+  <strong>"As a returning citizen, I want explanations of jargon"</strong>
+  <p>Covered by <code>glossary_terms</code>. Each row is one term with a plain-language definition. The AI can also pull from this table to ground its responses -- "here's what the glossary says, now let me explain it further."</p>
+</div>
+
+<div class="answer">
+  <strong>"As a case worker, I want to see which clients are stuck"</strong>
+  <p>Covered by <code>progress</code> + <code>assignments</code>. The case worker looks up their assigned clients, then checks each client's progress rows. If a client has <code>completed = false</code> on the same step for a while, they're stuck.</p>
+</div>
+
+<div class="answer">
+  <strong>"As a case worker, I want to assign modules to clients"</strong>
+  <p>Covered by the <code>assignments</code> table. It's a three-way link: this case worker assigned this module to this client. Both <code>caseworker_id</code> and <code>client_id</code> point to <code>users.id</code> -- same table, different roles.</p>
+</div>
+
+<div class="answer">
+  <strong>"As a case worker, I want to add local resources"</strong>
+  <p>Covered by <code>resources</code>. The <code>created_by</code> foreign key tracks which case worker added it. Title, URL, description. Simple CRUD.</p>
+</div>
+
+<h2>Relationships</h2>
+
+<div class="card">
+  <div class="card-label">One-to-many</div>
+  <p>
+    <b>users -> questions:</b> one user asks many questions.<br>
+    <b>users -> progress:</b> one user has many progress entries.<br>
+    <b>modules -> steps:</b> one module has many steps.<br>
+    <b>steps -> progress:</b> one step has many progress entries (from different users).<br>
+    <b>users -> resources:</b> one case worker creates many resources.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">Schema swap feedback</div>
+  <p>
+    Partner noticed I don't have a way to track which module a question was asked from. If someone is in the "Setting Up Email" module and asks "what's a password manager?", the questions table just stores the text -- no link to the module they were in. Good catch. I could add a <code>module_id</code> (FK, nullable) to the <code>questions</code> table to capture context. Not critical, but useful for the case worker dashboard.
+  </p>
+  <p>
+    Also pointed out: the glossary_terms table is standalone. No foreign keys, no relationship to other tables. That's fine -- it's a lookup table. Not everything needs to connect to everything.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9654; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

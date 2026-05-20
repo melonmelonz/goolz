@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 4 -- Day 3 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 4 Day 3. Databases, tables, relationships, primary keys, foreign keys, schema design for ReEntry Tech.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F5C3;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 3 -- Databases: Where the Data Lives</h1>
+<div class="subtitle">NCD . WK4 . D3 . five exercises loaded</div>
+
+<p>
+  Yesterday was APIs -- front-end talks to back-end, JSON goes back and forth. Today: where does the data actually live? Every response the API sends has to come from somewhere. That somewhere is a database. Tables, rows, columns, keys. It's a spreadsheet that enforces rules and doesn't break at scale.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- Where Does the Data Live?</div>
+  <p><b>App I picked:</b> Spotify.</p>
+  <p><b>Data about ME:</b> name, email, password (hashed hopefully), subscription tier, listening history, playlists I created, saved songs, followed artists, what I'm playing right now, device info, play counts, skip counts probably. There's definitely a table somewhere that knows I listened to the same Nujabes album forty times last month.</p>
+  <p><b>Data that ISN'T about me:</b> songs (title, artist, album, duration, audio file URL, genre tags), artists (name, bio, monthly listeners, discography), albums (name, release date, track list, cover art), playlists made by other people, podcast episodes.</p>
+  <p><b>Delete and reinstall:</b> everything is still there. My playlists, my history, my queue. Because none of that lives on my phone. It lives in Spotify's database. My phone is just the front-end making API calls. The data survived because it's persistent -- stored server-side, not in local memory.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> learned how APIs work, designed ReEntry Tech's endpoints (GET/POST/PUT/DELETE), found the Free Dictionary API for the glossary feature.</p>
+  <p><b>What I'm doing today:</b> learning about databases and designing the tables for ReEntry Tech. Turning the API endpoints from yesterday into actual data structures.</p>
+  <p><b>Where I'm stuck:</b> I'm not stuck yet, but I can already tell the hard part is going to be figuring out how tables connect. My app has users, modules, progress, and questions -- those all reference each other somehow.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Read a Database Diagram</span>
+      <span class="ex-desc">read the blog schema, trace foreign keys, answer questions about relationships</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Design Your App's Tables</span>
+      <span class="ex-desc">turn ReEntry Tech's user stories into a real database schema</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">AI-Assisted Schema Review</span>
+      <span class="ex-desc">paste the schema into ChatGPT, accept/reject/modify suggestions</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Peer Review Round 2</span>
+      <span class="ex-desc">tougher questions from a different partner -- search, sort, CRUD operations</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Edge Cases</span>
+      <span class="ex-desc">what happens when users get deleted, emails collide, fields go blank</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo</div>
+  <p>
+    Pointed to the <code>user_id</code> column in my <code>progress</code> table. It's a foreign key that connects to <code>users.id</code>. Without it, the progress table is just a pile of "step 4 is complete" rows with no way to know WHO completed it. Every row in progress would be anonymous. The case worker dashboard user story -- "I want to see which clients are stuck" -- requires knowing which user each progress row belongs to. That foreign key is the entire link.
+  </p>
+  <p>
+    Partner asked: "Why not just put the progress data directly in the users table?" Because one user has many progress entries -- one per step per module. If I crammed that into the users table, I'd need columns like <code>module_1_step_1_complete</code>, <code>module_1_step_2_complete</code>, and that's insane. It doesn't scale. A separate progress table with a foreign key lets me have as many rows as needed without changing the schema.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
