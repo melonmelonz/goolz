@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- INSERT, UPDATE, DELETE / NCD W4D4</title>
+<meta name="description" content="Exercise 3: write queries that create, modify, and remove data in the ReEntry Tech database.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270F;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>INSERT, UPDATE, DELETE</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 30 min</div>
+
+<p>
+  SELECT was safe. Nothing moves, nothing breaks. Now the database changes. Every query here creates, modifies, or removes a row. These are the operations that matter because they're the ones you can't undo by accident.
+</p>
+
+<h2>INSERT -- creating new rows</h2>
+
+<div class="answer">
+  <strong>Scenario: A new returning citizen signs up</strong>
+<pre><code>INSERT INTO users (name, email, role, created_at)
+VALUES ('Darius Jackson', 'darius.j@email.com', 'citizen', '2026-05-21');</code></pre>
+  <p>One new row in <code>users</code>. The <code>id</code> auto-increments so I don't specify it. <code>role</code> defaults to 'citizen' but I'm explicit here because that's what the assignment template said. <code>updated_at</code> starts as NULL since nothing's been edited yet.</p>
+</div>
+
+<div class="answer">
+  <strong>Scenario: A case worker adds a new resource</strong>
+<pre><code>INSERT INTO resources (title, url, description, category, created_by, created_at)
+VALUES (
+  'County Transit App',
+  'https://transit.county.gov/app',
+  'Free bus route planner and real-time arrival tracker for county buses',
+  'transportation',
+  5,
+  '2026-05-21'
+);</code></pre>
+  <p><code>created_by = 5</code> is the case worker's user ID. That foreign key tracks who added it. If someone later asks "who put this resource in?", the answer is one query away.</p>
+</div>
+
+<div class="answer">
+  <strong>Scenario: A user completes a step</strong>
+<pre><code>INSERT INTO progress (user_id, step_id, completed, completed_at)
+VALUES (7, 14, true, '2026-05-21');</code></pre>
+  <p>User 7 completed step 14. One row. The UNIQUE constraint on <code>(user_id, step_id)</code> from yesterday's edge case work means this INSERT will fail if user 7 already has a progress row for step 14. That's intentional. You don't double-count completions.</p>
+</div>
+
+<h2>UPDATE -- modifying existing rows</h2>
+
+<div class="answer">
+  <strong>Scenario: A resource URL changed</strong>
+<pre><code>UPDATE resources
+SET url = 'https://newportal.county.gov/benefits',
+    updated_at = '2026-05-21'
+WHERE id = 3;</code></pre>
+  <p>Only changes the row where <code>id = 3</code>. The WHERE clause is critical. Without it, every single resource in the table gets the same URL. That's the most dangerous thing about UPDATE: forget the WHERE and you corrupt your entire table. The instructor called this "the naked UPDATE problem."</p>
+</div>
+
+<div class="answer">
+  <strong>Scenario: Mark a step as completed (update existing progress row)</strong>
+<pre><code>UPDATE progress
+SET completed = true,
+    completed_at = '2026-05-21'
+WHERE user_id = 7
+  AND step_id = 14;</code></pre>
+  <p>If the progress row was created when the user first opened the step (with <code>completed = false</code>), this flips it. Two conditions in the WHERE because I need to match the specific user-step combination.</p>
+</div>
+
+<div class="answer">
+  <strong>Scenario: A user changes their email</strong>
+<pre><code>UPDATE users
+SET email = 'darius.jackson@newemail.com',
+    updated_at = '2026-05-21'
+WHERE id = 12;</code></pre>
+  <p>Updates one column, leaves everything else alone. The UNIQUE constraint on email means this will fail if someone else already has that address. Good. That's the database protecting itself.</p>
+</div>
+
+<h2>DELETE -- removing rows</h2>
+
+<div class="answer">
+  <strong>Scenario: Remove a glossary term that was a duplicate</strong>
+<pre><code>DELETE FROM glossary_terms
+WHERE id = 8;</code></pre>
+  <p>This one is safe because glossary_terms has no foreign keys pointing to it. Nothing else references it. Deleting a term doesn't break any other table. Compare that to deleting a user, which would orphan rows in progress, questions, assignments, and resources.</p>
+</div>
+
+<div class="answer">
+  <strong>Scenario: Soft-delete a user (the approach from Day 3)</strong>
+<pre><code>UPDATE users
+SET is_active = false,
+    updated_at = '2026-05-21'
+WHERE id = 7;</code></pre>
+  <p>Not a DELETE at all. It's an UPDATE. This is the soft delete from yesterday's edge case exercise. The row stays, the data stays, but the app knows to treat this user as gone. The WHERE makes me target a specific user. And this doesn't cascade to anything because no rows are removed.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">The pattern I see</div>
+  <p>
+    INSERT is the safest write operation. You're adding, not touching existing data. UPDATE is the most dangerous because a missing WHERE corrupts everything silently. DELETE is permanent (unless you soft-delete). And soft delete is really just UPDATE in disguise. The instructor's rule: "write the WHERE clause first, then write the rest of the query around it." That way you never accidentally hit every row.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9654; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- SELECT Queries for ReEntry Tech / NCD W4D4</title>
+<meta name="description" content="Exercise 2: write SELECT queries against the ReEntry Tech schema to retrieve users, progress, modules, and resources.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F50E;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>SELECT Queries for ReEntry Tech</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 25 min</div>
+
+<p>
+  All reads. Nothing changes in the database. I'm just asking questions and the database answers with rows.
+</p>
+
+<h2>The schema (reminder)</h2>
+
+<pre><code>USERS (id, name, email, role, created_at, updated_at)
+MODULES (id, title, description, difficulty, created_at, updated_at)
+STEPS (id, module_id, title, content, step_order, created_at)
+PROGRESS (id, user_id, step_id, completed, completed_at)
+QUESTIONS (id, user_id, session_id, body, ai_response, created_at)
+GLOSSARY_TERMS (id, term, definition, created_at, updated_at)
+RESOURCES (id, title, url, description, category, created_by, created_at, updated_at)
+ASSIGNMENTS (id, caseworker_id, client_id, module_id, assigned_at)</code></pre>
+
+<h2>Queries</h2>
+
+<div class="answer">
+  <strong>1. Get all returning citizens (not case workers)</strong>
+<pre><code>SELECT name, email
+FROM users
+WHERE role = 'citizen';</code></pre>
+  <p>Filters on the <code>role</code> column. Only returns name and email because that's all the dashboard needs to show a list. No reason to pull every column.</p>
+</div>
+
+<div class="answer">
+  <strong>2. Get all beginner modules, sorted by title</strong>
+<pre><code>SELECT title, description
+FROM modules
+WHERE difficulty = 'beginner'
+ORDER BY title;</code></pre>
+  <p>Two filters working together: WHERE narrows to beginner, ORDER BY sorts alphabetically. A returning citizen browsing modules would see "Setting Up Email" before "Using a Smartphone".</p>
+</div>
+
+<div class="answer">
+  <strong>3. Get all steps in a specific module, in order</strong>
+<pre><code>SELECT title, content
+FROM steps
+WHERE module_id = 1
+ORDER BY step_order;</code></pre>
+  <p>This is what the app loads when someone opens a module. Steps come back in the right order because of <code>step_order</code>. Without ORDER BY, the database might return them in any order. I learned yesterday that order is never guaranteed unless you ask for it.</p>
+</div>
+
+<div class="answer">
+  <strong>4. Get all transportation resources</strong>
+<pre><code>SELECT title, url, description
+FROM resources
+WHERE category = 'transportation';</code></pre>
+  <p>This is exactly the query my Day 3 peer reviewer asked about. Before adding the <code>category</code> column (which the AI suggested), this query would have been impossible. I would've had to search inside the description text, which is unreliable.</p>
+</div>
+
+<div class="answer">
+  <strong>5. Count how many questions a specific user has asked</strong>
+<pre><code>SELECT COUNT(*)
+FROM questions
+WHERE user_id = 3;</code></pre>
+  <p>Returns a single number. Could be useful for the case worker dashboard: "this client has asked 47 questions" tells you they're engaged. Zero questions might mean they're not using the AI feature at all.</p>
+</div>
+
+<div class="answer">
+  <strong>6. Get a user's completed steps for a specific module (the JOIN)</strong>
+<pre><code>SELECT steps.title, progress.completed_at
+FROM progress
+JOIN steps ON progress.step_id = steps.id
+WHERE progress.user_id = 7
+  AND steps.module_id = 2
+  AND progress.completed = true
+ORDER BY steps.step_order;</code></pre>
+  <p>This one is harder. I need data from two tables: the step's title (from <code>steps</code>) and whether it's done (from <code>progress</code>). JOIN connects them on the foreign key. The WHERE clause filters to one user, one module, completed only. This is what the progress bar would use.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">What I noticed</div>
+  <p>
+    Every query maps directly to something in the UI. "Get all beginner modules" is the module browser page. "Get steps in order" is the module detail page. "Count questions" is a dashboard stat. SQL isn't abstract. Each query IS a feature. If I can't write the query, the feature doesn't work.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9654; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

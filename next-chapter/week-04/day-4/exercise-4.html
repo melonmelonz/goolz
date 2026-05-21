@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- AI-Generated SQL Review / NCD W4D4</title>
+<meta name="description" content="Exercise 4: ask ChatGPT to write SQL from plain English, evaluate the output, accept/reject/modify each query.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F916;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>AI-Generated SQL Review</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Same drill as Day 3's schema review. Paste the schema into ChatGPT, ask it to write queries from natural language prompts, then evaluate what it gives me. Accept, reject, or modify.
+</p>
+
+<p>
+  I gave ChatGPT the full ReEntry Tech schema and said: "I'm going to give you plain English descriptions of what I need from the database. Write the SQL query for each one. Use my exact table and column names."
+</p>
+
+<h2>Prompt 1: "Show me all clients assigned to case worker #5"</h2>
+
+<div class="card">
+  <div class="card-label">AI wrote</div>
+<pre><code>SELECT users.name, users.email
+FROM assignments
+JOIN users ON assignments.client_id = users.id
+WHERE assignments.caseworker_id = 5;</code></pre>
+</div>
+
+<div class="answer">
+  <strong>Decision: Accept</strong>
+  <p>This is exactly right. Starts in assignments, filters to caseworker 5, JOINs to users to get the client's name and email. Clean. I would have written this the same way after Exercise 2.</p>
+</div>
+
+<h2>Prompt 2: "How many steps has user #12 completed in module #2?"</h2>
+
+<div class="card">
+  <div class="card-label">AI wrote</div>
+<pre><code>SELECT COUNT(*) AS completed_steps
+FROM progress
+JOIN steps ON progress.step_id = steps.id
+WHERE progress.user_id = 12
+  AND steps.module_id = 2
+  AND progress.completed = true;</code></pre>
+</div>
+
+<div class="answer">
+  <strong>Decision: Accept</strong>
+  <p>Correct. Joins progress to steps to know which module each step belongs to, filters to user 12, module 2, completed only. The <code>AS completed_steps</code> alias is a nice touch. Makes the output column name readable instead of just <code>COUNT(*)</code>.</p>
+</div>
+
+<h2>Prompt 3: "Find all users who haven't completed any steps"</h2>
+
+<div class="card">
+  <div class="card-label">AI wrote</div>
+<pre><code>SELECT users.name, users.email
+FROM users
+LEFT JOIN progress ON users.id = progress.user_id
+  AND progress.completed = true
+WHERE users.role = 'citizen'
+  AND progress.id IS NULL;</code></pre>
+</div>
+
+<div class="answer">
+  <strong>Decision: Modify</strong>
+  <p>The logic is right but I had to stare at it for a while. LEFT JOIN means "include users even if they have no matching progress rows." The <code>AND progress.completed = true</code> in the JOIN condition (not the WHERE) is subtle. Then <code>progress.id IS NULL</code> catches users where the join found nothing.</p>
+  <p>It works, but it's doing too much in one query for someone reading this the first time. I'd split it into a subquery version that's easier to follow:</p>
+<pre><code>SELECT name, email
+FROM users
+WHERE role = 'citizen'
+  AND id NOT IN (
+    SELECT DISTINCT user_id
+    FROM progress
+    WHERE completed = true
+  );</code></pre>
+  <p>Same result. "Get all citizens whose ID doesn't appear in the completed-progress list." The subquery reads like a sentence. The LEFT JOIN version is probably faster at scale but readability matters more when I'm learning.</p>
+</div>
+
+<h2>Prompt 4: "Delete all progress data for a user who's deleting their account"</h2>
+
+<div class="card">
+  <div class="card-label">AI wrote</div>
+<pre><code>DELETE FROM progress WHERE user_id = 7;
+DELETE FROM questions WHERE user_id = 7;
+DELETE FROM assignments WHERE client_id = 7;
+DELETE FROM resources WHERE created_by = 7;
+DELETE FROM users WHERE id = 7;</code></pre>
+</div>
+
+<div class="answer">
+  <strong>Decision: Reject</strong>
+  <p>I said "delete progress data" and it gave me a full cascading hard delete of everything, including the user row itself. That's not what I asked for and it's not what I decided yesterday. My Day 3 edge case decision was soft delete for the user, with optional hard delete of questions only. The AI ignored my design decisions and went nuclear.</p>
+  <p>What I'd actually write:</p>
+<pre><code>-- Soft-delete the user
+UPDATE users
+SET is_active = false, updated_at = '2026-05-21'
+WHERE id = 7;
+
+-- Hard-delete their AI chat history (their choice)
+DELETE FROM questions WHERE user_id = 7;</code></pre>
+  <p>Progress stays (for aggregate reporting). Assignments stay (case worker records). Resources stay (they're shared). Only the personal Q&A gets wiped if the user requests it. Context matters. The AI had no context about my specific design decisions.</p>
+</div>
+
+<h2>Prompt 5: "Get the 5 most recently asked questions across all users"</h2>
+
+<div class="card">
+  <div class="card-label">AI wrote</div>
+<pre><code>SELECT questions.body, questions.ai_response, users.name, questions.created_at
+FROM questions
+JOIN users ON questions.user_id = users.id
+ORDER BY questions.created_at DESC
+LIMIT 5;</code></pre>
+</div>
+
+<div class="answer">
+  <strong>Decision: Accept</strong>
+  <p>Straightforward. JOIN gets the user's name, ORDER BY DESC puts newest first, LIMIT caps it at 5. I hadn't seen LIMIT before but it does exactly what it sounds like. This would power an "admin recent activity" panel.</p>
+</div>
+
+<h2>Scorecard</h2>
+
+<table>
+  <thead>
+    <tr><th>Prompt</th><th>Decision</th><th>Why</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Clients for caseworker</td><td>Accept</td><td>Clean JOIN, correct filter</td></tr>
+    <tr><td>Completed step count</td><td>Accept</td><td>Correct with alias</td></tr>
+    <tr><td>Users with no completions</td><td>Modify</td><td>Correct but hard to read; subquery clearer</td></tr>
+    <tr><td>Delete account data</td><td>Reject</td><td>Ignored my soft-delete decision, went too far</td></tr>
+    <tr><td>Recent questions</td><td>Accept</td><td>Clean, taught me LIMIT</td></tr>
+  </tbody>
+</table>
+
+<div class="card">
+  <div class="card-label">Takeaway</div>
+  <p>
+    The AI is good at translating English to SQL syntax. It nailed 3 out of 5 on the first try. But it doesn't know my design decisions. When I said "delete" it heard the SQL keyword, not the soft-delete policy I wrote yesterday. The schema review on Day 3 was the same: the AI is a syntax machine, not a design partner. I have to bring the context. The accept/reject/modify framework is doing real work here because it forces me to evaluate instead of copy-paste.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9654; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- API Explorer / NCD W4D2</title>
+<meta name="description" content="Exercise 1: visit four public APIs in the browser, read JSON responses, answer questions about what comes back.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F50D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>API Explorer</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 30 min</div>
+
+<p>
+  Visit each of these public APIs in the browser. Not a webpage -- just a URL that returns raw data. That data is JSON.
+</p>
+
+<h2>API 1 -- GitHub User</h2>
+
+<p><code>https://api.github.com/users/octocat</code></p>
+
+<div class="answer">
+  <strong>What is the value of "login"?</strong>
+  <p><code>"octocat"</code></p>
+</div>
+
+<div class="answer">
+  <strong>What is the value of "public_repos"?</strong>
+  <p><code>8</code></p>
+</div>
+
+<div class="answer">
+  <strong>How many followers does this account have?</strong>
+  <p><code>16212</code> -- this number changes because it's live data. When I checked it was over 16,000. That's the point: the data is dynamic, not baked into a page.</p>
+</div>
+
+<div class="answer">
+  <strong>Try replacing octocat with your own GitHub username. Does it work?</strong>
+  <p>Yes. I tried <code>/users/melonmelonz</code> and it came back with my account info -- my actual repos, followers, bio, everything. Same structure, different data. That's the whole idea of an endpoint: same URL pattern, different input, different output.</p>
+</div>
+
+<h2>API 2 -- JSONPlaceholder (Fake Posts)</h2>
+
+<p><code>https://jsonplaceholder.typicode.com/posts/1</code></p>
+
+<div class="answer">
+  <strong>What fields do you see in the response?</strong>
+  <p><code>userId</code>, <code>id</code>, <code>title</code>, <code>body</code>. Four fields. The structure is flat -- no nested objects here.</p>
+</div>
+
+<div class="answer">
+  <strong>What is the "title" of this post?</strong>
+  <p><code>"sunt aut facere repellat provident occaecati excepturi optio reprehenderit"</code> -- it's Latin placeholder text, like lorem ipsum but for a fake blog.</p>
+</div>
+
+<div class="answer">
+  <strong>Now try /posts/2. What changed?</strong>
+  <p>Different <code>id</code> (2), different <code>title</code> and <code>body</code>. Same structure. The <code>userId</code> is still 1, meaning both posts belong to the same fake user.</p>
+</div>
+
+<div class="answer">
+  <strong>Now try /posts. (No number.) What do you get? How many posts are there?</strong>
+  <p>An array (starts with <code>[</code>) of 100 post objects. So <code>/posts</code> = "give me all of them" and <code>/posts/1</code> = "give me just this one." The number at the end is the ID.</p>
+</div>
+
+<h2>API 3 -- JSONPlaceholder (Users)</h2>
+
+<p><code>https://jsonplaceholder.typicode.com/users/1</code></p>
+
+<div class="answer">
+  <strong>What is this user's name?</strong>
+  <p><code>"Leanne Graham"</code></p>
+</div>
+
+<div class="answer">
+  <strong>What city do they live in?</strong>
+  <p><code>"Gwenborough"</code> -- it's inside <code>address.city</code>. The address field is an object inside the user object. Objects inside objects. This is nesting.</p>
+</div>
+
+<div class="answer">
+  <strong>What company do they work for?</strong>
+  <p><code>"Romaguera-Crona"</code> -- inside <code>company.name</code>. Another nested object. The company also has <code>catchPhrase</code> and <code>bs</code> fields, which is funny. Their bs is <code>"harness real-time e-markets"</code>.</p>
+</div>
+
+<div class="answer">
+  <strong>Try /users to see all users. How many are there?</strong>
+  <p>10 users total. Same pattern as posts: no ID at the end returns the full list.</p>
+</div>
+
+<h2>API 4 -- JSONPlaceholder (Todos)</h2>
+
+<p><code>https://jsonplaceholder.typicode.com/todos/1</code></p>
+
+<div class="answer">
+  <strong>What fields does a todo have?</strong>
+  <p><code>userId</code>, <code>id</code>, <code>title</code>, <code>completed</code>. Four fields, same as posts but with <code>completed</code> instead of <code>body</code>.</p>
+</div>
+
+<div class="answer">
+  <strong>What does the "completed" field tell you?</strong>
+  <p>Whether the todo is done or not. It's a boolean: <code>true</code> or <code>false</code>. Todo #1 has <code>completed: false</code> -- Leanne hasn't gotten around to it yet.</p>
+</div>
+
+<div class="answer">
+  <strong>Visit /todos -- how many todos are there?</strong>
+  <p>200. A lot of fake productivity.</p>
+</div>
+
+<div class="answer">
+  <strong>Can you find a todo that's marked as completed: true?</strong>
+  <p>Todo #4: <code>"et porro tempora"</code> with <code>completed: true</code>. Scrolled through the list until I found one. Roughly half are true, half are false.</p>
+</div>
+
+<h2>What surprised me</h2>
+
+<div class="card">
+  <div class="card-label">Reflection</div>
+  <p>
+    Honestly, how plain it is. I expected something more complicated but it's literally just text with curly braces. No colors, no layout, no buttons. Just data sitting there. Also, I didn't realize you could just type an API URL into a browser bar and get a response. I thought you had to use special tools. But the browser is just making a GET request, same as loading any page.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="./">Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

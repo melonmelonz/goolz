@@ -1234,6 +1234,24 @@
       <div class="icon-img shortcut">🧠</div>
       <div class="icon-label">W4D1.gbc</div>
     </div>
+    <div class="icon" tabindex="0" title="Week 4 Day 2 — What's an API? (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-04/day-2/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-04/day-2/','_blank','noopener')">
+      <div class="icon-img shortcut">🔌</div>
+      <div class="icon-label">W4D2</div>
+    </div>
+    <div class="icon" tabindex="0" title="Week 4 Day 3 — Databases: Where the Data Lives (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-04/day-3/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-04/day-3/','_blank','noopener')">
+      <div class="icon-img shortcut">🗃</div>
+      <div class="icon-label">W4D3</div>
+    </div>
+    <div class="icon" tabindex="0" title="Week 4 Day 4 — CRUD &amp; SQL (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-04/day-4/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-04/day-4/','_blank','noopener')">
+      <div class="icon-img shortcut">💾</div>
+      <div class="icon-label">W4D4</div>
+    </div>
     <div class="icon" tabindex="0" title="Study Plan / Report Card" ondblclick="openWindow('win-rc')">
       <div class="icon-img">📊</div>
       <div class="icon-label">Report&nbsp;Card</div>
@@ -1309,6 +1327,18 @@
             <span class="fl-icon">🧠</span>
             <span class="fl-name">Week 4 Day 1 — Design Thinking Workshop</span>
           </li>
+          <li onclick="window.open('/next-chapter/week-04/day-2/','_blank','noopener')">
+            <span class="fl-icon">🔌</span>
+            <span class="fl-name">Week 4 Day 2 — What's an API?</span>
+          </li>
+          <li onclick="window.open('/next-chapter/week-04/day-3/','_blank','noopener')">
+            <span class="fl-icon">🗃</span>
+            <span class="fl-name">Week 4 Day 3 — Databases: Where the Data Lives</span>
+          </li>
+          <li onclick="window.open('/next-chapter/week-04/day-4/','_blank','noopener')">
+            <span class="fl-icon">💾</span>
+            <span class="fl-name">Week 4 Day 4 — CRUD &amp; SQL</span>
+          </li>
           <li onclick="window.open('/peek/','_blank','noopener')">
             <span class="fl-icon">🥚</span>
             <span class="fl-name">Capstone Companion — PEEK Examines Embedded Kernels (browser build)</span>
@@ -1317,7 +1347,7 @@
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">11 object(s)</div>
+      <div class="status-pane">14 object(s)</div>
     </div>
   </div>
 
@@ -2945,7 +2975,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.8.1';
+const NCD_VERSION = 'v2.11.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3587,6 +3617,36 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-21',
+      title: 'Week 4 Day 4 -- CRUD & SQL',
+      notes: [
+        'W4D4 lives at /next-chapter/week-04/day-4/ -- five exercises in clean monospace layout: SQL syntax crash course, SELECT queries, INSERT/UPDATE/DELETE, AI-generated SQL review (accept/reject/modify), query plan for a full feature',
+        'Full-stack trace exercise ties Day 1 user story to Day 2 API to Day 3 schema to Day 4 SQL -- case worker dashboard walks through LEFT JOIN, subqueries, and multi-table query chains',
+        'Course Materials window + desktop shortcuts updated with W4D3 + W4D4; status bar count bumped 12 -> 14 objects',
+      ]
+    },
+    {
+      version: 'v2.10.0',
+      date: '2026-05-20',
+      title: 'Week 4 Day 3 -- Databases: Where the Data Lives',
+      notes: [
+        'W4D3 lives at /next-chapter/week-04/day-3/ -- five exercises: read a database diagram, design ReEntry Tech tables, AI-assisted schema review, peer review round 2 (CRUD + search + sort), edge cases (soft delete, UNIQUE constraints, required vs optional fields)',
+        'Eight-table schema designed for ReEntry Tech: users, modules, steps, progress, questions, glossary_terms, resources, assignments -- with foreign keys, constraints, and updated_at columns',
+        'AI schema review: 3 accepted, 1 modified, 1 rejected -- best suggestions were UNIQUE on email and category column on resources',
+      ]
+    },
+    {
+      version: 'v2.9.0',
+      date: '2026-05-19',
+      title: 'Week 4 Day 2 -- What\'s an API?',
+      notes: [
+        'W4D2 lives at /next-chapter/week-04/day-2/ -- five exercises in clean monospace layout: API explorer, fetch in code, HTTP methods for ReEntry Tech, error handling + status code reference, public API discovery (Free Dictionary API)',
+        'New format: dropped the GBC shell in favor of the mint/monospace style from week 3; light/dark mode, prev/next exercise nav',
+        'Course Materials window + desktop shortcut updated with W4D2; status bar count bumped 11 -> 12 objects',
+      ]
+    },
+    {
+      version: 'v2.8.1',
       date: '2026-05-18',
       title: 'Week 4 Day 1 -- Design Thinking Workshop',
       notes: [

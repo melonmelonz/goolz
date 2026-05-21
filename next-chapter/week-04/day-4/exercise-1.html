@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- SQL Syntax Crash Course / NCD W4D4</title>
+<meta name="description" content="Exercise 1: read a SQL cheat sheet, match CRUD operations to syntax, predict what queries return.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4D6;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>SQL Syntax Crash Course</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 20 min</div>
+
+<p>
+  Four operations, four SQL keywords. This is the entire vocabulary for today. Everything else is modifiers.
+</p>
+
+<h2>The cheat sheet</h2>
+
+<pre><code>-- READ: get rows from a table
+SELECT column1, column2 FROM table_name WHERE condition;
+
+-- CREATE: add a new row
+INSERT INTO table_name (column1, column2) VALUES ('value1', 'value2');
+
+-- UPDATE: change existing rows
+UPDATE table_name SET column1 = 'new_value' WHERE condition;
+
+-- DELETE: remove rows
+DELETE FROM table_name WHERE condition;
+
+-- EXTRAS
+SELECT * FROM table_name;                    -- all columns
+SELECT * FROM table_name ORDER BY column;    -- sorted
+SELECT * FROM table_name WHERE col = 'val';  -- filtered
+SELECT COUNT(*) FROM table_name;             -- count rows</code></pre>
+
+<h2>Match the operation</h2>
+
+<div class="answer">
+  <strong>1. "Show me all users who are case workers"</strong>
+  <p><code>SELECT * FROM users WHERE role = 'caseworker';</code></p>
+  <p>This is a READ. I'm not changing anything, just looking at rows that match a condition.</p>
+</div>
+
+<div class="answer">
+  <strong>2. "A new returning citizen just signed up"</strong>
+  <p><code>INSERT INTO users (name, email, role, created_at) VALUES ('Marcus', 'marcus@email.com', 'citizen', '2026-05-21');</code></p>
+  <p>This is a CREATE. A row that didn't exist before now does.</p>
+</div>
+
+<div class="answer">
+  <strong>3. "The county benefits portal changed their URL"</strong>
+  <p><code>UPDATE resources SET url = 'https://newportal.county.gov', updated_at = '2026-05-21' WHERE title = 'County Benefits Portal';</code></p>
+  <p>This is an UPDATE. The resource row exists, I'm just changing a column value. Also hitting that <code>updated_at</code> column the AI told me to add yesterday.</p>
+</div>
+
+<div class="answer">
+  <strong>4. "Remove the old bus schedule link, it's been decommissioned"</strong>
+  <p><code>DELETE FROM resources WHERE title = 'City Bus Schedule (Old)';</code></p>
+  <p>This is a DELETE. The row is gone. In production I'd probably soft-delete, but the SQL itself is straightforward.</p>
+</div>
+
+<h2>Predict the output</h2>
+
+<p>Given this data in the <code>modules</code> table:</p>
+
+<table>
+  <thead>
+    <tr><th>id</th><th>title</th><th>difficulty</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>Setting Up Email</td><td>beginner</td></tr>
+    <tr><td>2</td><td>Using a Smartphone</td><td>beginner</td></tr>
+    <tr><td>3</td><td>Online Job Applications</td><td>intermediate</td></tr>
+    <tr><td>4</td><td>Managing a Bank Account Online</td><td>intermediate</td></tr>
+  </tbody>
+</table>
+
+<div class="answer">
+  <strong>Query: SELECT title FROM modules WHERE difficulty = 'beginner';</strong>
+  <p>Returns two rows: "Setting Up Email" and "Using a Smartphone". The WHERE clause filters out the intermediate modules. Only the title column comes back because that's all I asked for.</p>
+</div>
+
+<div class="answer">
+  <strong>Query: SELECT COUNT(*) FROM modules;</strong>
+  <p>Returns <code>4</code>. It counts every row regardless of difficulty. No WHERE clause means no filter.</p>
+</div>
+
+<div class="answer">
+  <strong>Query: SELECT * FROM modules ORDER BY title;</strong>
+  <p>Returns all four rows, all columns, sorted alphabetically by title: "Managing a Bank Account Online", "Online Job Applications", "Setting Up Email", "Using a Smartphone". ORDER BY doesn't filter, it just rearranges.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">What clicked</div>
+  <p>
+    SQL reads like English if you squint. <code>SELECT title FROM modules WHERE difficulty = 'beginner'</code> is basically "get the title from modules where difficulty equals beginner." The punctuation is different but the sentence structure maps almost one to one. The semicolon at the end is like a period. WHERE is the "but only if" clause.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="./">Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

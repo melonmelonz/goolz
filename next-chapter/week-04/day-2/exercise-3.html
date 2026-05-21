@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- HTTP Methods for ReEntry Tech / NCD W4D2</title>
+<meta name="description" content="Exercise 3: design the API endpoints ReEntry Tech would need using GET, POST, PUT, DELETE.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6E0;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>HTTP Methods for ReEntry Tech</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 25 min</div>
+
+<p>
+  From yesterday's design thinking: ReEntry Tech is an AI-powered digital literacy tool for people coming out of incarceration. The three core features are AI Q&A chat, guided walkthrough modules, and progress tracking. Today I'm designing the API endpoints that would make those features work.
+</p>
+
+<h2>Resources</h2>
+
+<div class="card">
+  <div class="card-label">What my app deals with</div>
+  <p>
+    <b>Modules</b> -- the guided walkthroughs (how to set up email, use a smartphone, apply for a job online).<br>
+    <b>Progress</b> -- where each user is in each module.<br>
+    <b>Questions</b> -- what users ask the AI chatbot.<br>
+    <b>Glossary</b> -- jargon definitions (what is "the cloud," what is "two-factor auth").<br>
+    <b>Resources</b> -- local community resources that case workers can add (city bus app link, county benefits portal, etc.).<br>
+    <b>Users</b> -- both returning citizens and case workers.
+  </p>
+</div>
+
+<h2>Endpoints</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>URL</th>
+      <th>What it does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>GET</code></td>
+      <td><code>/modules</code></td>
+      <td>Returns all available learning modules</td>
+    </tr>
+    <tr>
+      <td><code>GET</code></td>
+      <td><code>/modules/3</code></td>
+      <td>Returns a single module (module #3) with its steps</td>
+    </tr>
+    <tr>
+      <td><code>POST</code></td>
+      <td><code>/modules/3/progress</code></td>
+      <td>Mark a step as complete for the current user</td>
+    </tr>
+    <tr>
+      <td><code>GET</code></td>
+      <td><code>/users/7/progress</code></td>
+      <td>Get user #7's progress across all modules (case worker view)</td>
+    </tr>
+    <tr>
+      <td><code>POST</code></td>
+      <td><code>/questions</code></td>
+      <td>Submit a question to the AI chatbot, get an answer back</td>
+    </tr>
+    <tr>
+      <td><code>GET</code></td>
+      <td><code>/glossary</code></td>
+      <td>Returns all glossary terms and definitions</td>
+    </tr>
+    <tr>
+      <td><code>GET</code></td>
+      <td><code>/glossary?term=cloud</code></td>
+      <td>Search the glossary for a specific term</td>
+    </tr>
+    <tr>
+      <td><code>GET</code></td>
+      <td><code>/resources</code></td>
+      <td>Returns all local community resources</td>
+    </tr>
+    <tr>
+      <td><code>POST</code></td>
+      <td><code>/resources</code></td>
+      <td>Add a new local resource (case workers only)</td>
+    </tr>
+    <tr>
+      <td><code>PUT</code></td>
+      <td><code>/resources/12</code></td>
+      <td>Update resource #12 (fix a broken link, change hours)</td>
+    </tr>
+    <tr>
+      <td><code>DELETE</code></td>
+      <td><code>/resources/12</code></td>
+      <td>Remove a resource that's no longer available</td>
+    </tr>
+    <tr>
+      <td><code>PUT</code></td>
+      <td><code>/users/7/profile</code></td>
+      <td>Update user #7's profile info</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Thinking through it</h2>
+
+<div class="answer">
+  <strong>What data does the user need to see? (GET)</strong>
+  <p>Modules, their own progress, glossary definitions, and local resources. The case worker also needs to see other users' progress. That's a lot of GETs -- most of what the app does is showing information.</p>
+</div>
+
+<div class="answer">
+  <strong>What data does the user need to create? (POST)</strong>
+  <p>Questions to the AI chatbot (every time they ask something, that's a new request). Progress updates when they finish a step. Case workers creating new resource entries.</p>
+</div>
+
+<div class="answer">
+  <strong>What data might need to be updated? (PUT)</strong>
+  <p>Resource listings (URLs change, hours change). User profile info. Maybe module content itself if we want case workers to customize guides for their community.</p>
+</div>
+
+<div class="answer">
+  <strong>What data might need to be deleted? (DELETE)</strong>
+  <p>Resources that no longer exist (a program shuts down, a link goes dead). Maybe old questions from the AI chat history if the user wants to clear it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Observation</div>
+  <p>
+    The endpoints are just the same patterns repeated for different resources. Once you know GET/POST/PUT/DELETE and the URL pattern, you can design endpoints for basically anything. The hard part isn't the API design -- it's figuring out what the resources are in the first place. That's why yesterday's design thinking mattered.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

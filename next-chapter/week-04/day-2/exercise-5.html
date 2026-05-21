@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Find a Public API / NCD W4D2</title>
+<meta name="description" content="Exercise 5: find and test a real public API relevant to the ReEntry Tech app idea.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F310;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Find a Public API</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 3 . 25 min</div>
+
+<p>
+  The assignment: browse the public-apis list, find something relevant to ReEntry Tech, test it, and write code to call it. My app needs to explain jargon in plain language, so I looked for dictionary or definition APIs.
+</p>
+
+<h2>What I found</h2>
+
+<div class="card">
+  <div class="card-label">API info</div>
+  <p>
+    <b>Name:</b> Free Dictionary API<br>
+    <b>URL:</b> <code>https://api.dictionaryapi.dev/api/v2/entries/en/&lt;word&gt;</code><br>
+    <b>Auth:</b> none required (no API key)<br>
+    <b>CORS:</b> yes (works from the browser)<br>
+    <b>Category:</b> Dictionaries (found it under "Dictionaries" in the public-apis list)
+  </p>
+</div>
+
+<h2>Testing in the browser</h2>
+
+<p>Tried <code>https://api.dictionaryapi.dev/api/v2/entries/en/computer</code> and got back:</p>
+
+<pre><code>[
+  {
+    "word": "computer",
+    "phonetic": "/k&#601;m&#712;pju&#720;.t&#601;(&#638;)/",
+    "meanings": [
+      {
+        "partOfSpeech": "noun",
+        "definitions": [
+          {
+            "definition": "A person employed to perform
+              computations; one who computes.",
+            ...
+          },
+          {
+            "definition": "A programmable electronic device
+              that performs mathematical calculations and
+              logical operations...",
+            ...
+          }
+        ]
+      }
+    ]
+  }
+]</code></pre>
+
+<p>
+  Deeply nested, but the data is there. The first definition is the archaic one (a person who computes), the second is the modern one. It also includes phonetics and source URLs. More data than I expected.
+</p>
+
+<h2>Calling it in code</h2>
+
+<pre><code>// Fetch the definition of a word from the Free Dictionary API
+fetch("https://api.dictionaryapi.dev/api/v2/entries/en/bandwidth")
+  .then(function(response) {
+    // Check if the word was found
+    if (!response.ok) {
+      throw new Error("Word not found (status " + response.status + ")");
+    }
+    return response.json();
+  })
+  .then(function(data) {
+    // The API returns an array; grab the first entry
+    var entry = data[0];
+    console.log("Word: " + entry.word);
+
+    // Loop through each meaning (noun, verb, etc.)
+    entry.meanings.forEach(function(meaning) {
+      console.log("\n" + meaning.partOfSpeech + ":");
+      // Show the first definition for each part of speech
+      console.log("  " + meaning.definitions[0].definition);
+    });
+  })
+  .catch(function(error) {
+    console.log("Error: " + error.message);
+  });</code></pre>
+
+<p>Output:</p>
+
+<pre><code>Word: bandwidth
+
+noun:
+  The difference between the upper and lower frequencies
+  of a range of electromagnetic frequencies.</code></pre>
+
+<p>It works. Changed the word to "firewall" and got a definition about that too. Tried a made-up word and the <code>.catch()</code> fired correctly with a 404.</p>
+
+<h2>How this fits ReEntry Tech</h2>
+
+<div class="answer">
+  <strong>What data it provides</strong>
+  <p>Definitions, phonetics, parts of speech, example sentences, and source URLs for English words. Covers both everyday words and technical jargon.</p>
+</div>
+
+<div class="answer">
+  <strong>How it could be useful</strong>
+  <p>The "explain jargon in plain language" feature from my user stories. When a returning citizen encounters a term they don't know -- "cloud," "bandwidth," "firewall," "authentication" -- the app could pull a definition from this API as a starting point. The AI chatbot could use it as a fallback or to ground its response in an actual dictionary definition before simplifying it further.</p>
+</div>
+
+<div class="answer">
+  <strong>Issues</strong>
+  <p>
+    The definitions are dictionary-formal, not plain-language. "The difference between the upper and lower frequencies of a range of electromagnetic frequencies" is technically correct but useless to someone who just wants to know what "bandwidth" means in everyday terms. So the API is a data source, not a complete solution. The AI layer would still need to translate these definitions into something a human would actually say.
+  </p>
+  <p>
+    Also, tech terms like "two-factor authentication" aren't in the dictionary. It returns a 404 for compound phrases. So this API handles single words, not the full glossary. Good supplement, not a replacement.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">Takeaway</div>
+  <p>
+    Public APIs don't solve your whole problem. They give you a piece. The Dictionary API gives ReEntry Tech baseline definitions for single English words. The AI layer is still the thing that makes those definitions understandable. But having a real data source behind the AI (instead of it just making things up) is worth something. Grounding.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

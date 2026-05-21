@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Query Plan for a Feature / NCD W4D4</title>
+<meta name="description" content="Exercise 5: map an entire user story to a sequence of SQL queries -- the case worker dashboard feature.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F5FA;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Query Plan for a Feature</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 3 . 30 min</div>
+
+<p>
+  One user story. Every SQL query it needs to work. This is the exercise where everything from the week connects: the user story from Day 1, the API endpoints from Day 2, the schema from Day 3, and the queries from today.
+</p>
+
+<h2>The user story</h2>
+
+<div class="card">
+  <div class="card-label">From Day 1</div>
+  <p>
+    "As a case worker, I want to see which of my clients are stuck so I can follow up with them."
+  </p>
+</div>
+
+<h2>What "stuck" means</h2>
+
+<p>
+  A client is stuck if they have an assigned module with incomplete steps. Specifically: there's a step in the module where the progress row either doesn't exist (never started) or has <code>completed = false</code>. The case worker needs to see: which client, which module, which step, and how long it's been.
+</p>
+
+<h2>The query plan</h2>
+
+<h3>Step 1: Get the case worker's assigned clients</h3>
+
+<pre><code>SELECT client_id, module_id, assigned_at
+FROM assignments
+WHERE caseworker_id = 5;</code></pre>
+
+<div class="answer">
+  <strong>What this returns</strong>
+  <p>A list of (client, module) pairs. Say: client 7 assigned to module 1, client 12 assigned to modules 1 and 3, client 19 assigned to module 2. This is the starting point. Everything else fans out from here.</p>
+</div>
+
+<h3>Step 2: For each client-module pair, get the steps and their completion status</h3>
+
+<pre><code>SELECT
+  steps.id AS step_id,
+  steps.title AS step_title,
+  steps.step_order,
+  progress.completed,
+  progress.completed_at
+FROM steps
+LEFT JOIN progress
+  ON progress.step_id = steps.id
+  AND progress.user_id = 7
+WHERE steps.module_id = 1
+ORDER BY steps.step_order;</code></pre>
+
+<div class="answer">
+  <strong>Why LEFT JOIN</strong>
+  <p>LEFT JOIN instead of regular JOIN because I need to see steps even if the user hasn't started them. A regular JOIN would hide any step that has no progress row. With LEFT JOIN, those steps show up with <code>completed = NULL</code> and <code>completed_at = NULL</code>. That's exactly how I spot "stuck": the step exists but the progress doesn't.</p>
+</div>
+
+<div class="answer">
+  <strong>What this returns for client 7, module 1</strong>
+</div>
+
+<table>
+  <thead>
+    <tr><th>step_id</th><th>step_title</th><th>order</th><th>completed</th><th>completed_at</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>Open the Gmail app</td><td>1</td><td>true</td><td>2026-05-15</td></tr>
+    <tr><td>2</td><td>Tap Create Account</td><td>2</td><td>true</td><td>2026-05-15</td></tr>
+    <tr><td>3</td><td>Enter your name</td><td>3</td><td>true</td><td>2026-05-16</td></tr>
+    <tr><td>4</td><td>Choose a username</td><td>4</td><td>false</td><td>NULL</td></tr>
+    <tr><td>5</td><td>Set a password</td><td>5</td><td>NULL</td><td>NULL</td></tr>
+    <tr><td>6</td><td>Add recovery phone</td><td>6</td><td>NULL</td><td>NULL</td></tr>
+  </tbody>
+</table>
+
+<div class="answer">
+  <strong>Reading the results</strong>
+  <p>Steps 1-3: done. Step 4: started but not completed (<code>completed = false</code>). Steps 5-6: never started (<code>completed = NULL</code>, no progress row exists). Client 7 is stuck on step 4, "Choose a username." The case worker now knows exactly where to intervene.</p>
+</div>
+
+<h3>Step 3: Get the client's name for the dashboard display</h3>
+
+<pre><code>SELECT name, email
+FROM users
+WHERE id = 7;</code></pre>
+
+<div class="answer">
+  <strong>Why this is separate</strong>
+  <p>I could have JOINed users into Step 2, but the case worker dashboard probably shows the client's name once at the top, not repeated on every step row. Keeping it separate is cleaner for the front-end to consume. One query gets the person, another gets their step status.</p>
+</div>
+
+<h3>Step 4: How the API serves this</h3>
+
+<div class="card">
+  <div class="card-label">Connecting to Day 2</div>
+  <p>The Day 2 API endpoint for this was:</p>
+<pre><code>GET /api/caseworker/5/clients</code></pre>
+  <p>The back-end receives this request and runs queries 1, 2, and 3. It packages the results into JSON:</p>
+<pre><code>{
+  "clients": [
+    {
+      "name": "Darius Jackson",
+      "email": "darius.j@email.com",
+      "module": "Setting Up Email",
+      "total_steps": 6,
+      "completed_steps": 3,
+      "stuck_on": "Choose a username",
+      "last_activity": "2026-05-16"
+    }
+  ]
+}</code></pre>
+  <p>The front-end gets this JSON and renders the dashboard. The user story is fulfilled. The SQL is invisible to the case worker. They just see a list of clients with progress bars and stuck indicators.</p>
+</div>
+
+<h2>Full-stack trace</h2>
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Day</th><th>What happens</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>User story</td><td>Day 1</td><td>"I want to see who's stuck"</td></tr>
+    <tr><td>API endpoint</td><td>Day 2</td><td><code>GET /api/caseworker/:id/clients</code></td></tr>
+    <tr><td>Database schema</td><td>Day 3</td><td>assignments, steps, progress, users tables</td></tr>
+    <tr><td>SQL queries</td><td>Day 4</td><td>SELECT + LEFT JOIN chain across four tables</td></tr>
+  </tbody>
+</table>
+
+<div class="card">
+  <div class="card-label">What I learned</div>
+  <p>
+    A feature is never just one query. The "stuck clients" dashboard needs three queries minimum, touching four tables, and the results have to be stitched together into a shape the front-end can render. This is why schema design matters. If I didn't have the <code>assignments</code> table linking case workers to clients, or if <code>steps</code> didn't have <code>step_order</code>, or if <code>progress</code> didn't exist as its own table, this whole chain falls apart. Everything I built this week is load-bearing. Nothing was hypothetical.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9654; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

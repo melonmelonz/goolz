@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Error Handling / NCD W4D2</title>
+<meta name="description" content="Exercise 4: explore API error responses and build a status code reference card.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26A0;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Error Handling</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 20 min</div>
+
+<p>
+  What happens when things go wrong? Let's find out by deliberately asking for stuff that doesn't exist.
+</p>
+
+<h2>Breaking things on purpose</h2>
+
+<h3>JSONPlaceholder -- missing post</h3>
+
+<p><code>https://jsonplaceholder.typicode.com/posts/99999</code></p>
+
+<div class="answer">
+  <strong>What do you see? Is it an error?</strong>
+  <p>An empty object: <code>{}</code>. Just curly braces with nothing inside. That's... not really an error? JSONPlaceholder doesn't return a 404 for missing IDs. It just hands back empty data and a 200 OK. A real production API would return a 404 with an error message. This is why JSONPlaceholder is a practice API, not a model for how to build one.</p>
+</div>
+
+<h3>GitHub -- nonexistent user</h3>
+
+<p><code>https://api.github.com/users/thisisnotarealgithubusername12345678</code></p>
+
+<div class="answer">
+  <strong>What does the "message" field say?</strong>
+  <p><code>"Not Found"</code>. That's a real 404. GitHub returns:</p>
+</div>
+
+<pre><code>{
+  "message": "Not Found",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "404"
+}</code></pre>
+
+<p>
+  This is better. Clear error message, a link to the docs, and the status code right in the JSON body. You can see it in the browser and in code. If my app was making this request, the <code>.catch()</code> or a status check would handle it.
+</p>
+
+<h2>Status Code Reference Card</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Name</th>
+      <th>What it means</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>200</code></td>
+      <td>OK</td>
+      <td>Everything worked. Here's the data you asked for. The happy path.</td>
+    </tr>
+    <tr>
+      <td><code>201</code></td>
+      <td>Created</td>
+      <td>Your request created something new. Like when you POST a new resource and the server says "got it, it exists now." Order placed.</td>
+    </tr>
+    <tr>
+      <td><code>400</code></td>
+      <td>Bad Request</td>
+      <td>You sent something the server can't understand. Missing a required field, wrong data format, malformed JSON. "I can't read your handwriting, try again."</td>
+    </tr>
+    <tr>
+      <td><code>401</code></td>
+      <td>Unauthorized</td>
+      <td>You haven't proven who you are. No login, no API key, expired token. "Who are you? Show me your ID."</td>
+    </tr>
+    <tr>
+      <td><code>403</code></td>
+      <td>Forbidden</td>
+      <td>You proved who you are, but you still can't do this. Like a regular user trying to access admin settings. "I know who you are, but you're not allowed in here."</td>
+    </tr>
+    <tr>
+      <td><code>404</code></td>
+      <td>Not Found</td>
+      <td>The thing you asked for doesn't exist. Wrong URL, deleted resource, typo in the endpoint. "We don't have that on the menu."</td>
+    </tr>
+    <tr>
+      <td><code>500</code></td>
+      <td>Server Error</td>
+      <td>The server broke. Not your fault -- something crashed on their end. "The kitchen is on fire. Come back later."</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="card">
+  <div class="card-label">The distinction that matters</div>
+  <p>
+    <b>401 vs 403:</b> 401 means "I don't know who you are" (not logged in). 403 means "I know who you are and you can't do this" (logged in but no permission). For ReEntry Tech this matters: a returning citizen logged in shouldn't be able to DELETE a resource -- that's a 403, not a 401. They're authenticated, just not authorized for that action.
+  </p>
+  <p>
+    <b>400 vs 404:</b> 400 means the request itself is broken (bad syntax, missing data). 404 means the request was fine but the thing doesn't exist. If I send <code>GET /modules/999</code> and module 999 doesn't exist, that's a 404. If I send <code>POST /modules</code> with no body at all, that's a 400.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
