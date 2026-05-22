@@ -27,17 +27,21 @@
     .addAttribution('<a href="https://carto.com/">CartoDB</a> | <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>')
     .addTo(map);
 
-  // Build heatmap from flat Float32Array: [lat,lng,count, lat,lng,count, ...]
+  // Build heatmap from flat array: [lat,lng,count, lat,lng,count, ...]
   var heatPoints = [];
+  var maxWeight = 0;
   for (var i = 0; i < RT_HEAT.length; i += 3) {
-    heatPoints.push([RT_HEAT[i], RT_HEAT[i + 1], RT_HEAT[i + 2]]);
+    var w = RT_HEAT[i + 2];
+    if (w > maxWeight) maxWeight = w;
+    heatPoints.push([RT_HEAT[i], RT_HEAT[i + 1], w]);
   }
 
   L.heatLayer(heatPoints, {
-    radius: 20, blur: 16, maxZoom: 15, max: 10.0,
+    radius: 18, blur: 18, maxZoom: 17, max: maxWeight * 0.4,
+    minOpacity: 0.08,
     gradient: {
-      0.1: 'rgba(63,185,80,0.2)', 0.3: '#3FB950',
-      0.6: '#6FCF7F', 0.8: '#F0883E', 1.0: '#F05D3E'
+      0.15: 'rgba(63,185,80,0.15)', 0.35: '#3FB950',
+      0.55: '#6FCF7F', 0.75: '#F0883E', 1.0: '#F05D3E'
     }
   }).addTo(map);
 
