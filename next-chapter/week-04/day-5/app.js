@@ -28,24 +28,23 @@
     .addTo(map);
 
   // ── Heatmap ──
-  // Log-scale: raw weights 1-5676, log range ~0-8.6
+  // 30K cells at ~111m grid. Log-scale weights (range 1-5392).
   var heatPoints = [];
   for (var i = 0; i < RT_HEAT.length; i += 3) {
-    heatPoints.push([RT_HEAT[i], RT_HEAT[i + 1], Math.log(RT_HEAT[i + 2] + 1)]);
+    heatPoints.push([RT_HEAT[i], RT_HEAT[i + 1], Math.log1p(RT_HEAT[i + 2])]);
   }
 
-  // maxZoom set very high so leaflet-heat keeps interpolating at street zoom
-  // instead of showing individual point blobs
   var heatLayer = L.heatLayer(heatPoints, {
-    radius: 30, blur: 25, maxZoom: 22, max: 7,
-    minOpacity: 0.05,
+    radius: 15, blur: 20, maxZoom: 16, max: 5.5,
+    minOpacity: 0.02,
     gradient: {
       0.0: 'transparent',
-      0.15: 'rgba(63,185,80,0.25)',
-      0.35: '#3FB950',
-      0.55: '#8CD790',
-      0.75: '#F0883E',
-      1.0: '#F05D3E'
+      0.1: 'rgba(63,185,80,0.15)',
+      0.25: '#237A34',
+      0.45: '#3FB950',
+      0.65: '#F0883E',
+      0.85: '#F05D3E',
+      1.0: '#FF3333'
     }
   }).addTo(map);
 
