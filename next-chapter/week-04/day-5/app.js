@@ -29,34 +29,32 @@
 
   // ── Heatmap ──
   // 30K cells at ~111m grid. sqrt-scaled weights for balanced contrast.
-  // maxZoom=12: heatmap renders at zoom-12 density, then zooming in
-  // just magnifies the smooth canvas -- no individual dots ever appear.
+  // maxZoom=14: heatmap renders at zoom-14 density with neighborhood detail.
+  // Past zoom 14 the smooth canvas just magnifies -- no dots.
   var heatPoints = [];
   for (var i = 0; i < RT_HEAT.length; i += 3) {
     heatPoints.push([RT_HEAT[i], RT_HEAT[i + 1], Math.sqrt(RT_HEAT[i + 2])]);
   }
 
   var heatLayer = L.heatLayer(heatPoints, {
-    radius: 18,
-    blur: 14,
-    maxZoom: 12,
-    max: 100,
+    radius: 22,
+    blur: 16,
+    maxZoom: 14,
+    max: 25,
     minOpacity: 0,
     gradient: {
       0.00: 'transparent',
-      0.06: 'rgba(26, 82, 38, 0.5)',
-      0.15: 'rgba(63, 185, 80, 0.7)',
-      0.30: '#3FB950',
-      0.50: '#A3D977',
-      0.70: '#F0883E',
+      0.04: 'rgba(26, 82, 38, 0.4)',
+      0.12: 'rgba(63, 185, 80, 0.7)',
+      0.25: '#3FB950',
+      0.45: '#A3D977',
+      0.65: '#F0883E',
       0.85: '#E84040',
       1.00: '#FF2222'
     }
   }).addTo(map);
 
   // ── Click-to-inspect: fetch real reports from NYC Open Data API ──
-  var activePopup = null;
-
   map.on('click', function (e) {
     if (map.getZoom() < 12) return;
 
