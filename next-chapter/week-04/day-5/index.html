@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RatTrack NYC</title>
+  <meta name="description" content="Interactive heatmap of 227,000+ rodent complaints from NYC 311 Open Data (2020-2026)">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <header id="header">
+    <div class="logo">
+      <span class="mascot-icon">🐕</span>
+      RATTRACK<span class="logo-slash">///</span><small>NYC</small>
+    </div>
+    <div class="header-stats">
+      <span class="header-stat"><b id="stat-total">227,319</b> reports</span>
+      <span class="header-stat"><b id="stat-years">2020-2026</b></span>
+      <span class="header-stat accent">LIVE HEATMAP</span>
+    </div>
+  </header>
+
+  <aside id="filters">
+    <div class="filter-section">
+      <div class="filter-title">Year</div>
+      <div class="filter-group" id="year-filters">
+        <button class="filter-item active" data-year="all">
+          <span>All Years</span>
+          <span class="count" data-count="year-all"></span>
+        </button>
+        <button class="filter-item" data-year="2026">
+          <span>2026</span>
+          <span class="count" data-count="year-2026"></span>
+        </button>
+        <button class="filter-item" data-year="2025">
+          <span>2025</span>
+          <span class="count" data-count="year-2025"></span>
+        </button>
+        <button class="filter-item" data-year="2024">
+          <span>2024</span>
+          <span class="count" data-count="year-2024"></span>
+        </button>
+        <button class="filter-item" data-year="2023">
+          <span>2023</span>
+          <span class="count" data-count="year-2023"></span>
+        </button>
+        <button class="filter-item" data-year="2022">
+          <span>2022</span>
+          <span class="count" data-count="year-2022"></span>
+        </button>
+        <button class="filter-item" data-year="2021">
+          <span>2021</span>
+          <span class="count" data-count="year-2021"></span>
+        </button>
+        <button class="filter-item" data-year="2020">
+          <span>2020</span>
+          <span class="count" data-count="year-2020"></span>
+        </button>
+      </div>
+    </div>
+    <div class="filter-section">
+      <div class="filter-title">Borough</div>
+      <div class="filter-group" id="borough-filters">
+        <button class="filter-item active" data-borough="all">
+          <span><span class="filter-dot green"></span>All Boroughs</span>
+          <span class="count" data-count="boro-all"></span>
+        </button>
+        <button class="filter-item" data-borough="K">
+          <span><span class="filter-dot"></span>Brooklyn</span>
+          <span class="count" data-count="boro-K"></span>
+        </button>
+        <button class="filter-item" data-borough="M">
+          <span><span class="filter-dot"></span>Manhattan</span>
+          <span class="count" data-count="boro-M"></span>
+        </button>
+        <button class="filter-item" data-borough="X">
+          <span><span class="filter-dot"></span>Bronx</span>
+          <span class="count" data-count="boro-X"></span>
+        </button>
+        <button class="filter-item" data-borough="Q">
+          <span><span class="filter-dot"></span>Queens</span>
+          <span class="count" data-count="boro-Q"></span>
+        </button>
+        <button class="filter-item" data-borough="S">
+          <span><span class="filter-dot"></span>Staten Island</span>
+          <span class="count" data-count="boro-S"></span>
+        </button>
+      </div>
+    </div>
+    <div class="filter-section">
+      <div class="filter-title">Type</div>
+      <div class="filter-group" id="type-filters">
+        <button class="filter-item active" data-type="all">
+          <span>All Types</span>
+          <span class="count" data-count="type-all"></span>
+        </button>
+        <button class="filter-item" data-type="R">
+          <span>Rat Sighting</span>
+          <span class="count" data-count="type-R"></span>
+        </button>
+        <button class="filter-item" data-type="S">
+          <span>Signs of Rodents</span>
+          <span class="count" data-count="type-S"></span>
+        </button>
+        <button class="filter-item" data-type="M">
+          <span>Mouse Sighting</span>
+          <span class="count" data-count="type-M"></span>
+        </button>
+        <button class="filter-item" data-type="C">
+          <span>Conditions</span>
+          <span class="count" data-count="type-C"></span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div id="legend">
+    <div class="legend-title">Density</div>
+    <div class="legend-bar"></div>
+    <div class="legend-labels"><span>Low</span><span>High</span></div>
+  </div>
+
+  <div id="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Worst Borough</div>
+      <div class="stat-value green" id="stat-borough">--</div>
+      <div class="stat-sub" id="stat-borough-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Peak Season</div>
+      <div class="stat-value orange" id="stat-season">--</div>
+      <div class="stat-sub" id="stat-season-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Reports</div>
+      <div class="stat-value" id="stat-count">--</div>
+      <div class="stat-sub" id="stat-count-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Monthly Trend</div>
+      <div class="mini-bars" id="stat-trend"></div>
+      <div class="stat-sub" id="stat-trend-sub">Jan - Dec</div>
+    </div>
+  </div>
+
+  <button id="filter-toggle" aria-label="Toggle filters">&#9776;</button>
+
+  <div id="loading">
+    <div class="loading-inner">
+      <span class="mascot-icon-lg">🐕</span>
+      <div class="loading-text">Sniffing out rodent activity...</div>
+      <div class="loading-sub">Loading 227,319 complaints</div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

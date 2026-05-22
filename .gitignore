@@ -11,3 +11,4 @@
 
 # Node (for occasional npx wrangler runs)
 node_modules/
+.superpowers/
