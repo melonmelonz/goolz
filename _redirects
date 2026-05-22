@@ -2,3 +2,6 @@
 /games/pwf3        /games/pwg/        301
 /games/pwf3/       /games/pwg/        301
 /games/pwf3/*      /games/pwg/:splat  301
+
+# 311 Anomaly Tracker SPA
+/311/*             /311/index.html    200
