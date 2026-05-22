@@ -27,23 +27,83 @@
     .addAttribution('<a href="https://carto.com/">CartoDB</a> | <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>')
     .addTo(map);
 
-  // Build heatmap from flat array: [lat,lng,count, lat,lng,count, ...]
+  // ── Heatmap layer ──
   var heatPoints = [];
-  var maxWeight = 0;
   for (var i = 0; i < RT_HEAT.length; i += 3) {
-    var w = RT_HEAT[i + 2];
-    if (w > maxWeight) maxWeight = w;
-    heatPoints.push([RT_HEAT[i], RT_HEAT[i + 1], w]);
+    heatPoints.push([RT_HEAT[i], RT_HEAT[i + 1], Math.log(RT_HEAT[i + 2] + 1)]);
   }
 
-  L.heatLayer(heatPoints, {
-    radius: 18, blur: 18, maxZoom: 17, max: maxWeight * 0.4,
-    minOpacity: 0.08,
+  var heatLayer = L.heatLayer(heatPoints, {
+    radius: 22, blur: 20, maxZoom: 17, max: 7,
+    minOpacity: 0.05,
     gradient: {
-      0.15: 'rgba(63,185,80,0.15)', 0.35: '#3FB950',
-      0.55: '#6FCF7F', 0.75: '#F0883E', 1.0: '#F05D3E'
+      0.0: 'transparent',
+      0.15: 'rgba(63,185,80,0.25)',
+      0.35: '#3FB950',
+      0.55: '#8CD790',
+      0.75: '#F0883E',
+      1.0: '#F05D3E'
     }
   }).addTo(map);
+
+  // ── Circle markers (appear on zoom >= 13) ──
+  var markersLayer = L.layerGroup();
+  var markersBuilt = false;
+
+  function buildMarkers() {
+    if (markersBuilt) return;
+    markersBuilt = true;
+    for (var i = 0; i < RT_HEAT.length; i += 3) {
+      var lat = RT_HEAT[i], lng = RT_HEAT[i + 1], count = RT_HEAT[i + 2];
+      var intensity = Math.min(count / 1000, 1);
+      var color = intensity > 0.6 ? '#F05D3E' : intensity > 0.3 ? '#F0883E' : '#3FB950';
+      var radius = Math.max(4, Math.min(16, Math.sqrt(count) * 0.8));
+
+      var marker = L.circleMarker([lat, lng], {
+        radius: radius,
+        fillColor: color,
+        fillOpacity: 0.7,
+        color: 'rgba(255,255,255,0.3)',
+        weight: 1
+      });
+
+      marker._rtCount = count;
+      marker._rtLat = lat;
+      marker._rtLng = lng;
+
+      marker.on('click', function (e) {
+        var m = e.target;
+        var c = m._rtCount;
+        var sev = c > 1000 ? 'Critical hotspot' : c > 500 ? 'High activity' : c > 100 ? 'Moderate activity' : 'Low activity';
+        var sevColor = c > 1000 ? '#F05D3E' : c > 500 ? '#F0883E' : c > 100 ? '#3FB950' : '#8B949E';
+        var popup = '<div style="font-family:monospace;color:#C9D1D9;min-width:180px;">'
+          + '<div style="font-size:13px;font-weight:700;margin-bottom:6px;color:' + sevColor + ';">' + sev + '</div>'
+          + '<div style="font-size:22px;font-weight:700;">' + c.toLocaleString() + ' <span style="font-size:11px;color:#8B949E;">reports</span></div>'
+          + '<div style="font-size:10px;color:#8B949E;margin-top:6px;">Grid: ' + m._rtLat.toFixed(2) + ', ' + m._rtLng.toFixed(2) + '</div>'
+          + '<div style="font-size:10px;color:#8B949E;">~1km area, 2020-2026</div>'
+          + '</div>';
+        L.popup({ className: 'rt-popup', closeButton: false, offset: [0, -4] })
+          .setLatLng(m.getLatLng())
+          .setContent(popup)
+          .openOn(map);
+      });
+
+      markersLayer.addLayer(marker);
+    }
+  }
+
+  function toggleMarkersByZoom() {
+    var z = map.getZoom();
+    if (z >= 13) {
+      buildMarkers();
+      if (!map.hasLayer(markersLayer)) map.addLayer(markersLayer);
+    } else {
+      if (map.hasLayer(markersLayer)) map.removeLayer(markersLayer);
+    }
+  }
+
+  map.on('zoomend', toggleMarkersByZoom);
+  toggleMarkersByZoom();
 
   // ── Stats helpers ──
   function getTotal() {
@@ -85,7 +145,6 @@
   function getMonthly() {
     if (activeYear === 'all' && activeBorough === 'all' && activeType === 'all') return S.monthly;
     if (activeYear !== 'all' && activeBorough === 'all' && activeType === 'all') return S.monthByY[activeYear] || new Array(12).fill(0);
-    // For complex filters, approximate from yearly monthly data
     var totals = new Array(12).fill(0);
     ALL_YEARS.forEach(function (y) {
       if (activeYear !== 'all' && y !== activeYear) return;
@@ -99,34 +158,12 @@
     return totals;
   }
 
-  // ── Render ──
+  // ── Render stats ──
   function render() {
     var total = getTotal();
     document.getElementById('stat-total').textContent = total.toLocaleString();
+    updateFilterCounts();
 
-    // Filter counts
-    var allBoro = 0;
-    ALL_BOROS.forEach(function (b) {
-      var c = getBoroCount(b); allBoro += c;
-      setCount('boro-' + b, c);
-    });
-    setCount('boro-all', allBoro);
-
-    var allType = 0;
-    ALL_TYPES.forEach(function (t) {
-      var c = getTypeCount(t); allType += c;
-      setCount('type-' + t, c);
-    });
-    setCount('type-all', allType);
-
-    var allYear = 0;
-    ALL_YEARS.forEach(function (y) {
-      var c = getYearCount(y); allYear += c;
-      setCount('year-' + y, c);
-    });
-    setCount('year-all', allYear);
-
-    // Stat cards
     if (total === 0) {
       document.getElementById('stat-borough').textContent = '--';
       document.getElementById('stat-borough-sub').textContent = 'No data';
@@ -170,6 +207,18 @@
     document.getElementById('stat-trend-sub').textContent = 'Jan - Dec' + (activeYear !== 'all' ? ' ' + activeYear : '');
   }
 
+  function updateFilterCounts() {
+    var allBoro = 0;
+    ALL_BOROS.forEach(function (b) { var c = getBoroCount(b); allBoro += c; setCount('boro-' + b, c); });
+    setCount('boro-all', allBoro);
+    var allType = 0;
+    ALL_TYPES.forEach(function (t) { var c = getTypeCount(t); allType += c; setCount('type-' + t, c); });
+    setCount('type-all', allType);
+    var allYear = 0;
+    ALL_YEARS.forEach(function (y) { var c = getYearCount(y); allYear += c; setCount('year-' + y, c); });
+    setCount('year-all', allYear);
+  }
+
   function setCount(key, val) {
     var el = document.querySelector('[data-count="' + key + '"]');
     if (el) el.textContent = val.toLocaleString();
@@ -204,6 +253,18 @@
   document.getElementById('filter-toggle').addEventListener('click', function () {
     document.getElementById('filters').classList.toggle('open');
   });
+
+  // ── Zoom hint ──
+  var hint = document.getElementById('zoom-hint');
+  if (hint) {
+    map.on('zoomend', function () {
+      if (map.getZoom() >= 13) {
+        hint.classList.add('hidden');
+      } else {
+        hint.classList.remove('hidden');
+      }
+    });
+  }
 
   // ── Init ──
   render();
