@@ -247,7 +247,20 @@
     var btn = e.target.closest('.filter-item');
     if (!btn || !btn.dataset.borough || btn.dataset.borough === 'all') return;
     var c = BORO_CENTER[btn.dataset.borough];
-    if (c) map.flyTo([c[0], c[1]], c[2], { duration: 1 });
+    if (!c) return;
+
+    // Hide heatmap during flight to avoid flickering redraws
+    var el = heatLayer.getContainer ? heatLayer.getContainer() : null;
+    if (!el) { var canvases = document.querySelectorAll('.leaflet-heatmap-layer'); if (canvases.length) el = canvases[0]; }
+    if (el) el.style.opacity = '0';
+
+    map.flyTo([c[0], c[1]], c[2], { duration: 1.2 });
+    map.once('moveend', function () {
+      if (el) {
+        el.style.transition = 'opacity 0.4s ease';
+        el.style.opacity = '1';
+      }
+    });
   });
 
   // ── Filters ──
