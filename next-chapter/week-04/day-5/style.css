@@ -197,7 +197,7 @@ html, body {
 .legend-bar {
   width: 120px; height: 8px;
   border-radius: 4px;
-  background: linear-gradient(90deg, rgba(63,185,80,0.15), var(--green), var(--orange), var(--red));
+  background: linear-gradient(90deg, rgba(26,82,38,0.5), #3FB950, #A3D977, #F0883E, #E84040, #FF2222);
 }
 .legend-labels {
   display: flex;
