@@ -27,14 +27,17 @@
     .addAttribution('<a href="https://carto.com/">CartoDB</a> | <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>')
     .addTo(map);
 
-  // ── Heatmap layer ──
+  // ── Heatmap ──
+  // Log-scale: raw weights 1-5676, log range ~0-8.6
   var heatPoints = [];
   for (var i = 0; i < RT_HEAT.length; i += 3) {
     heatPoints.push([RT_HEAT[i], RT_HEAT[i + 1], Math.log(RT_HEAT[i + 2] + 1)]);
   }
 
+  // maxZoom set very high so leaflet-heat keeps interpolating at street zoom
+  // instead of showing individual point blobs
   var heatLayer = L.heatLayer(heatPoints, {
-    radius: 22, blur: 20, maxZoom: 17, max: 7,
+    radius: 30, blur: 25, maxZoom: 22, max: 7,
     minOpacity: 0.05,
     gradient: {
       0.0: 'transparent',
@@ -46,64 +49,70 @@
     }
   }).addTo(map);
 
-  // ── Circle markers (appear on zoom >= 13) ──
-  var markersLayer = L.layerGroup();
-  var markersBuilt = false;
+  // ── Click-to-inspect: fetch real reports from NYC Open Data API ──
+  var activePopup = null;
 
-  function buildMarkers() {
-    if (markersBuilt) return;
-    markersBuilt = true;
-    for (var i = 0; i < RT_HEAT.length; i += 3) {
-      var lat = RT_HEAT[i], lng = RT_HEAT[i + 1], count = RT_HEAT[i + 2];
-      var intensity = Math.min(count / 1000, 1);
-      var color = intensity > 0.6 ? '#F05D3E' : intensity > 0.3 ? '#F0883E' : '#3FB950';
-      var radius = Math.max(4, Math.min(16, Math.sqrt(count) * 0.8));
+  map.on('click', function (e) {
+    if (map.getZoom() < 12) return;
 
-      var marker = L.circleMarker([lat, lng], {
-        radius: radius,
-        fillColor: color,
-        fillOpacity: 0.7,
-        color: 'rgba(255,255,255,0.3)',
-        weight: 1
+    var lat = e.latlng.lat;
+    var lng = e.latlng.lng;
+    var range = 0.005; // ~0.5km box around click
+
+    // Show loading popup immediately
+    var loadingPopup = L.popup({ className: 'rt-popup', closeButton: true, maxWidth: 320, offset: [0, -4] })
+      .setLatLng(e.latlng)
+      .setContent('<div style="font-family:monospace;color:#C9D1D9;padding:4px;"><span style="color:#3FB950;">&#9679;</span> Fetching reports...</div>')
+      .openOn(map);
+
+    // Query NYC Open Data Socrata API for actual complaints near this point
+    var where = "complaint_type='Rodent' AND latitude IS NOT NULL"
+      + " AND latitude>" + (lat - range) + " AND latitude<" + (lat + range)
+      + " AND longitude>" + (lng - range) + " AND longitude<" + (lng + range);
+    var url = "https://data.cityofnewyork.us/resource/erm2-nwe9.json?"
+      + "$where=" + encodeURIComponent(where)
+      + "&$order=created_date DESC"
+      + "&$limit=8"
+      + "&$select=descriptor,borough,created_date,incident_address,status,resolution_description";
+
+    fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (reports) {
+        if (!reports.length) {
+          loadingPopup.setContent('<div style="font-family:monospace;color:#8B949E;padding:4px;">No reports found in this area</div>');
+          return;
+        }
+
+        var html = '<div class="rt-reports">';
+        html += '<div class="rt-reports-header">' + reports.length + ' most recent reports</div>';
+
+        reports.forEach(function (r) {
+          var date = (r.created_date || '').substring(0, 10);
+          var desc = r.descriptor || 'Unknown';
+          var addr = r.incident_address || 'No address';
+          var status = r.status || '';
+          var statusColor = status === 'Closed' ? '#3FB950' : status === 'Open' ? '#F0883E' : '#8B949E';
+
+          html += '<div class="rt-report">';
+          html += '<div class="rt-report-type">' + desc + '</div>';
+          html += '<div class="rt-report-meta">';
+          html += '<span>' + addr + '</span>';
+          html += '<span>' + date + '</span>';
+          html += '</div>';
+          if (status) {
+            html += '<div class="rt-report-status" style="color:' + statusColor + ';">' + status + '</div>';
+          }
+          html += '</div>';
+        });
+
+        html += '</div>';
+        loadingPopup.setContent(html);
+        loadingPopup.update();
+      })
+      .catch(function () {
+        loadingPopup.setContent('<div style="font-family:monospace;color:#F0883E;padding:4px;">Could not fetch reports</div>');
       });
-
-      marker._rtCount = count;
-      marker._rtLat = lat;
-      marker._rtLng = lng;
-
-      marker.on('click', function (e) {
-        var m = e.target;
-        var c = m._rtCount;
-        var sev = c > 1000 ? 'Critical hotspot' : c > 500 ? 'High activity' : c > 100 ? 'Moderate activity' : 'Low activity';
-        var sevColor = c > 1000 ? '#F05D3E' : c > 500 ? '#F0883E' : c > 100 ? '#3FB950' : '#8B949E';
-        var popup = '<div style="font-family:monospace;color:#C9D1D9;min-width:180px;">'
-          + '<div style="font-size:13px;font-weight:700;margin-bottom:6px;color:' + sevColor + ';">' + sev + '</div>'
-          + '<div style="font-size:22px;font-weight:700;">' + c.toLocaleString() + ' <span style="font-size:11px;color:#8B949E;">reports</span></div>'
-          + '<div style="font-size:10px;color:#8B949E;margin-top:6px;">Grid: ' + m._rtLat.toFixed(2) + ', ' + m._rtLng.toFixed(2) + '</div>'
-          + '<div style="font-size:10px;color:#8B949E;">~1km area, 2020-2026</div>'
-          + '</div>';
-        L.popup({ className: 'rt-popup', closeButton: false, offset: [0, -4] })
-          .setLatLng(m.getLatLng())
-          .setContent(popup)
-          .openOn(map);
-      });
-
-      markersLayer.addLayer(marker);
-    }
-  }
-
-  function toggleMarkersByZoom() {
-    var z = map.getZoom();
-    if (z >= 13) {
-      buildMarkers();
-      if (!map.hasLayer(markersLayer)) map.addLayer(markersLayer);
-    } else {
-      if (map.hasLayer(markersLayer)) map.removeLayer(markersLayer);
-    }
-  }
-
-  map.on('zoomend', toggleMarkersByZoom);
-  toggleMarkersByZoom();
+  });
 
   // ── Stats helpers ──
   function getTotal() {
@@ -208,15 +217,13 @@
   }
 
   function updateFilterCounts() {
-    var allBoro = 0;
-    ALL_BOROS.forEach(function (b) { var c = getBoroCount(b); allBoro += c; setCount('boro-' + b, c); });
-    setCount('boro-all', allBoro);
-    var allType = 0;
-    ALL_TYPES.forEach(function (t) { var c = getTypeCount(t); allType += c; setCount('type-' + t, c); });
-    setCount('type-all', allType);
-    var allYear = 0;
-    ALL_YEARS.forEach(function (y) { var c = getYearCount(y); allYear += c; setCount('year-' + y, c); });
-    setCount('year-all', allYear);
+    var total = getTotal();
+    ALL_BOROS.forEach(function (b) { setCount('boro-' + b, getBoroCount(b)); });
+    setCount('boro-all', total);
+    ALL_TYPES.forEach(function (t) { setCount('type-' + t, getTypeCount(t)); });
+    setCount('type-all', total);
+    ALL_YEARS.forEach(function (y) { setCount('year-' + y, getYearCount(y)); });
+    setCount('year-all', total);
   }
 
   function setCount(key, val) {
@@ -258,11 +265,7 @@
   var hint = document.getElementById('zoom-hint');
   if (hint) {
     map.on('zoomend', function () {
-      if (map.getZoom() >= 13) {
-        hint.classList.add('hidden');
-      } else {
-        hint.classList.remove('hidden');
-      }
+      hint.classList.toggle('hidden', map.getZoom() >= 12);
     });
   }
 

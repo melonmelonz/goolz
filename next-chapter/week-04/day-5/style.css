@@ -302,17 +302,68 @@ html, body {
 
 /* ── Map popups ── */
 .rt-popup .leaflet-popup-content-wrapper {
-  background: var(--glass) !important;
+  background: rgba(13, 17, 23, 0.92) !important;
   backdrop-filter: var(--blur);
   border: 1px solid var(--border) !important;
-  border-radius: 6px !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
 }
-.rt-popup .leaflet-popup-content { margin: 12px !important; }
+.rt-popup .leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
 .rt-popup .leaflet-popup-tip {
-  background: var(--surface) !important;
+  background: rgba(13, 17, 23, 0.92) !important;
   border: 1px solid var(--border) !important;
   box-shadow: none !important;
+}
+.leaflet-popup-close-button {
+  color: var(--muted) !important;
+  font-size: 18px !important;
+  padding: 4px 8px !important;
+}
+.leaflet-popup-close-button:hover { color: var(--text) !important; }
+
+/* ── Report cards in popup ── */
+.rt-reports {
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  color: var(--text);
+  max-height: 320px;
+  overflow-y: auto;
+  min-width: 260px;
+}
+.rt-reports-header {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(13, 17, 23, 0.95);
+}
+.rt-report {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+}
+.rt-report:last-child { border-bottom: none; }
+.rt-report-type {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.rt-report-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--dim);
+  gap: 12px;
+}
+.rt-report-status {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  font-weight: 600;
 }
 
 /* ── Loading screen ── */
@@ -383,6 +434,7 @@ html, body {
   #filters.open { display: block; }
 
   #legend { bottom: auto; top: 56px; right: 10px; }
+  #zoom-hint { display: none; }
 
   #stats-bar {
     left: 10px; right: 10px;
