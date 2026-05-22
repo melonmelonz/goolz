@@ -433,21 +433,40 @@ html, body {
   }
   #filters.open { display: block; }
 
-  #legend { bottom: auto; top: 56px; right: 10px; }
+  /* Move legend below filter toggle, left of zoom controls */
+  #legend { bottom: auto; top: 56px; right: 50px; }
   #zoom-hint { display: none; }
 
   #stats-bar {
     left: 10px; right: 10px;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
   }
-  .stat-card { flex: 1 1 calc(50% - 4px); min-width: 0; }
-  .stat-value { font-size: 22px; }
+  .stat-card { flex: 1 1 calc(50% - 3px); min-width: 0; padding: 10px; }
+  .stat-value { font-size: 20px; }
+  .stat-label { font-size: 8px; }
+  .stat-sub { font-size: 9px; }
+
+  /* Constrain popups */
+  .rt-reports { min-width: 200px; max-height: 260px; }
+
+  /* Leaflet zoom controls: shift down below header */
+  .leaflet-top.leaflet-right { top: 52px !important; }
 }
 
 @media (max-width: 480px) {
-  .stat-card { flex: 1 1 100%; }
   .header-stat.accent { display: none; }
+  .header-stat:nth-child(1) b { font-size: 11px; }
+
+  /* Only show 2 stat cards on tiny screens */
+  .stat-card:nth-child(3),
+  .stat-card:nth-child(4) { display: none; }
+  .stat-card { flex: 1 1 calc(50% - 3px); }
+
+  #legend { right: 10px; top: 100px; }
+  .leaflet-top.leaflet-right { top: 52px !important; right: 5px !important; }
+
+  .rt-reports { min-width: 180px; max-height: 220px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

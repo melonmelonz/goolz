@@ -54,6 +54,11 @@
     }
   }).addTo(map);
 
+  // ── Close filter drawer on map tap (mobile) ──
+  map.on('click', function () {
+    document.getElementById('filters').classList.remove('open');
+  });
+
   // ── Click-to-inspect: fetch real reports from NYC Open Data API ──
   map.on('click', function (e) {
     if (map.getZoom() < 12) return;
