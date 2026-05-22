@@ -203,9 +203,9 @@
 
   // ── Init ──
   render();
-  requestAnimationFrame(function () {
+  setTimeout(function () {
     document.getElementById('loading').classList.add('done');
     setTimeout(function () { document.getElementById('loading').remove(); }, 600);
-  });
+  }, 300);
 
 })();
