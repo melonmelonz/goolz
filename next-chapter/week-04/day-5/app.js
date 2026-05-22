@@ -234,6 +234,22 @@
     if (el) el.textContent = val.toLocaleString();
   }
 
+  // ── Borough zoom on double-click ──
+  var BORO_CENTER = {
+    K: [40.650, -73.950, 12],  // Brooklyn
+    M: [40.776, -73.970, 13],  // Manhattan
+    X: [40.845, -73.910, 12],  // Bronx
+    Q: [40.680, -73.830, 12],  // Queens
+    S: [40.580, -74.150, 12]   // Staten Island
+  };
+
+  document.getElementById('filters').addEventListener('dblclick', function (e) {
+    var btn = e.target.closest('.filter-item');
+    if (!btn || !btn.dataset.borough || btn.dataset.borough === 'all') return;
+    var c = BORO_CENTER[btn.dataset.borough];
+    if (c) map.flyTo([c[0], c[1]], c[2], { duration: 1 });
+  });
+
   // ── Filters ──
   document.getElementById('filters').addEventListener('click', function (e) {
     var btn = e.target.closest('.filter-item');
