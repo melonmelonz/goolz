@@ -69,52 +69,7 @@
   </p>
 </div>
 
-<h2>Exit Ticket</h2>
-
-<div class="answer">
-  <strong>Q1 -- What is Node.js?</strong>
-  <p>
-    Node is the V8 JavaScript engine -- the same one inside Chrome -- packaged as a standalone runtime that runs on your computer instead of inside a browser tab. The language is exactly the same JavaScript I've been writing for four weeks. What changes is the environment around it: instead of a DOM and a fetch API sandboxed inside a page, Node gives the JS engine access to the filesystem, network sockets, child processes, environment variables -- the actual operating system. That matters because everything past the front of the restaurant lives on a server, and a server is just a program that runs outside a browser. Without Node (or something like it) there's no way for JavaScript to be the server too. Node is what makes "full stack JavaScript" a sentence that means something.
-  </p>
-</div>
-
-<div class="answer">
-  <strong>Q2 -- What is npm and what problem does it solve?</strong>
-  <p>
-    npm is the package manager for the JavaScript world. Same job as <code>pip</code> in Python, <code>cargo</code> in Rust, <code>dnf</code> on my Fedora box. It solves two problems at once. First: I don't have to rewrite code other people already wrote and tested. If I need to parse dates, work with timestamps, send HTTP requests, validate emails, there's a package for it -- one command pulls it in. Second, and arguably more important: it solves a coordination problem. <code>package.json</code> records exactly which packages this project depends on, and <code>package-lock.json</code> records the exact versions that got installed. Six months from now on a different machine, <code>npm install</code> reproduces the same tree. Without that, every "works on my machine" bug is just version drift.
-  </p>
-</div>
-
-<div class="answer">
-  <strong>Q3 -- What does <code>package.json</code> do? Name at least two things it tracks.</strong>
-  <p>
-    It's the project's manifest -- the file that tells npm (and any other tool) what this project is and what it needs. Two things it tracks that I use every day:
-  </p>
-  <ol>
-    <li><b>Dependencies.</b> The <code>"dependencies"</code> block lists every package the project needs to run, plus the version range each is allowed to be. <code>"devDependencies"</code> is the same idea for packages only needed during development (test runners, type definitions, build tools).</li>
-    <li><b>Scripts.</b> The <code>"scripts"</code> block defines named shortcuts. <code>npm run dev</code> or <code>npm test</code> aren't built-in commands -- they map to whatever shell command you wrote under that key. Half of working in a JS codebase is reading the scripts block to figure out how to actually start the thing.</li>
-  </ol>
-  <p>
-    It also tracks the project name, version, the entry point (<code>"main"</code>), the module system (<code>"type": "module"</code> vs CommonJS), license, author. But deps and scripts are the load-bearing fields.
-  </p>
-</div>
-
-<div class="answer">
-  <strong>Q4 -- Predict the output of <code>node app.js</code>.</strong>
-  <p>Trace it:</p>
-  <ul>
-    <li><code>double(7)</code> returns <code>7 * 2</code> = <code>14</code>. <code>console.log</code> prints <code>14</code>.</li>
-    <li><code>shout("hello")</code> calls <code>"hello".toUpperCase()</code> which is <code>"HELLO"</code>, then concatenates <code>"!!!"</code>, giving <code>"HELLO!!!"</code>.</li>
-  </ul>
-  <p>Output:</p>
-  <pre><code>14
-HELLO!!!</code></pre>
-  <p>
-    Two functions exported from <code>utils.js</code>, two functions imported into <code>app.js</code> by name, two calls, two lines printed. The relative path <code>./utils.js</code> is the bit that always trips people up -- the <code>./</code> and the <code>.js</code> are both required when using native ESM in Node.
-  </p>
-</div>
-
-<div class="card" style="margin-top:28px;">
+<div class="card">
   <div class="card-label">The Thing That Clicked Today</div>
   <p>
     Modules. Not the syntax -- the syntax is fine. What clicked is that <code>import</code> / <code>export</code> is the same primitive every modern language has, just under different names. Python's <code>from x import y</code>. Rust's <code>use crate::x::y</code>. The fact that JavaScript got it late is a quirk of history, not a sign the idea is hard. Once you have modules, you can stop writing five-hundred-line files and start writing twenty-line files that call each other. That's the unlock.
