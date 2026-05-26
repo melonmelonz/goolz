@@ -308,6 +308,20 @@
     .file-list li:hover a { color: var(--white); }
     .file-list .fl-icon { font-size: 18px; }
     .file-list .fl-name { font-size: 12px; }
+    .file-list li.fl-section {
+      cursor: default;
+      padding: 8px 8px 4px;
+      margin-top: 4px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray-darker);
+      border-bottom: 1px solid var(--gray-dark);
+      font-weight: bold;
+    }
+    .file-list li.fl-section:hover { background: transparent; color: var(--gray-darker); }
+    .file-list li.fl-section:first-child { margin-top: 0; }
+    .file-list li.fl-day { padding-left: 18px; }
 
     /* day content boxes */
     .exercise-box {
@@ -1295,75 +1309,90 @@
         <h2>📂 Next Chapter — Course Files</h2>
         <p>Click a file to open it.</p>
         <ul class="file-list">
-          <li onclick="openWindow('win-day1')">
+          <li class="fl-section">Week 1 &mdash; Foundations</li>
+          <li class="fl-day" onclick="openWindow('win-day1')">
             <span class="fl-icon">📄</span>
-            <span class="fl-name">Week 1 Day 1 — Introduction to AI</span>
+            <span class="fl-name">Day 1 — Introduction to AI</span>
           </li>
-          <li onclick="openWindow('win-day2')">
+          <li class="fl-day" onclick="openWindow('win-day2')">
             <span class="fl-icon">📄</span>
-            <span class="fl-name">Week 1 Day 2 — Prompts &amp; Code</span>
+            <span class="fl-name">Day 2 — Prompts &amp; Code</span>
           </li>
-          <li onclick="openWindow('win-day3')">
+          <li class="fl-day" onclick="openWindow('win-day3')">
             <span class="fl-icon">📄</span>
-            <span class="fl-name">Week 1 Day 3 — Sequence, Selection, Iteration</span>
+            <span class="fl-name">Day 3 — Sequence, Selection, Iteration</span>
           </li>
-          <li onclick="openWindow('win-day4')">
+          <li class="fl-day" onclick="openWindow('win-day4')">
             <span class="fl-icon">📄</span>
-            <span class="fl-name">Week 1 Day 4 — Human Lane vs. AI Lane</span>
+            <span class="fl-name">Day 4 — Human Lane vs. AI Lane</span>
           </li>
-          <li onclick="openWindow('win-day5')">
+          <li class="fl-day" onclick="openWindow('win-day5')">
             <span class="fl-icon">🕯</span>
-            <span class="fl-name">Week 1 Day 5 — GOOLZ.exe Walkthrough</span>
+            <span class="fl-name">Day 5 — GOOLZ.exe Walkthrough</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-02/day-1/','_blank','noopener')">
+
+          <li class="fl-section">Week 2 &mdash; The Browser</li>
+          <li class="fl-day" onclick="window.open('/next-chapter/week-02/day-1/','_blank','noopener')">
             <span class="fl-icon">🎮</span>
-            <span class="fl-name">Week 2 Day 1 — HTML: Reading &amp; Writing</span>
+            <span class="fl-name">Day 1 — HTML: Reading &amp; Writing</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-02/day-2/','_blank','noopener')">
+          <li class="fl-day" onclick="window.open('/next-chapter/week-02/day-2/','_blank','noopener')">
             <span class="fl-icon">📨</span>
-            <span class="fl-name">Week 2 Day 2 — Forms + DOM Basics</span>
+            <span class="fl-name">Day 2 — Forms + DOM Basics</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-02/day-3/','_blank','noopener')">
+          <li class="fl-day" onclick="window.open('/next-chapter/week-02/day-3/','_blank','noopener')">
             <span class="fl-icon">🐛</span>
-            <span class="fl-name">Week 2 Day 3 — Debugging Day</span>
+            <span class="fl-name">Day 3 — Debugging Day</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-02/day-4/','_blank','noopener')">
+          <li class="fl-day" onclick="window.open('/next-chapter/week-02/day-4/','_blank','noopener')">
             <span class="fl-icon">📦</span>
-            <span class="fl-name">Week 2 Day 4 — JavaScript Fundamentals</span>
+            <span class="fl-name">Day 4 — JavaScript Fundamentals</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-03/','_blank','noopener')">
+
+          <li class="fl-section">Week 3 &mdash; Project Week</li>
+          <li class="fl-day" onclick="window.open('/next-chapter/week-03/','_blank','noopener')">
             <span class="fl-icon">🔬</span>
-            <span class="fl-name">Week 3 — Project Week: Scry</span>
+            <span class="fl-name">Scry — divination by data</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-04/day-1/','_blank','noopener')">
+
+          <li class="fl-section">Week 4 &mdash; Backend &amp; Data</li>
+          <li class="fl-day" onclick="window.open('/next-chapter/week-04/day-1/','_blank','noopener')">
             <span class="fl-icon">🧠</span>
-            <span class="fl-name">Week 4 Day 1 — Design Thinking Workshop</span>
+            <span class="fl-name">Day 1 — Design Thinking Workshop</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-04/day-2/','_blank','noopener')">
+          <li class="fl-day" onclick="window.open('/next-chapter/week-04/day-2/','_blank','noopener')">
             <span class="fl-icon">🔌</span>
-            <span class="fl-name">Week 4 Day 2 — What's an API?</span>
+            <span class="fl-name">Day 2 — What's an API?</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-04/day-3/','_blank','noopener')">
+          <li class="fl-day" onclick="window.open('/next-chapter/week-04/day-3/','_blank','noopener')">
             <span class="fl-icon">🗃</span>
-            <span class="fl-name">Week 4 Day 3 — Databases: Where the Data Lives</span>
+            <span class="fl-name">Day 3 — Databases: Where the Data Lives</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-04/day-4/','_blank','noopener')">
+          <li class="fl-day" onclick="window.open('/next-chapter/week-04/day-4/','_blank','noopener')">
             <span class="fl-icon">💾</span>
-            <span class="fl-name">Week 4 Day 4 — CRUD &amp; SQL</span>
+            <span class="fl-name">Day 4 — CRUD &amp; SQL</span>
           </li>
-          <li onclick="window.open('/next-chapter/week-05/day-1/','_blank','noopener')">
+          <li class="fl-day" onclick="window.open('/next-chapter/week-04/day-5/','_blank','noopener')">
+            <span class="fl-icon">🐀</span>
+            <span class="fl-name">Day 5 — RatTrack NYC (project day)</span>
+          </li>
+
+          <li class="fl-section">Week 5 &mdash; Full Stack JavaScript</li>
+          <li class="fl-day" onclick="window.open('/next-chapter/week-05/day-1/','_blank','noopener')">
             <span class="fl-icon">🟢</span>
-            <span class="fl-name">Week 5 Day 1 — Node.js: JavaScript Leaves the Browser</span>
+            <span class="fl-name">Day 1 — Node.js: JavaScript Leaves the Browser</span>
           </li>
-          <li onclick="window.open('/peek/','_blank','noopener')">
+
+          <li class="fl-section">Capstone</li>
+          <li class="fl-day" onclick="window.open('/peek/','_blank','noopener')">
             <span class="fl-icon">🥚</span>
-            <span class="fl-name">Capstone Companion — PEEK Examines Embedded Kernels (browser build)</span>
+            <span class="fl-name">PEEK — Examines Embedded Kernels (browser build)</span>
           </li>
         </ul>
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">15 object(s)</div>
+      <div class="status-pane">16 object(s)</div>
     </div>
   </div>
 
@@ -2991,7 +3020,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.12.0';
+const NCD_VERSION = 'v2.12.1';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3633,6 +3662,16 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-26',
+      title: 'Course Materials -- weekly sections + W4D5 RatTrack added',
+      notes: [
+        'Course Materials window now groups entries by week with section headers (Week 1 Foundations, Week 2 The Browser, Week 3 Project Week, Week 4 Backend & Data, Week 5 Full Stack JavaScript, Capstone) -- easier to scan than the flat list',
+        'W4D5 (RatTrack NYC project day) was missing from the file list -- now indexed; status bar count bumped 15 -> 16 objects',
+        'Day labels inside each section trimmed from "Week N Day M" to "Day M" since the section header carries the week -- less repetition, same destinations',
+      ]
+    },
+    {
+      version: 'v2.12.0',
       date: '2026-05-26',
       title: 'Week 5 Day 1 -- Node.js: JavaScript Leaves the Browser',
       notes: [
