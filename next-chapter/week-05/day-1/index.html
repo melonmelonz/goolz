@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 5 -- Day 1 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 5 Day 1. Node.js: JavaScript leaves the browser. npm, modules, and a first pass at TypeScript.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F7E2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 1 -- Node.js: JavaScript Leaves the Browser</h1>
+<div class="subtitle">NCD . WK5 . D1 . the kitchen opens</div>
+
+<p>
+  Four weeks of JavaScript living inside a browser tab. Today it gets to walk around the rest of the machine. Node is the V8 engine you've been driving in Chrome, ripped out of the dashboard and bolted to the OS so you can <code>node file.js</code> from a shell and the syscalls go straight through. Same language. New environment. New things it can touch.
+</p>
+
+<p>
+  The Day Brief framed it as building the kitchen for the restaurant. That works. The thing I had to settle in my own head though is that I already use Node every time I run <code>wrangler pages deploy</code> or <code>npm install</code> for one of the goolz sub-apps -- I just hadn't sat with what it <em>was</em>. Today is sitting-with-it day.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- Same Language, New Environment</div>
+  <p><b>Predicted output:</b> <code>HELLO FROM JAVASCRIPT!</code> on its own line. <code>greeting</code> is the string, <code>.toUpperCase()</code> uppercases it, <code>console.log</code> prints.</p>
+  <p><b>Where does <code>console.log</code> print without a browser?</b> Standard out. The terminal that launched the node process. The same stream a C program would hit with <code>printf</code> or a Rust one with <code>println!</code>. Browser devtools were just one possible sink for that stream; the OS pipe is the more general one.</p>
+  <p><b>Changing the string to <code>"Node.js is running"</code>:</b> output becomes <code>NODE.JS IS RUNNING</code>. The logic doesn't care what the contents are, only that it's a string.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> closed out Week 4 with the RatTrack NYC heatmap. Pulled six years of 311 rodent complaints into a SQLite DB, threw a Leaflet heatmap over Brooklyn, learned more about how garbage collection works in NYC than I ever planned to. Felt like a real project, not just an exercise.</p>
+  <p><b>What I'm doing today:</b> learning Node.js. JavaScript outside the browser. <code>npm init</code>, <code>npm install</code>, <code>import / export</code> across files. Then a first pass at TypeScript so the syntax stops looking foreign when I read AI output.</p>
+  <p><b>Where I'm stuck:</b> not stuck exactly. I've used npm before (Cloudflare projects, Tailwind installs) but never really read what <code>package.json</code> was saying back to me. Today is the day to actually read it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lab -- What I Built</div>
+  <p>
+    <b>Ex 1 -- Hello Node.</b> Ran <code>node hello.js</code>. Saw text in my terminal that came from a file with no HTML wrapper. Then did the basics.js variant with my own name, my city, the <code>age === 18</code> branch for the "just turned adult" case. Nothing surprising, but the absence of a browser felt like the point.
+  </p>
+  <p>
+    <b>Ex 2 -- npm init + dayjs.</b> Generated a <code>package.json</code>, added <code>"type": "module"</code> so I could use real <code>import</code> syntax instead of CommonJS, installed <code>dayjs</code>. Watched <code>node_modules/</code> appear with way more folders than I'd installed -- the transitive dependency tree of one date library is wild. Added my birthday calculation, days since Jan 1 2026, 100 days from now.
+  </p>
+  <p>
+    <b>Ex 3 -- Build a module.</b> Wrote <code>utils.js</code> with <code>calculateTip</code>, <code>toCelsius</code>, <code>toFahrenheit</code>, then added <code>formatCurrency</code> and <code>getGrade</code>. The thing I like about modules is they read the same way a Python or Rust file does: a small, named thing that does one job, brought in by name where it's needed. The mental model is identical to what I already know from other ecosystems -- only the keyword changes.
+  </p>
+  <p>
+    <b>Ex 4 -- Read someone else's code.</b> Predicted the report.js output before running. Got the team header and the totals right. Missed the exact width of <code>"=".repeat(30)</code> on first count (off by one in my head). Added a "who has the most projects" line using <code>Array.prototype.reduce</code> instead of asking AI -- felt smug about it for thirty seconds.
+  </p>
+  <p>
+    <b>Ex 5 -- CLI tool.</b> Built the quiz with <code>prompt-sync</code>. Added two questions of my own about Linux file permissions and the difference between <code>let</code> and <code>const</code>. Tracked wrong answers in an array so the replay-only-the-misses feature works. This is the first time something I wrote felt like a <em>program</em> instead of a <em>page</em>.
+  </p>
+  <p>
+    <b>Ex 6 + 7 -- TypeScript.</b> Did both in the TS playground. Added annotations to <code>discountPrice</code> and <code>formatName</code>, wrote <code>isAdult</code>, then read the <code>Student</code> type and shipped <code>topGrade</code> and <code>summarize</code> with full annotations. The "argument of type 'number' is not assignable to parameter of type 'string'" red squiggle landed exactly the way the day brief said it would. It's documentation that yells at you. I'm into it.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">Peer Demo</div>
+  <p>
+    Pair partner asked me to explain <code>npm install</code>. I walked it: you run the command, npm reads <code>package.json</code> for the dep list (or takes the name you passed as an argument), reaches out to the npm registry over HTTPS, downloads tarballs into <code>node_modules/</code>, resolves the transitive tree so every dep's deps are also there, writes the exact resolved versions into <code>package-lock.json</code> so the install is reproducible, and updates the <code>dependencies</code> block in <code>package.json</code> with the version range it just locked. The thing I tried to land hardest: <code>node_modules</code> is generated output. Never edit it. Never commit it. <code>.gitignore</code> it on day one.
+  </p>
+  <p>
+    Their follow-up: "what happens if I delete <code>node_modules</code>?" Run <code>npm install</code> again and it rebuilds the whole tree from the lockfile. The folder is recoverable; the lockfile is the truth.
+  </p>
+</div>
+
+<h2>Exit Ticket</h2>
+
+<div class="answer">
+  <strong>Q1 -- What is Node.js?</strong>
+  <p>
+    Node is the V8 JavaScript engine -- the same one inside Chrome -- packaged as a standalone runtime that runs on your computer instead of inside a browser tab. The language is exactly the same JavaScript I've been writing for four weeks. What changes is the environment around it: instead of a DOM and a fetch API sandboxed inside a page, Node gives the JS engine access to the filesystem, network sockets, child processes, environment variables -- the actual operating system. That matters because everything past the front of the restaurant lives on a server, and a server is just a program that runs outside a browser. Without Node (or something like it) there's no way for JavaScript to be the server too. Node is what makes "full stack JavaScript" a sentence that means something.
+  </p>
+</div>
+
+<div class="answer">
+  <strong>Q2 -- What is npm and what problem does it solve?</strong>
+  <p>
+    npm is the package manager for the JavaScript world. Same job as <code>pip</code> in Python, <code>cargo</code> in Rust, <code>dnf</code> on my Fedora box. It solves two problems at once. First: I don't have to rewrite code other people already wrote and tested. If I need to parse dates, work with timestamps, send HTTP requests, validate emails, there's a package for it -- one command pulls it in. Second, and arguably more important: it solves a coordination problem. <code>package.json</code> records exactly which packages this project depends on, and <code>package-lock.json</code> records the exact versions that got installed. Six months from now on a different machine, <code>npm install</code> reproduces the same tree. Without that, every "works on my machine" bug is just version drift.
+  </p>
+</div>
+
+<div class="answer">
+  <strong>Q3 -- What does <code>package.json</code> do? Name at least two things it tracks.</strong>
+  <p>
+    It's the project's manifest -- the file that tells npm (and any other tool) what this project is and what it needs. Two things it tracks that I use every day:
+  </p>
+  <ol>
+    <li><b>Dependencies.</b> The <code>"dependencies"</code> block lists every package the project needs to run, plus the version range each is allowed to be. <code>"devDependencies"</code> is the same idea for packages only needed during development (test runners, type definitions, build tools).</li>
+    <li><b>Scripts.</b> The <code>"scripts"</code> block defines named shortcuts. <code>npm run dev</code> or <code>npm test</code> aren't built-in commands -- they map to whatever shell command you wrote under that key. Half of working in a JS codebase is reading the scripts block to figure out how to actually start the thing.</li>
+  </ol>
+  <p>
+    It also tracks the project name, version, the entry point (<code>"main"</code>), the module system (<code>"type": "module"</code> vs CommonJS), license, author. But deps and scripts are the load-bearing fields.
+  </p>
+</div>
+
+<div class="answer">
+  <strong>Q4 -- Predict the output of <code>node app.js</code>.</strong>
+  <p>Trace it:</p>
+  <ul>
+    <li><code>double(7)</code> returns <code>7 * 2</code> = <code>14</code>. <code>console.log</code> prints <code>14</code>.</li>
+    <li><code>shout("hello")</code> calls <code>"hello".toUpperCase()</code> which is <code>"HELLO"</code>, then concatenates <code>"!!!"</code>, giving <code>"HELLO!!!"</code>.</li>
+  </ul>
+  <p>Output:</p>
+  <pre><code>14
+HELLO!!!</code></pre>
+  <p>
+    Two functions exported from <code>utils.js</code>, two functions imported into <code>app.js</code> by name, two calls, two lines printed. The relative path <code>./utils.js</code> is the bit that always trips people up -- the <code>./</code> and the <code>.js</code> are both required when using native ESM in Node.
+  </p>
+</div>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    Modules. Not the syntax -- the syntax is fine. What clicked is that <code>import</code> / <code>export</code> is the same primitive every modern language has, just under different names. Python's <code>from x import y</code>. Rust's <code>use crate::x::y</code>. The fact that JavaScript got it late is a quirk of history, not a sign the idea is hard. Once you have modules, you can stop writing five-hundred-line files and start writing twenty-line files that call each other. That's the unlock.
+  </p>
+  <p>
+    The TypeScript intro at the end of the day was the right call, too. Twenty minutes of <code>: number</code> and <code>: string</code> and the Codex output I'll see all week stops looking like a foreign language. I'd rather pay that tax now than be confused for a week.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
