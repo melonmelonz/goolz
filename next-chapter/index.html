@@ -2689,7 +2689,7 @@ Features needed:
       <span class="menu-bar-item" onclick="rcExport()">Export</span>
       <span class="menu-bar-item" onclick="rcImport()">Import</span>
       <span class="menu-bar-item" onclick="rcReset()" title="Wipe local data">Reset…</span>
-      <span class="menu-bar-item" onclick="ndAlert('Report Card','Track your daily LeetCode + math study.\n\n• Today: tick off today\u2019s tasks\n• Week: full schedule\n• Log: record problems attempted\n• Grade: streak and totals\n\nData stays in your browser (localStorage).','📊')">Help</span>
+      <span class="menu-bar-item" onclick="ndAlert('Report Card','Track BeaglePlay / Ada (Adafruit panel) kernel-project work.\n\n\u2022 Today: tick off today\u2019s tasks\n\u2022 Week: full sprint schedule\n\u2022 Log: every kernel/driver/bring-up task attempted\n\u2022 Grade: streak and totals\n\nLog is pre-seeded with the timeline from May 2026 onward. Data stays in your browser (localStorage).','📊')">Help</span>
     </div>
     <div class="window-body rc-body">
       <div class="rc-tabs">
@@ -2709,9 +2709,9 @@ Features needed:
             <button class="rc-btn" id="rc-add-task-btn">+ Add</button>
           </div>
         </div>
-        <fieldset class="rc-fs"><legend>Quick Log a Problem</legend>
+        <fieldset class="rc-fs"><legend>Quick Log -- BeaglePlay / Ada</legend>
           <div class="rc-row">
-            <input type="text" class="rc-input" id="rc-q-name" placeholder="problem name (e.g. Two Sum)" style="flex:1; min-width:180px">
+            <input type="text" class="rc-input" id="rc-q-name" placeholder="task (e.g. ST7735R init sequence)" style="flex:1; min-width:180px">
             <select class="rc-sel" id="rc-q-diff">
               <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
             </select>
@@ -2720,7 +2720,7 @@ Features needed:
             </select>
           </div>
           <div class="rc-row">
-            <input type="text" class="rc-input" id="rc-q-topic" placeholder="topic (arrays, dp, calc…)" style="flex:1">
+            <input type="text" class="rc-input" id="rc-q-topic" placeholder="topic (kernel, driver, dts, bring-up, bench, peek…)" style="flex:1">
             <button class="rc-btn" id="rc-q-save">Log it</button>
           </div>
           <textarea class="rc-ta" id="rc-q-notes" placeholder="notes (optional)"></textarea>
@@ -2730,7 +2730,7 @@ Features needed:
 
       <!-- WEEK -->
       <div class="rc-pane" data-pane="week">
-        <div class="rc-hint">Default cadence: 1 LeetCode + ~15 min math fundamentals each weekday. Click a task in <b>Today</b> to mark it done.</div>
+        <div class="rc-hint">Default cadence: kernel sprint (~25 hr/wk, May\u2192Aug 2026). One main task + one supporting task per day. Click a task in <b>Today</b> to mark it done.</div>
         <div class="rc-week" id="rc-week-grid"></div>
       </div>
 
@@ -3020,7 +3020,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.12.1';
+const NCD_VERSION = 'v2.13.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3662,6 +3662,16 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-26',
+      title: 'Report Card retargeted to the BeaglePlay / Ada kernel sprint',
+      notes: [
+        'Weekly TEMPLATE swapped from LeetCode + math to the actual kernel sprint cadence (SPI abstraction, panel driver iteration, bring-up days, userspace, integration, PEEK writing)',
+        'Log pre-seeded with the May 2026 timeline: roadmap onepager + LaTeX scaffolding, ROCK 5B+ -> BeaglePlay decision, RFL 7.1-rc3 + CONFIG_RUST=y checkout, kernel::spi abstraction commit, GPIO consumer.h binding, debug UART verify, wl18xx wifi triage, board helpers, ILI9341 + ST7735R Phase 1 drivers (~595 + ~510 LoC Rust), miscdev framebuffer with FB_FLUSH ioctl, beagleplay-*.dtso overlays, PEEK three-render-target lock-in',
+        'Seed is idempotent (matched on name+date) so manual log entries survive across page loads. Reset re-seeds.',
+      ]
+    },
+    {
+      version: 'v2.12.1',
       date: '2026-05-26',
       title: 'Course Materials -- weekly sections + W4D5 RatTrack added',
       notes: [
@@ -5257,16 +5267,43 @@ function pwgTeardown() {
 const _RC = (() => {
   const KEY = 'ncd-rc-v1';
   const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  // Default weekly schedule template — reasonable daily cadence
+  // Default weekly cadence — BeaglePlay / Rust kernel sprint (~25 hr/wk, May→Aug 2026)
   const TEMPLATE = {
-    1: ['1× LeetCode Easy (Arrays / Hash Map)', 'Math: Big-O & complexity refresh (15m)'],
-    2: ['1× LeetCode Easy/Med (Two Pointers)', 'Math: Probability basics (15m)'],
-    3: ['1× LeetCode Medium (Sliding Window)', 'Math: Linear algebra — vectors/matrices (15m)'],
-    4: ['1× LeetCode Easy (Stack / Queue)',    'Math: Combinatorics & counting (15m)'],
-    5: ['1× LeetCode Medium (BFS / DFS)',      'Math: Calculus — derivatives review (15m)'],
-    6: ['Mock interview OR 2 freestyle problems', 'Long-form math reading (20m)'],
-    0: ['Review week\u2019s solutions, write notes', 'Light: re-do 1 missed problem'],
+    1: ['Kernel: SPI abstraction work (penn/spi-abstraction)', 'PEEK: write 1 chapter section (markdown, 60m)'],
+    2: ['Panel driver iteration (ILI9341 or ST7735R)',          'Bench: Saleae capture + dmesg dive (30m)'],
+    3: ['Bring-up: BeaglePlay serial / DT overlay tests',       'PEEK: design 1 exercise + ASCII diagram (60m)'],
+    4: ['Userspace: doomgeneric backend + /dev/penn-fb0',       'Logic-analyzer review of last bring-up (20m)'],
+    5: ['Integration: full stack test on real panel',           'Roadmap doc + risks update (20m)'],
+    6: ['Long-form: write up week, mentor check-in prep',       'PEEK: typeset + diff against last week'],
+    0: ['Light: rebuild kernel, re-deploy modules, journal',    'Re-test deploy.sh + verify one-liner'],
   };
+
+  // ─── BeaglePlay / Ada (Adafruit panels) work log seed ───
+  // One-shot: populated on first open or after Reset. Entries already in
+  // state.log (matched on name+date) are skipped, so manual edits survive.
+  const KERNEL_SEED = [
+    { date:'2026-05-05', difficulty:'easy',   status:'solved',    name:'Roadmap onepager v1 -- DoD + risks defined',          topic:'roadmap',  notes:'First cut of the one-pager: scope, three layers (SPI abstraction / panel drivers / miscdev fb), explicit non-goals.' },
+    { date:'2026-05-05', difficulty:'easy',   status:'solved',    name:'Reframe spec as pre-approval proposal',               topic:'roadmap',  notes:'Recasting the design doc so it reads as a mentor ask, not a self-brief.' },
+    { date:'2026-05-06', difficulty:'easy',   status:'solved',    name:'LaTeX proposal scaffolding (tectonic build)',         topic:'docs',     notes:'Makefile + tex source + PDF output via tectonic; lives in docs/roadmap/.' },
+    { date:'2026-05-07', difficulty:'easy',   status:'solved',    name:'Onepager typography pass + hardware photo strip',     topic:'docs',     notes:'Tighter type, cleaner hierarchy, photo strip across the bottom.' },
+    { date:'2026-05-07', difficulty:'medium', status:'solved',    name:'Expand roadmap to 2 pages with PEEK section',         topic:'docs',     notes:'PEEK companion added as additive scope; satisfies the justice-impacted tie-in for Next Chapter.' },
+    { date:'2026-05-07', difficulty:'easy',   status:'solved',    name:'Apply for Saleae Logic 8 student discount',           topic:'bench',    notes:'$249 via Saleae\u2019s program vs $499 retail. Approved same week.' },
+    { date:'2026-05-08', difficulty:'medium', status:'solved',    name:'Scaffold out-of-tree modules + DT overlays + scripts',topic:'kernel',   notes:'modules/penn_ili9341, penn_st7735r, penn_fb; dts/beagleplay-*.dtso; scripts/build.sh + deploy.sh.' },
+    { date:'2026-05-09', difficulty:'medium', status:'solved',    name:'Decision: BeaglePlay over ROCK 5B+',                  topic:'hardware', notes:'TI mainline kernel cleaner than Rockchip; A53 quad runs DOOM fine; Cape headers expose labeled SPI. ROCK 5B+\u2019s strengths (PCIe, NPU) don\u2019t apply to a 320x240 SPI panel.' },
+    { date:'2026-05-10', difficulty:'easy',   status:'solved',    name:'Hardware target locked: BeaglePlay + Adafruit panels',topic:'hardware', notes:'ROCK 5B+ cancelled. PSU (5V/3A USB-C PD) + FTDI 3.3V cable on order. Adafruit ILI9341 #1770 + ST7735R #358 will wire direct to SPI pins (no mikroBUS Click).' },
+    { date:'2026-05-11', difficulty:'medium', status:'solved',    name:'RFL kernel checkout: 7.1-rc3 + CONFIG_RUST=y',         topic:'kernel',   notes:'arm64/K3 defconfig, cross-compile from kdev distrobox. First boot to userspace on BeaglePlay.' },
+    { date:'2026-05-12', difficulty:'easy',   status:'solved',    name:'BeaglePlay debug UART pinout verified',               topic:'bring-up', notes:'3-pin header: 1=GND, 2=RXD (board), 3=TXD (board). picocom @ 115200; open BEFORE plugging the PSU.' },
+    { date:'2026-05-13', difficulty:'hard',   status:'solved',    name:'kernel::spi -- SPI subsystem abstraction commit',     topic:'kernel',   notes:'Wraps the C SPI subsystem via bindgen. Sync-only (spi_sync). Device / Driver / Message / Transfer types. Lives on penn/spi-abstraction branch of rust-for-linux.' },
+    { date:'2026-05-14', difficulty:'medium', status:'solved',    name:'GPIO consumer.h binding for descriptor API',          topic:'kernel',   notes:'bindgen pass over linux/gpio/consumer.h so panel drivers can grab reset and DC lines through the descriptor API.' },
+    { date:'2026-05-15', difficulty:'medium', status:'attempted', name:'wl18xx wifi: auth-no-assoc on 7.1-rc3',                topic:'bring-up', notes:'Reproducible. Documented. Fall back to ethernet for the duration; revisit post-demo. Not in critical path.' },
+    { date:'2026-05-16', difficulty:'easy',   status:'solved',    name:'Board helpers installed (wifi-up, overlay-apply, module-load)', topic:'bring-up', notes:'/usr/local/bin/* on the Beagle, SSH key authorized, penn-wifi.service disabled.' },
+    { date:'2026-05-17', difficulty:'easy',   status:'solved',    name:'BeaglePlay verify one-liner',                         topic:'bring-up', notes:'Single-paste shell cmd that dumps SPI / kernel / boot state. Multi-line heredoc pastes do NOT survive picocom -- this is one-line on purpose.' },
+    { date:'2026-05-18', difficulty:'hard',   status:'solved',    name:'Phase 1: ILI9341 driver -- full init sequence',       topic:'driver',   notes:'GPIO reset, SPI command/data split, power + gamma config, sleep-out, display-on. ~595 LoC Rust. /dev/penn-fb0.' },
+    { date:'2026-05-18', difficulty:'hard',   status:'solved',    name:'Phase 1: ST7735R driver on the same abstraction',     topic:'driver',   notes:'Same SPI abstraction, different init table + dimensions (128x160). ~510 LoC. Proves the abstraction is not ILI9341-shaped.' },
+    { date:'2026-05-18', difficulty:'medium', status:'solved',    name:'miscdev framebuffer: mmap + FB_FLUSH ioctl',          topic:'driver',   notes:'/dev/penn-fb0 with shared ioctl defs in userspace/penn_fb.h. fb_test.c draws solid colors + stripes through the buffer.' },
+    { date:'2026-05-26', difficulty:'medium', status:'solved',    name:'BeaglePlay DT overlays compiled (ili9341 + st7735r)', topic:'dts',      notes:'beagleplay-ili9341.dtso + .dtbo and beagleplay-st7735r.dtso + .dtbo built and staged. Ready for overlay-apply on hardware.' },
+    { date:'2026-05-26', difficulty:'medium', status:'solved',    name:'PEEK companion: three render targets locked',         topic:'peek',     notes:'Paginated TUI (live demo + cohort) + LaTeX/PDF book (facility print) + static-site bundle (free download). One markdown source. Read-only, no network, no exploit vocab -- designed to clear facility review on day one.' },
+  ];
   let state = null;
   let bound = false;
 
@@ -5443,7 +5480,7 @@ const _RC = (() => {
         <td>${escHtml(p.notes)}</td>
         <td><button class="rc-del" data-del="${escHtml(p.id)}" title="delete">✕</button></td>
       </tr>`).join('');
-    tbody.innerHTML = rows || `<tr><td colspan="7" style="text-align:center; padding:14px; color:var(--gray-darker)">no problems logged yet — log one in the <b>Today</b> tab</td></tr>`;
+    tbody.innerHTML = rows || `<tr><td colspan="7" style="text-align:center; padding:14px; color:var(--gray-darker)">no entries logged yet \u2014 log one in the <b>Today</b> tab</td></tr>`;
     tbody.querySelectorAll('button[data-del]').forEach(b => {
       b.onclick = async () => {
         const ok = await ndConfirm('Delete this log entry?', 'Report Card', '🗑');
@@ -5551,14 +5588,46 @@ const _RC = (() => {
     document.getElementById('rc-log-filter').addEventListener('input', renderLog);
   }
 
+  // Seed the log with the BeaglePlay / Ada timeline if it isn't already in.
+  // Idempotent: skip any entry whose (name, date) pair is already present.
+  function seedKernelLog(){
+    let added = 0;
+    const have = new Set(state.log.map(p => p.date + '|' + p.name));
+    // Walk in reverse so the earliest entry ends up last in unshift order
+    // (state.log is newest-first; we want chronological order to read top-down).
+    for (let i = KERNEL_SEED.length - 1; i >= 0; i--) {
+      const s = KERNEL_SEED[i];
+      const key = s.date + '|' + s.name;
+      if (have.has(key)) continue;
+      state.log.unshift({
+        id: 'k' + s.date.replace(/-/g,'') + '_' + i,
+        date: s.date,
+        name: s.name,
+        difficulty: s.difficulty,
+        status: s.status,
+        topic: s.topic,
+        notes: s.notes,
+      });
+      have.add(key);
+      added++;
+    }
+    if (added > 0) {
+      // Keep the log newest-first.
+      state.log.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+      save();
+    }
+    return added;
+  }
+
   function init(){
     load();
+    seedKernelLog();
     bind();
     renderToday();
     renderWeek();
     renderLog();
     renderGrade();
-    setStatus(`${state.log.length} problem${state.log.length===1?'':'s'} logged · streak ${streakDays()}d`);
+    setStatus(`${state.log.length} entr${state.log.length===1?'y':'ies'} logged \u00b7 streak ${streakDays()}d`);
   }
 
   function exportData(){
@@ -5637,8 +5706,9 @@ const _RC = (() => {
     state = null;
     try { localStorage.removeItem(KEY); } catch(e) {}
     load();
+    seedKernelLog();
     renderToday(); renderWeek(); renderLog(); renderGrade();
-    setStatus('reset complete');
+    setStatus('reset complete \u00b7 kernel timeline re-seeded');
   }
 
   function refresh(){
