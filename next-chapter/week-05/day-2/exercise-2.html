@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Build ProfileCard / NCD W5D2</title>
+<meta name="description" content="Exercise 2: build a ProfileCard component from scratch and use it three times with different props.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4C7;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Build ProfileCard</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 30 min</div>
+
+<p>
+  First component I wrote myself today. Stayed close to the day brief's starter, then swapped in real names from the cohort instead of placeholders. The thing I wanted to feel was the moment where the same component renders three times with different data -- which is the entire reason React exists. It hit on the first run, which felt slightly anticlimactic in the way the good ones always do.
+</p>
+
+<h2>Setup</h2>
+
+<pre><code>npm create vite@latest profile-app -- --template react
+cd profile-app
+npm install
+npm run dev</code></pre>
+
+<p>
+  I reused the directory pattern from Ex 1. Same Vite scaffold. Same dev server on 5173. Hot reload is genuinely good -- I don't have to think about it once it's running.
+</p>
+
+<h2>The component, three call sites</h2>
+
+<pre><code>function ProfileCard({ name, role, bio, color }) {
+  return (
+    &lt;div style={{
+      border: "2px solid " + color,
+      borderRadius: "12px",
+      padding: "20px",
+      margin: "12px",
+      maxWidth: "300px",
+      backgroundColor: "#f9f9f9"
+    }}&gt;
+      &lt;h2 style={{ margin: "0 0 4px 0" }}&gt;{name}&lt;/h2&gt;
+      &lt;p style={{ color: "#666", margin: "0 0 12px 0", fontStyle: "italic" }}&gt;{role}&lt;/p&gt;
+      &lt;p style={{ margin: 0 }}&gt;{bio}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+function App() {
+  return (
+    &lt;div style={{ fontFamily: "Arial, sans-serif", padding: "20px" }}&gt;
+      &lt;h1&gt;Meet the Team&lt;/h1&gt;
+      &lt;div style={{ display: "flex", flexWrap: "wrap" }}&gt;
+        &lt;ProfileCard
+          name="Penn Porterfield"
+          role="Student / Systems Track"
+          bio="Trying to land a kernel module on a BeaglePlay by August. Currently writing more React than expected."
+          color="#5E957A"
+        /&gt;
+        &lt;ProfileCard
+          name="Aisha Johnson"
+          role="Frontend Developer"
+          bio="Passionate about accessible design and clean code."
+          color="#e74c3c"
+        /&gt;
+        &lt;ProfileCard
+          name="Carlos Rivera"
+          role="Backend Developer"
+          bio="Loves databases, APIs, and solving logic puzzles."
+          color="#3498db"
+        /&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<h2>Things I picked up doing this</h2>
+
+<div class="answer">
+  <strong>Inline style is a JS object, not a string.</strong>
+  <p>The double-braces in <code>style={{ ... }}</code> aren't React syntax. The outer brace is "I'm putting JS inside JSX," and the inner brace is the JS object literal. Property names are camelCase (<code>borderRadius</code>, not <code>border-radius</code>) and the values are strings. Once you see it as "object literal inside an expression slot" it stops looking strange.</p>
+</div>
+
+<div class="answer">
+  <strong>The color prop and string concatenation.</strong>
+  <p>I used <code>border: "2px solid " + color</code> instead of building a template literal, because the prop is just a hex string and JS string concat is fine. Could also have done <code>` 2px solid ${color}`</code> with template literals -- same result, slightly more idiomatic. Worth noting that the value <em>has</em> to be a string at the end of the day, since that's what CSS wants. The <code>color</code> prop is just data; the conversion to a style string happens at the boundary.</p>
+</div>
+
+<div class="answer">
+  <strong>Three cards, one component definition.</strong>
+  <p>This is the part the day brief was selling. The <code>ProfileCard</code> function exists once. The three <code>&lt;ProfileCard /&gt;</code> elements are three calls with different inputs. If I want a fourth card I add a fourth element. If I want to change how every card looks, I edit the function once. That's the whole pitch and it works exactly the way it claims to.</p>
+</div>
+
+<h2>Level 2 modification -- skills as chips</h2>
+
+<p>
+  Added a <code>skills</code> prop that takes a comma-separated string and renders each skill as a small chip element. Split, trim, map.
+</p>
+
+<pre><code>function ProfileCard({ name, role, bio, color, skills }) {
+  const skillList = skills ? skills.split(",").map(s =&gt; s.trim()) : [];
+
+  return (
+    &lt;div style={{ /* ...same border using color... */ }}&gt;
+      &lt;h2&gt;{name}&lt;/h2&gt;
+      &lt;p style={{ fontStyle: "italic" }}&gt;{role}&lt;/p&gt;
+      &lt;p&gt;{bio}&lt;/p&gt;
+      &lt;div style={{ marginTop: "10px", display: "flex", flexWrap: "wrap", gap: "4px" }}&gt;
+        {skillList.map((skill) =&gt; (
+          &lt;span
+            key={skill}
+            style={{
+              fontSize: "11px",
+              padding: "2px 8px",
+              border: "1px solid " + color,
+              borderRadius: "10px",
+              color: color
+            }}
+          &gt;
+            {skill}
+          &lt;/span&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+&lt;ProfileCard
+  name="Penn Porterfield"
+  role="Student / Systems Track"
+  bio="..."
+  color="#5E957A"
+  skills="Rust, Linux kernel, SPI, Vim"
+/&gt;</code></pre>
+
+<p>
+  The interesting bit is <code>.map((skill) =&gt; ( ... ))</code> returning an array of JSX elements that React renders inline. That's the same pattern Ex 5 will use for the favorites list, just one exercise early. The <code>key={skill}</code> is required because React wants a stable identifier per item in an array -- I'm using the skill string itself, which works because skills in a single card shouldn't repeat. If they could repeat, I'd index them or attach an id.
+</p>
+
+<h2>What I learned</h2>
+
+<div class="card">
+  <div class="card-label">Reflection</div>
+  <p>
+    The mental model that helped: a component is a function that returns markup, and props are its arguments. That's it. There's no special "component machinery" once it's in your head -- it's just a JS function with rules about what its return value looks like. Everything else (state, effects, context) is layered on top of that one primitive.
+  </p>
+  <p>
+    One thing I'll do differently next time: stop putting inline styles in the JSX. It's fine for one exercise but the styles drown the structure. CSS modules or even a plain <code>className</code> + external sheet would make this readable. Filing that for whenever the course says "now let's talk about styling React."
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

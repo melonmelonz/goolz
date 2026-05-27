@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 5 -- Day 2 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 5 Day 2. React: thinking in components. JSX, props, useState, composition.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x269B;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 2 -- React: Thinking in Components</h1>
+<div class="subtitle">NCD . WK5 . D2 . five exercises loaded</div>
+
+<p>
+  Yesterday Node taught me that JavaScript can leave the browser. Today React teaches me how to put it back in a way that scales past a single HTML file. Components instead of pages. The interesting part is that I already think this way for everything else I write -- Rust crates have modules, Python files have functions, the kernel has subsystems. Front-end was the holdout. Today's the day it catches up.
+</p>
+
+<p>
+  The mental model the day brief landed on -- <code>UI = f(state)</code> -- is the thing I want to actually feel by the end of lab. Not just nod at. The "you describe what it should look like and React figures out the diff" pitch is exactly how I want to write UI code, because the alternative (manual DOM mutation) is what made me dread anything that needed JavaScript in Phase 1.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- Spot the Components</div>
+  <p><b>Q1 -- how many distinct component types?</b> Four. NavBar, Card, Footer, and the outer Page that holds them. The four cards look identical but they're the same type with different data; only the type counts.</p>
+  <p><b>Q2 -- which piece first?</b> The Card. It's the smallest, most-repeated unit and everything else is just chrome around it. Build the leaf, then frame it.</p>
+  <p><b>Q3 -- what data per card?</b> An image URL, a title, a description. Probably also an id once you start mapping over a list. That's exactly the props signature: <code>{ image, title, description }</code>.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> Node and npm, modules across files, a first pass at TypeScript. The modules thing was the unlock -- twenty-line files calling each other instead of one five-hundred-line file.</p>
+  <p><b>What I'm doing today:</b> React. Components, JSX, props, <code>useState</code>. Five lab exercises ending in a working interactive favorites list.</p>
+  <p><b>Where I'm stuck:</b> not stuck. Mildly suspicious of the "magic" framing -- I want to know what React actually does on a re-render, not just that it does one. Going to keep that question open through lab and ask in peer demo if it doesn't resolve.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Read a React Component</span>
+      <span class="ex-desc">predict what MovieCard renders before running it, then run it</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Build ProfileCard</span>
+      <span class="ex-desc">first component from scratch, three cards, one reusable piece</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">State Playground</span>
+      <span class="ex-desc">useState through Counter, Toggle, and ColorCounter</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Compose a Page</span>
+      <span class="ex-desc">Header + Main + Footer + ProfileCard, props flow downward</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Favorites List</span>
+      <span class="ex-desc">working mini-app: input, add, remove, count, no duplicates</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- Props vs State</div>
+  <p>
+    Pair partner asked me to do the props vs state walk. I pulled up the favorites list from Ex 5 and pointed: <code>FavoriteItem</code> takes <code>text</code> and <code>onRemove</code> as props -- it never changes them, it just reads them and renders. The parent owns the truth. <code>App</code> owns <code>favorites</code> and <code>inputValue</code> as state -- those are the things that change in response to clicks and typing, and changing them is what causes the screen to update.
+  </p>
+  <p>
+    The rule I tried to land: if a value is given to a component, it's a prop. If a value belongs to the component and the component is allowed to change it, it's state. Same data can be state in one component and a prop in its child. That's what "lifting state up" is going to mean in a later week, but the seed is here.
+  </p>
+  <p>
+    Their follow-up: "what actually happens on a re-render?" Honest answer: React calls the function again with the new state, builds a fresh virtual DOM tree, diffs it against the previous tree, and only patches the real DOM nodes that changed. The function runs from the top every time -- which is why <code>useState</code> looks weird (how does it remember?) but actually works (React keeps the state slot, your function just reads from it).
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    <code>UI = f(state)</code>. Not the equation -- the inversion of control. In Phase 1 I was writing code that said "find this element, change its text." Today I wrote code that says "here is what the screen should look like given this data," and React figures out the find-and-change step. That's the same shift I felt going from C-style mutation to Rust's <code>match</code> on a fresh value: stop telling the runtime what to do, start describing what you want the result to be.
+  </p>
+  <p>
+    The other thing is how cheap composition gets. The favorites app is a 90-line file but it's actually three components with clean seams between them. I could yank <code>FavoriteItem</code> into a separate file and import it tomorrow without changing one line of <code>App</code>. That's not a feature of React -- it's a feature of having a real module system layered onto a real component model. Yesterday's modules + today's components is the actual point. Each was useful alone. Together they're the whole game.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

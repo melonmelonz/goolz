@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- State Playground / NCD W5D2</title>
+<meta name="description" content="Exercise 3: learning useState through Counter, Toggle, and ColorCounter.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F39B;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>State Playground</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 30 min</div>
+
+<p>
+  This is the exercise where the React mental model has to actually click, because before <code>useState</code> a "component" is just a fancy template engine. State is what makes it a thing that can respond to time. Built all three components -- Counter, Toggle, ColorCounter -- in one App.
+</p>
+
+<h2>Counter -- the basics</h2>
+
+<pre><code>import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Counter: {count}&lt;/h2&gt;
+      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;+ Add 1&lt;/button&gt;
+      &lt;button onClick={() =&gt; setCount(count - 1)}&gt;- Subtract 1&lt;/button&gt;
+      &lt;button onClick={() =&gt; setCount(0)}&gt;Reset&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>What is useState(0) actually doing?</strong>
+  <p>Asking React to allocate a slot of state inside this component, initialized to 0 the first time the component mounts, and returning a 2-tuple: <code>[currentValue, setterFunction]</code>. The destructuring <code>const [count, setCount] = ...</code> just names those two slots. On every subsequent render, <code>useState(0)</code> ignores the initial value and returns the current value of that slot. The "0" only matters on the first call.</p>
+</div>
+
+<div class="answer">
+  <strong>Why doesn't setCount(count + 1) mutate count directly?</strong>
+  <p>Because <code>count</code> is a local const inside this render. The setter doesn't change <em>this</em> render's <code>count</code> -- it tells React "next time you render this component, the value for this slot should be <code>count + 1</code>." Then React re-runs the function. The new run sees the new value. That immutability is the whole reason React can do the diff -- old value and new value coexist long enough to compare.</p>
+</div>
+
+<h2>Toggle -- booleans and ternaries</h2>
+
+<pre><code>function Toggle() {
+  const [isOn, setIsOn] = useState(false);
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Status: {isOn ? "ON" : "OFF"}&lt;/h2&gt;
+      &lt;button
+        onClick={() =&gt; setIsOn(!isOn)}
+        style={{ backgroundColor: isOn ? "#2ecc71" : "#e74c3c", color: "white" }}
+      &gt;
+        {isOn ? "Turn OFF" : "Turn ON"}
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>New syntax notes.</strong>
+  <p><code>isOn ? "ON" : "OFF"</code> is a ternary. JS borrowed it from C; same shape in Rust (<code>if isOn { "ON" } else { "OFF" }</code>) just without the question mark. <code>!isOn</code> flips a boolean. <code>setIsOn(!isOn)</code> reads the current value and asks React to set the next one to the opposite. Nothing here is React-specific -- it's just JS expressions in a JSX shell.</p>
+</div>
+
+<div class="answer">
+  <strong>Same data, three render slots.</strong>
+  <p>The <code>isOn</code> boolean drives three different bits of output on the same render: the status text, the button color, and the button label. That's the lesson under the lesson -- one piece of state can be projected into many places in the UI, and they all stay in sync automatically because they're all just expressions over the same value.</p>
+</div>
+
+<h2>ColorCounter -- derived values</h2>
+
+<pre><code>function ColorCounter() {
+  const [count, setCount] = useState(0);
+
+  const getColor = () =&gt; {
+    if (count &gt;= 10) return "#e74c3c";
+    if (count &gt;= 5) return "#f39c12";
+    return "#2ecc71";
+  };
+
+  return (
+    &lt;div&gt;
+      &lt;h2 style={{ color: getColor(), fontSize: "48px" }}&gt;{count}&lt;/h2&gt;
+      &lt;p&gt;
+        {count &lt; 5 &amp;&amp; "Keep going!"}
+        {count &gt;= 5 &amp;&amp; count &lt; 10 &amp;&amp; "Getting warm..."}
+        {count &gt;= 10 &amp;&amp; "You made it to 10!"}
+      &lt;/p&gt;
+      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;+ 1&lt;/button&gt;
+      &lt;button onClick={() =&gt; setCount(0)}&gt;Reset&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<h3>Code tracing</h3>
+
+<div class="answer">
+  <strong>count = 3 -- color and message?</strong>
+  <p>Color: <code>#2ecc71</code> (green -- under 5). Message: "Keep going!" (the first branch is true, the others are false).</p>
+</div>
+
+<div class="answer">
+  <strong>count = 7 -- color and message?</strong>
+  <p>Color: <code>#f39c12</code> (orange -- between 5 and 10). Message: "Getting warm..." (the middle branch fires).</p>
+</div>
+
+<div class="answer">
+  <strong>count = 10 -- color and message?</strong>
+  <p>Color: <code>#e74c3c</code> (red -- at or above 10). Message: "You made it to 10!" The check is <code>count &gt;= 10</code>, not <code>&gt;</code>, so 10 itself triggers the red state, not 11. Off-by-one is the kind of thing I want to read carefully every time.</p>
+</div>
+
+<div class="answer">
+  <strong>What does Reset do?</strong>
+  <p>Sets <code>count</code> back to 0. Which then re-renders the component: number turns green again, message flips back to "Keep going!". No special "reset" logic -- it's just <code>setCount(0)</code>. The UI is downstream of the state.</p>
+</div>
+
+<h2>What clicked here</h2>
+
+<div class="card">
+  <div class="card-label">Reflection</div>
+  <p>
+    The <code>getColor</code> function is the part I want to remember. It's not state. It's not a prop. It's a plain function defined inside the component body that computes a derived value from state on every render. The temptation in a non-React mindset is to store the color <em>as</em> state and write an effect that updates it when count changes. That would work and be wrong. The color is a pure function of the count. Compute it, don't store it. State is for things that actually change independently; derived data should just be re-derived. That's a discipline-not-syntax lesson and it's the kind of thing I'll get wrong a few times before it sticks.
+  </p>
+  <p>
+    The "how does <code>useState</code> remember between renders?" question is still open in my head. The honest answer the day brief didn't quite give: React keeps a list of state slots keyed by call order inside the component, and <code>useState</code> reads from the next slot each time. That's why you can't put <code>useState</code> inside a conditional -- the call order would shift and the slots would get crossed. Filing that one as the "rules of hooks" thing I'll probably see explicitly next week.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

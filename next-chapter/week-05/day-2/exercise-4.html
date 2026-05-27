@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Compose a Page / NCD W5D2</title>
+<meta name="description" content="Exercise 4: compose an App out of Header, Main, Footer, and ProfileCard components.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F9F1;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Compose a Page</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Composition. The exercise where the whole point of components stops being theoretical. <code>App</code> renders <code>Header</code>, <code>Main</code>, and <code>Footer</code>. <code>Main</code> renders three <code>ProfileCard</code>s. Four components total, one screen, and each piece can be changed without breaking the others.
+</p>
+
+<h2>The structure</h2>
+
+<pre><code>App
+  ├─ Header (props: appName, subtitle)
+  ├─ Main
+  │   └─ ProfileCard × 3 (props: name, role, bio)
+  ├─ Contact (props: email, message)  ← my addition
+  └─ Footer</code></pre>
+
+<p>
+  This is the tree I built. The relevant insight is that <code>Main</code> doesn't know <code>App</code> exists, and <code>App</code> doesn't know what <code>Main</code> renders inside itself. Each component is a black box from the outside. From <code>App</code>'s view, <code>Main</code> is just "this opaque thing I drop into the page." That's the seam.
+</p>
+
+<h2>Header takes a subtitle now</h2>
+
+<pre><code>function Header({ appName, subtitle }) {
+  return (
+    &lt;header style={{
+      backgroundColor: "#1a1a2e",
+      color: "white",
+      padding: "20px",
+      textAlign: "center"
+    }}&gt;
+      &lt;h1 style={{ margin: 0 }}&gt;{appName}&lt;/h1&gt;
+      {subtitle &amp;&amp; (
+        &lt;p style={{ margin: "8px 0 0 0", color: "#aaa" }}&gt;{subtitle}&lt;/p&gt;
+      )}
+    &lt;/header&gt;
+  );
+}
+
+&lt;Header appName="PEEK" subtitle="examines embedded kernels" /&gt;</code></pre>
+
+<p>
+  I picked PEEK as the app name because that's what I'd actually build a page like this for -- the capstone needs a landing page eventually and "Header / Main / Footer" is the minimum useful shell. The <code>{subtitle &amp;&amp; ...}</code> short-circuit means I can drop the subtitle prop on a page that doesn't want one and the header just collapses. Optional props with sensible defaults, no destructuring tricks needed.
+</p>
+
+<h2>Contact section added between Main and Footer</h2>
+
+<pre><code>function Contact({ email, message }) {
+  return (
+    &lt;section style={{
+      backgroundColor: "#f4f1e8",
+      padding: "24px",
+      textAlign: "center",
+      borderTop: "1px solid #ddd",
+      borderBottom: "1px solid #ddd"
+    }}&gt;
+      &lt;h2&gt;Get in touch&lt;/h2&gt;
+      &lt;p&gt;{message}&lt;/p&gt;
+      &lt;p&gt;
+        &lt;a href={"mailto:" + email}&gt;{email}&lt;/a&gt;
+      &lt;/p&gt;
+    &lt;/section&gt;
+  );
+}</code></pre>
+
+<p>
+  Built as its own component on purpose, even though it's tiny. The day brief asked for it that way and the reason is right: if I inlined the contact markup in <code>App</code>, I'd be back to writing one big file. Putting it in a function with named props makes it a unit I can drop into another page tomorrow.
+</p>
+
+<h2>The whole App, composed</h2>
+
+<pre><code>function App() {
+  return (
+    &lt;div style={{ fontFamily: "Arial, sans-serif", minHeight: "100vh", display: "flex", flexDirection: "column" }}&gt;
+      &lt;Header appName="PEEK" subtitle="examines embedded kernels" /&gt;
+      &lt;Main /&gt;
+      &lt;Contact
+        email="penn@goolz.org"
+        message="If you want to hear about progress on the eldritch-tamagotchi TUI, the kernel module, or the BeaglePlay demo -- send a note."
+      /&gt;
+      &lt;Footer /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<h2>Things I noticed</h2>
+
+<div class="answer">
+  <strong>Props flow down. State stays local.</strong>
+  <p><code>App</code> hands <code>appName</code> and <code>subtitle</code> down to <code>Header</code>. Hands <code>email</code> and <code>message</code> down to <code>Contact</code>. The leaves (<code>Header</code>, <code>Contact</code>) receive data and render. They don't reach up to grab anything. That one-way flow is what makes the tree easy to reason about -- you trace a value by following props from the root outward.</p>
+</div>
+
+<div class="answer">
+  <strong>Each component has its own little world.</strong>
+  <p><code>Footer</code> calls <code>new Date().getFullYear()</code> inside itself. That's a side computation, scoped to the component. <code>App</code> doesn't have to pass the year down. If I want every component to know the year, props is the way. If only one component needs it, just compute it there. The discipline is "lift what you need to share, keep what you don't."</p>
+</div>
+
+<div class="answer">
+  <strong>The cost of a new component is low.</strong>
+  <p>Adding <code>Contact</code> took maybe four minutes including the inline styles. I didn't have to register it anywhere, configure routing, edit a manifest. I wrote a function and used it. Compared to the friction of adding a new template partial in some frameworks I won't name, this is the right amount of ceremony: none.</p>
+</div>
+
+<h2>What I learned</h2>
+
+<div class="card">
+  <div class="card-label">Reflection</div>
+  <p>
+    The "compose small pieces" pattern is the one part of front-end I've been waiting for. Phase 1 HTML was a single page that grew until it was hard to read. Phase 2 modules let me split JavaScript across files. Today is the day the markup gets the same treatment -- I can break the page into named pieces with explicit interfaces, and the page is still just one page from the user's side. Same end result, much better source layout.
+  </p>
+  <p>
+    The natural next question is "where does data that multiple components need actually live?" Right now everything is local or passed down through props. If <code>Footer</code> wanted to show the current count from <code>ColorCounter</code>, I'd have to hoist that state up to <code>App</code> and pass it down both sides. That's "lifting state up" and it's the next thing the curriculum will hit. I can feel the shape of it from here.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

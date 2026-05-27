@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Read a React Component / NCD W5D2</title>
+<meta name="description" content="Exercise 1: read MovieCard before running it. Predict the output, then verify in the browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F3AC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Read a React Component</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 25 min</div>
+
+<p>
+  Predict-before-run. The point of the exercise is to confirm I can read JSX without executing it, the same way I should be able to read a function signature and trace it on paper. I read the component first, answered the questions, <em>then</em> spun up Vite. The predictions were all right except for one off-by-one I caught reading my own answer back.
+</p>
+
+<h2>The component</h2>
+
+<pre><code>function MovieCard({ title, year, rating, genre }) {
+  return (
+    &lt;div className="movie-card"&gt;
+      &lt;h2&gt;{title} ({year})&lt;/h2&gt;
+      &lt;p&gt;Genre: {genre}&lt;/p&gt;
+      &lt;p&gt;Rating: {"*".repeat(rating)}&lt;/p&gt;
+      {rating &gt;= 4 &amp;&amp; &lt;p className="recommended"&gt;Highly Recommended!&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>What props does MovieCard accept?</strong>
+  <p>Four: <code>title</code> (string), <code>year</code> (number), <code>rating</code> (number, looks like 1-5), <code>genre</code> (string). They're destructured out of the props object in the function signature, which is the same pattern as destructuring a struct in Rust or a dict in Python -- pull the named fields out, ignore the rest.</p>
+</div>
+
+<div class="answer">
+  <strong>For "The Matrix", what will the &lt;h2&gt; display?</strong>
+  <p><code>The Matrix (1999)</code>. JSX evaluates the <code>{title}</code> and <code>{year}</code> expressions and stitches them into the text with the literal space and parens around them.</p>
+</div>
+
+<div class="answer">
+  <strong>What does "*".repeat(rating) do for rating 5 vs rating 2?</strong>
+  <p>5 stars: <code>"*****"</code>. 2 stars: <code>"**"</code>. <code>String.prototype.repeat(n)</code> returns a string with the original repeated n times. Same primitive Python has with <code>"*" * n</code>. Quick-and-dirty star bar, no SVG needed.</p>
+</div>
+
+<div class="answer">
+  <strong>{rating &gt;= 4 &amp;&amp; &lt;p&gt;...&lt;/p&gt;} -- what does this do?</strong>
+  <p>JS short-circuit rendering. If <code>rating &gt;= 4</code> is false, the expression evaluates to <code>false</code> and React renders nothing. If it's true, the expression evaluates to the <code>&lt;p&gt;</code> element and React renders it. The Matrix (5) and Toy Story (4) get the "Highly Recommended!" line; A Bad Movie (2) doesn't. This is the React idiom for conditional rendering -- no ternary needed when the alternative is "nothing."</p>
+</div>
+
+<div class="answer">
+  <strong>Adding a director prop -- two places to change?</strong>
+  <p>One: add <code>director</code> to the destructured parameter list. Two: render it somewhere in the JSX, e.g. <code>&lt;p&gt;Directed by {director}&lt;/p&gt;</code>. And then a third place if you're being honest: every <code>&lt;MovieCard&gt;</code> call site needs the new prop or it'll render <code>undefined</code>. Not a hard error, just a quiet one -- which is exactly the kind of thing TypeScript would catch and plain JSX won't.</p>
+</div>
+
+<h2>Then I ran it</h2>
+
+<p>
+  Set up <code>movie-app</code> with <code>npm create vite@latest movie-app -- --template react</code>, pasted the App.jsx, hit <code>npm run dev</code>, opened localhost:5173. Three cards. Matrix and Toy Story both flagged "Highly Recommended!" in green-bold (the inline style version). A Bad Movie quietly didn't. Predictions confirmed.
+</p>
+
+<p>
+  One thing I noticed running it that I didn't notice reading it: the recommended <code>&lt;p&gt;</code> sits inside the same border as the rest of the card, no spacing tweak needed. That's because it's just another child of the card <code>&lt;div&gt;</code>. No magic. The "conditional" part is in the data, not in the DOM structure.
+</p>
+
+<h2>Modification</h2>
+
+<p>
+  Added a fourth card -- <em>The Lighthouse</em> (2019, 5 stars, "Horror") -- and a <code>director</code> prop on the component. Final App.jsx looked like this for the relevant chunk:
+</p>
+
+<pre><code>function MovieCard({ title, year, rating, genre, director }) {
+  return (
+    &lt;div style={{ /* ...same... */ }}&gt;
+      &lt;h2&gt;{title} ({year})&lt;/h2&gt;
+      &lt;p&gt;Genre: {genre}&lt;/p&gt;
+      &lt;p&gt;Director: {director}&lt;/p&gt;
+      &lt;p&gt;Rating: {"*".repeat(rating)}&lt;/p&gt;
+      {rating &gt;= 4 &amp;&amp; &lt;p style={{ color: "green", fontWeight: "bold" }}&gt;Highly Recommended!&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}
+
+&lt;MovieCard
+  title="The Lighthouse"
+  year={2019}
+  rating={5}
+  genre="Horror"
+  director="Robert Eggers"
+/&gt;</code></pre>
+
+<p>
+  Existing cards (Matrix, Toy Story, A Bad Movie) now render <code>Director: undefined</code> because I didn't backfill them. Caught it on the first render, fixed it by adding the director on each call site. Real lesson: changing a prop's interface is a refactor across every call site. That's not a React thing; that's any function. The friction is the same.
+</p>
+
+<h2>What I noticed</h2>
+
+<div class="card">
+  <div class="card-label">Reflection</div>
+  <p>
+    The destructuring-in-the-signature style (<code>function MovieCard({ title, year, ... })</code>) is much nicer to read than <code>function MovieCard(props)</code> followed by <code>props.title</code> everywhere. It's the same idea as named arguments in Python. The "what does this component take?" question is answered in the signature, not buried in the body.
+  </p>
+  <p>
+    The short-circuit <code>{cond &amp;&amp; &lt;jsx /&gt;}</code> trick is the kind of thing that looks clever the first time and then becomes second nature. The one footgun the day brief didn't flag: if <code>cond</code> is the number <code>0</code>, JSX will render the literal <code>0</code> on screen instead of nothing, because <code>0 &amp;&amp; anything</code> is <code>0</code>, not false. Easy to hit when you're conditioning on array length. Filing that one for later.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="./">Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

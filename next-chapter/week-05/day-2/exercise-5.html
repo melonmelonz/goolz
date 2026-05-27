@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Favorites List / NCD W5D2</title>
+<meta name="description" content="Exercise 5: build a working mini-app with state, props, event handling, and a remove-by-id pattern.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4CC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Favorites List</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 3 . 35 min</div>
+
+<p>
+  A real little app. Input, button, list, delete. State for the list, state for the input. Two pieces of state, one child component, and a handler per action. This is the smallest interactive React app I'd consider non-trivial. Built it, then did all three modification levels.
+</p>
+
+<p>
+  I renamed the title to "BeaglePlay TODO" because I'd actually use this for that. Stuff I need to verify on the board between now and 2026-08-10. Real list, fake demo data below.
+</p>
+
+<h2>The state, the handlers, the child</h2>
+
+<pre><code>const [favorites, setFavorites] = useState([]);
+const [inputValue, setInputValue] = useState("");
+
+const handleAdd = () =&gt; {
+  if (inputValue.trim() === "") return;
+  if (favorites.some(item =&gt; item.text === inputValue.trim())) {
+    // Level 3 mod: no duplicates
+    alert("Already on the list.");
+    return;
+  }
+  const newItem = { id: Date.now(), text: inputValue.trim() };
+  setFavorites([...favorites, newItem]);
+  setInputValue("");
+};
+
+const handleRemove = (idToRemove) =&gt; {
+  setFavorites(favorites.filter((item) =&gt; item.id !== idToRemove));
+};
+
+const handleClearAll = () =&gt; setFavorites([]);
+
+const handleKeyPress = (event) =&gt; {
+  if (event.key === "Enter") handleAdd();
+};</code></pre>
+
+<h2>Code reading -- the bits I want to remember</h2>
+
+<div class="answer">
+  <strong>Two pieces of state -- what each tracks.</strong>
+  <p><code>favorites</code> is the actual list, an array of <code>{ id, text }</code> objects, starts empty. <code>inputValue</code> is whatever's typed in the input box right now, starts as <code>""</code>. They're separate because they change for separate reasons: input changes on every keystroke, the list changes only on Add or Remove. Lumping them together would mean a list re-render on every keystroke, which is wasteful and conceptually wrong.</p>
+</div>
+
+<div class="answer">
+  <strong>What props does FavoriteItem receive?</strong>
+  <p><code>text</code> (the string to display) and <code>onRemove</code> (a function to call when X is clicked). That's the whole interface. <code>FavoriteItem</code> doesn't know anything about the list, the input, or the id. It just renders text and a button. The parent owns the logic; the child owns the rendering. Clean seam.</p>
+</div>
+
+<div class="answer">
+  <strong>What happens when Add fires?</strong>
+  <p>1) Trim check -- if the input is empty/whitespace, return without doing anything. 2) Dedup check (my mod) -- if the trimmed text already exists in the list, alert and return. 3) Build a new item with a fresh id (<code>Date.now()</code> as a quick unique key) and the trimmed text. 4) <code>setFavorites([...favorites, newItem])</code> -- spread the existing array into a new array and append the new item. Crucially, this creates a <em>new</em> array; the old one is left alone. React sees a new reference, re-renders the list. 5) <code>setInputValue("")</code> clears the input.</p>
+</div>
+
+<div class="answer">
+  <strong>Why id on each item, not just the index?</strong>
+  <p>The day brief flagged this and it's the right call. React uses the <code>key</code> prop to identify which list item is which between renders. If I used the array index as the key, then deleting item 2 from <code>[A, B, C, D]</code> would leave <code>[A, C, D]</code> -- but React would think item at index 1 just changed text from B to C, item at index 2 changed from C to D, item at index 3 was removed. State attached to those items (focus, animation, internal component state) would get the wrong owners. With stable ids tied to the data itself, React knows "the item with id 1700000001 is gone; the items with ids 1700000002 and 1700000003 are still here, just shifted in the array." Same DOM nodes, just reordered. <code>Date.now()</code> works for this small case because clicks can't happen within the same millisecond from a human. For anything bigger I'd use <code>crypto.randomUUID()</code>.</p>
+</div>
+
+<div class="answer">
+  <strong>onChange={(event) =&gt; setInputValue(event.target.value)} -- the controlled input pattern.</strong>
+  <p>The input's value is driven by React state. Every keystroke fires <code>onChange</code>, which updates <code>inputValue</code>, which re-renders the input with the new value. The DOM input doesn't have its own truth -- React does, and the input just reflects it. That's a "controlled component." It's heavier than letting the DOM hold the value, but it means I can read or modify the input value from anywhere in my component code at any time. Worth the cost for anything past the most trivial form.</p>
+</div>
+
+<div class="answer">
+  <strong>Spread operator vs Array.push.</strong>
+  <p><code>setFavorites([...favorites, newItem])</code> builds a new array. <code>favorites.push(newItem)</code> mutates the existing one. React relies on identity comparison (<code>oldArray === newArray</code>) to decide whether to re-render the list. <code>push</code> doesn't change the reference; spread does. So <code>push</code> would silently fail to update the UI. This is the kind of footgun I'll definitely hit at least once before it becomes muscle memory.</p>
+</div>
+
+<h2>Modifications</h2>
+
+<h3>Level 1 -- retitled and re-themed</h3>
+
+<p>
+  Changed the title from "My Favorites" to "BeaglePlay TODO" and the input placeholder to "thing to verify..." Seeded the list with the things actually on my mind right now: <code>SPI loopback test on /dev/spidev0.0</code>, <code>panel driver probe scope</code>, <code>switch back to ethernet after wifi bug</code>. That last one is per the <code>wl18xx</code> auth-no-assoc issue I hit yesterday -- wifi is just busted on the RfL kernel I'm running.
+</p>
+
+<h3>Level 2 -- Clear All button</h3>
+
+<pre><code>{favorites.length &gt; 0 &amp;&amp; (
+  &lt;button
+    onClick={handleClearAll}
+    style={{ fontSize: "12px", color: "#999", background: "none", border: "none", cursor: "pointer", marginTop: "8px" }}
+  &gt;
+    clear all
+  &lt;/button&gt;
+)}</code></pre>
+
+<p>
+  <code>handleClearAll</code> is one line: <code>setFavorites([])</code>. The button itself is conditionally rendered -- if the list is empty there's nothing to clear, so the button doesn't appear. Subtle styling so it doesn't dominate. The danger of "clear all" without confirmation is real but for a TODO list with no persistence, fine.
+</p>
+
+<h3>Level 3 -- no duplicates</h3>
+
+<p>
+  Two ways to do this. I went with the simpler: inside <code>handleAdd</code>, check <code>favorites.some(item =&gt; item.text === inputValue.trim())</code> before adding, and bail with an alert if true. Alert is the lazy choice; the nicer move would be to flash the input border red for a second, but that needs another piece of state for "show error" plus a <code>setTimeout</code> to clear it. Filing that for after I learn <code>useEffect</code>, which is tomorrow's hook.
+</p>
+
+<h2>Final app</h2>
+
+<p>
+  Three components -- <code>App</code>, <code>FavoriteItem</code>, and the input is technically just JSX in <code>App</code>. Could extract that into <code>AddForm</code> as a fourth component to be cleaner, but the input + button + handler is small enough that I left it inline. Knowing when to extract is the judgment call. My rule of thumb after one day of React: extract when the same pattern shows up twice, or when a chunk grows past 15 lines of JSX. Both bar would justify pulling out the form. Today, neither does.
+</p>
+
+<h2>What clicked</h2>
+
+<div class="card">
+  <div class="card-label">Reflection</div>
+  <p>
+    The whole exercise is one application of <code>UI = f(state)</code>. The page is a function of two values, <code>favorites</code> and <code>inputValue</code>. Every interaction is just a handler that produces new values. I never touched <code>document</code>, never selected an element, never set <code>innerHTML</code>. I changed the data, and the screen followed. That is the unlock. I felt it specifically when I added the Clear All button: I wrote <code>setFavorites([])</code>, saved, and the entire list vanished from the page. No "loop through the list and remove each child node." Just data goes away, UI goes away. The DOM step is React's problem.
+  </p>
+  <p>
+    The thing I want to keep an eye on: as components get bigger, the prop chains get longer. <code>FavoriteItem</code> took two props today. In a real app the leaf components take eight, the parents pass twelve, and threading state through six layers of components ("prop drilling") becomes tedious. I know this is what Context and stores exist to solve, but I want to feel the pain a little first so the solution makes sense when it shows up. For now, two props is fine.
+  </p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

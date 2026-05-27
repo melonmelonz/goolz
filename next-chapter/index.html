@@ -1278,6 +1278,12 @@
       <div class="icon-img shortcut">🟢</div>
       <div class="icon-label">W5D1.node</div>
     </div>
+    <div class="icon" tabindex="0" title="Week 5 Day 2 -- React: Thinking in Components (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-05/day-2/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-05/day-2/','_blank','noopener')">
+      <div class="icon-img shortcut">⚛</div>
+      <div class="icon-label">W5D2.react</div>
+    </div>
     <div class="icon" tabindex="0" title="Study Plan / Report Card" ondblclick="openWindow('win-rc')">
       <div class="icon-img">📊</div>
       <div class="icon-label">Report&nbsp;Card</div>
@@ -1382,6 +1388,10 @@
             <span class="fl-icon">🟢</span>
             <span class="fl-name">Day 1 — Node.js: JavaScript Leaves the Browser</span>
           </li>
+          <li class="fl-day" onclick="window.open('/next-chapter/week-05/day-2/','_blank','noopener')">
+            <span class="fl-icon">⚛</span>
+            <span class="fl-name">Day 2 — React: Thinking in Components</span>
+          </li>
 
           <li class="fl-section">Capstone</li>
           <li class="fl-day" onclick="window.open('/peek/','_blank','noopener')">
@@ -1392,7 +1402,7 @@
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">16 object(s)</div>
+      <div class="status-pane">17 object(s)</div>
     </div>
   </div>
 
@@ -3020,7 +3030,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.13.0';
+const NCD_VERSION = 'v2.14.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3662,6 +3672,17 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-27',
+      title: 'Week 5 Day 2 -- React: Thinking in Components',
+      notes: [
+        'W5D2 lives at /next-chapter/week-05/day-2/ -- five exercises in the mint/monospace style: read MovieCard before running it, build ProfileCard from scratch, useState through Counter / Toggle / ColorCounter, compose Header+Main+Contact+Footer for a PEEK landing shell, build a Favorites list mini-app (input + add + remove + dedup + clear-all)',
+        'Favorites list retitled "BeaglePlay TODO" with real items (SPI loopback, panel driver probe scope, switch back to ethernet after the wl18xx wifi bug) -- exercise also doubled as the running checklist between now and the 2026-08-10 lock date',
+        'The thing that clicked: UI = f(state). Stopped describing how to change the DOM and started describing what it should look like for a given data shape -- same inversion as going from C-style mutation to Rust match-on-fresh-value',
+        'Course Materials window + desktop shortcut updated with W5D2.react; status bar count bumped 16 -> 17 objects',
+      ]
+    },
+    {
+      version: 'v2.13.0',
       date: '2026-05-26',
       title: 'Report Card retargeted to the BeaglePlay / Ada kernel sprint',
       notes: [
