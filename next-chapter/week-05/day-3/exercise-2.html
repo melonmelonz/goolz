@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Product List / NCD W5D3</title>
+<meta name="description" content="Exercise 2: render an array of product objects as ProductCard components with .map() and keys.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4E6;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Render a Product List</h1>
+<div class="subtitle">Exercise 2 / 7 . Level 1 . 25 min</div>
+
+<p>
+  The data-to-components transform that every list-rendering React snippet in the world boils down to. Array of objects in, array of JSX elements out, React renders the array. The piece I had to internalize: the <code>key</code> isn't a prop your component uses -- it's a hint to React's diffing algorithm. Your component never reads it. React reads it.
+</p>
+
+<h2>The data + the component</h2>
+
+<pre><code>const products = [
+  { id: 1, name: "Wireless Headphones", price: 49.99, category: "Electronics" },
+  { id: 2, name: "JavaScript Textbook",  price: 29.99, category: "Books" },
+  { id: 3, name: "Running Shoes",        price: 89.99, category: "Clothing" },
+  { id: 4, name: "USB-C Cable",          price: 12.99, category: "Electronics" },
+  { id: 5, name: "React Handbook",       price: 34.99, category: "Books" },
+];
+
+function ProductCard({ name, price, category }) {
+  return (
+    &lt;div className="product-card"&gt;
+      &lt;h3&gt;{name}&lt;/h3&gt;
+      &lt;p className="price"&gt;${price.toFixed(2)}&lt;/p&gt;
+      &lt;span className="tag"&gt;{category}&lt;/span&gt;
+    &lt;/div&gt;
+  );
+}
+
+function ProductList() {
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Products&lt;/h2&gt;
+      {products.map((p) =&gt; (
+        &lt;ProductCard
+          key={p.id}
+          name={p.name}
+          price={p.price}
+          category={p.category}
+        /&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Why .map() and not a for loop?</strong>
+  <p>JSX has to evaluate to an <em>expression</em>, not a statement. A <code>for</code> loop is a statement -- you can't drop it inside <code>{}</code> and have JSX work with it. <code>.map()</code> is an expression that returns an array, and JSX renders arrays of elements just fine. Same reason you use ternaries instead of <code>if</code> statements inside JSX. The expression rule.</p>
+</div>
+
+<div class="answer">
+  <strong>Why key={p.id} and not key={index}?</strong>
+  <p>Index-as-key works for static lists but breaks for dynamic ones. If you delete the first item, every remaining item shifts up by one -- but its key changes too, because the key was "position." React thinks every item changed, throws away their state, and re-mounts everything. With a stable id, React knows item id=3 is still item id=3 even if its position moved, and can shift the existing DOM nodes instead of rebuilding them. Cheap insurance against a class of bugs you don't see until you're shipping.</p>
+</div>
+
+<div class="answer">
+  <strong>Why .toFixed(2) on the price?</strong>
+  <p>Float formatting. <code>49.99</code> happens to render as "49.99" but <code>49.9</code> would render as "49.9" and <code>49</code> as "49", and a product list with mixed price formatting looks broken. <code>.toFixed(2)</code> coerces to a string with exactly two decimal places. Real apps use a money library for currency math -- not a float, ever -- but for display formatting at this level it's fine.</p>
+</div>
+
+<h2>What I noticed running it</h2>
+
+<p>
+  Five cards rendered, clean. Opened the React DevTools and watched it: <code>ProductList</code> at the top, five <code>ProductCard</code> children below, each with its own props row. Each card is its own component instance with its own slot in the tree. That's the part that's invisible from the JSX but obvious once you see the tree -- you didn't write five cards, you wrote one component that React instantiated five times.
+</p>
+
+<p>
+  Tried <code>console.warn</code>-ing inside <code>ProductCard</code> and counted: five logs on first render, zero on subsequent renders. Because nothing changed, React skipped re-rendering. That's the diffing payoff. The "everything re-renders on every state change" worry I had yesterday turns out to be "everything re-renders if its inputs changed, otherwise no." Big difference.
+</p>
+
+<h2>What I'd build on top</h2>
+
+<p>
+  Sort dropdown next to the heading -- "by name", "by price asc", "by price desc". One <code>useState</code> for the sort key, a sorted copy of <code>products</code> before the <code>.map()</code>, render the sorted version. Don't mutate the original array (that's a class of bug I'd carry over from Python by accident). <code>[...products].sort(...)</code> -- copy first, sort the copy.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

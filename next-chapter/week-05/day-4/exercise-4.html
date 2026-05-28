@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Env Variables / NCD W5D4</title>
+<meta name="description" content="Exercise 4: move the API base URL into .env, use import.meta.env.VITE_*, add .env to .gitignore, verify with git status.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F510;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Environment Variables</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 20 min</div>
+
+<p>
+  Smallest exercise of the week. Probably the most important. Move the API base URL out of the source, into a <code>.env</code> file, read it through <code>import.meta.env.VITE_*</code>, add <code>.env</code> to <code>.gitignore</code>, restart the dev server, verify <code>git status</code> shows no <code>.env</code>. Five steps, two minutes, a habit for life.
+</p>
+
+<h2>The .env file</h2>
+
+<pre><code># .env (project root)
+VITE_API_BASE_URL=https://api.github.com</code></pre>
+
+<h2>The code change</h2>
+
+<pre><code>// before
+const response = await fetch(
+  `https://api.github.com/users/${encodeURIComponent(username)}`
+);
+
+// after
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const response = await fetch(
+  `${API_BASE}/users/${encodeURIComponent(username)}`
+);</code></pre>
+
+<h2>The .gitignore entry</h2>
+
+<pre><code># in .gitignore
+.env
+.env.local</code></pre>
+
+<div class="answer">
+  <strong>Why does the variable name need the VITE_ prefix?</strong>
+  <p>Vite's safety rail. By default Vite refuses to expose any env var to client-side code -- because anything bundled into the browser is, in effect, public. The VITE_ prefix is an opt-in: "yes, I know this will be readable by anyone who downloads the JS bundle." For things that <em>shouldn't</em> be in the browser (a real secret key for a paid API, anything that should only be hit server-side), you'd omit the prefix and access it from a server function, not the React component. The prefix is a hint to me about what I'm about to leak.</p>
+</div>
+
+<div class="answer">
+  <strong>If VITE_ vars are still public, what was the point?</strong>
+  <p>Two things. First, even public-but-configurable beats hardcoded -- the same code can hit prod and dev base URLs without editing source. Second, it's the same mechanism for things that <em>are</em> secrets when you do it on the server side (Cloudflare Worker bindings, Node API routes, etc.). Same syntax, different runtime safety. Learning the habit on the public side means I don't fumble the syntax when it's the real secret on the server side later.</p>
+</div>
+
+<div class="answer">
+  <strong>Why restart the dev server after editing .env?</strong>
+  <p>Vite reads env vars at startup, not on every request. Edit the file, the running process doesn't know. <code>npm run dev</code> again, the file gets re-read, the new values land. Forget this and you'll be debugging "the new URL isn't taking effect" for ten minutes wondering why your code looks right but the network tab still shows the old endpoint.</p>
+</div>
+
+<div class="answer">
+  <strong>What if you accidentally commit .env before adding it to .gitignore?</strong>
+  <p>Once it's in git history it's effectively public, even if you delete it in the next commit -- the secret is in the history, and the history is on GitHub. The fix is to rotate the secret (generate a new key, invalidate the old one) AND scrub the file from history with <code>git filter-repo</code> or BFG. The lesson is: <code>.gitignore</code> first, <em>then</em> create <code>.env</code>. Reversing that order has cost people real money.</p>
+</div>
+
+<h2>What I verified</h2>
+
+<pre><code>$ git status
+On branch main
+nothing to commit, working tree clean</code></pre>
+
+<p>
+  The <code>.env</code> file is present on disk (next to <code>package.json</code>), the app reads it, but <code>git status</code> doesn't see it. That's the configuration working. If I'd skipped the <code>.gitignore</code> step, <code>.env</code> would have shown up under "Untracked files" -- which is the signal to stop and fix the gitignore before doing anything else.
+</p>
+
+<h2>What I noticed</h2>
+
+<p>
+  The Free Dictionary API I used in W4D2 didn't need a key, so I never had to think about this. The GitHub one I'm using today doesn't either (rate-limited but not keyed). But the OpenWeatherMap example in the day brief does, and so will most of the third-party APIs I'll touch in Phase 2. Getting the hygiene right on a no-key URL today means the muscle memory is already there when the key is real next week.
+</p>
+
+<p>
+  My PEEK / BeaglePlay work has the analog of this -- never commit <code>~/.ssh/id_ed25519</code>, never paste a serial key into a config file that's in source control. The web side is the same shape, just with bots scanning the GitHub firehose instead of a person reading your repo. The class of mistake is identical. The fix is identical. The cost of one mistake on either side can be real money.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

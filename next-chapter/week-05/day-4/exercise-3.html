@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- GitHub User Search / NCD W5D4</title>
+<meta name="description" content="Exercise 3: GitHub user lookup. On-submit fetch, 404 handling, avatar + name + bio + repo count.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F419;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>GitHub User Search</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 45 min</div>
+
+<p>
+  Lookup tool. Type a username, click search, render the profile. The shape that's different from Ex 1: the fetch fires on click, not on mount. So <code>useEffect</code> doesn't get involved at all -- the async function runs straight out of the submit handler. Same three states (loading/data/error), same try/catch/finally, just kicked off by a user action instead of a mount.
+</p>
+
+<h2>The component</h2>
+
+<pre><code>import { useState } from "react";
+
+function GitHubSearch() {
+  const [username, setUsername] = useState("");
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    if (username.trim() === "") return;
+
+    setLoading(true);
+    setError(null);
+    setUser(null);
+
+    try {
+      const response = await fetch(
+        `https://api.github.com/users/${encodeURIComponent(username)}`
+      );
+      if (response.status === 404) {
+        throw new Error("User not found");
+      }
+      if (!response.ok) {
+        throw new Error(`GitHub returned ${response.status}`);
+      }
+      const data = await response.json();
+      setUser(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;GitHub User Search&lt;/h1&gt;
+      &lt;form onSubmit={handleSearch}&gt;
+        &lt;input
+          value={username}
+          onChange={(e) =&gt; setUsername(e.target.value)}
+          placeholder="github handle"
+        /&gt;
+        &lt;button type="submit" disabled={loading}&gt;Search&lt;/button&gt;
+      &lt;/form&gt;
+
+      {loading &amp;&amp; &lt;p&gt;Searching...&lt;/p&gt;}
+      {error   &amp;&amp; &lt;p className="err"&gt;{error}&lt;/p&gt;}
+
+      {user &amp;&amp; (
+        &lt;article className="profile"&gt;
+          &lt;img src={user.avatar_url} alt="" width={96} height={96} /&gt;
+          &lt;h2&gt;{user.name || user.login}&lt;/h2&gt;
+          &lt;p&gt;{user.bio || "No bio available"}&lt;/p&gt;
+          &lt;p&gt;Public repos: {user.public_repos}&lt;/p&gt;
+          {user.location &amp;&amp; &lt;p&gt;Location: {user.location}&lt;/p&gt;}
+          &lt;a href={user.html_url} target="_blank" rel="noopener noreferrer"&gt;
+            View on GitHub
+          &lt;/a&gt;
+        &lt;/article&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Why no useEffect here?</strong>
+  <p>Because the fetch is event-driven, not mount-driven. <code>useEffect</code> is the right tool when "when this thing first appears on screen, run X." When the trigger is a click instead, just call the async function from the click handler -- the handler itself is the equivalent of the effect. Reaching for <code>useEffect</code> on click-driven fetches is a common over-application of the hook. It's not needed and it actively makes the code harder to follow.</p>
+</div>
+
+<div class="answer">
+  <strong>Why reset user/error/loading at the top of handleSearch?</strong>
+  <p>Without it, a second search runs with the first search's result still in state. The flicker would be: previous user still on screen, loading flag goes up, new user arrives, swap. With the reset: previous user disappears immediately, loading state shows, new user arrives. Less confusing. Same lesson as making sure interim states are explicit -- the user should never see stale data labelled as if it's fresh.</p>
+</div>
+
+<div class="answer">
+  <strong>encodeURIComponent on username -- why?</strong>
+  <p>Defensive. Most GitHub handles are URL-safe (alphanumerics and hyphens) but the input is user-controlled. If somebody types a space or a slash, the URL breaks in a way that's annoying to debug. <code>encodeURIComponent</code> escapes anything that would break the URL. It's the same one-line habit as parameterized SQL queries -- always do it, never trust the input shape, the cost is nothing.</p>
+</div>
+
+<div class="answer">
+  <strong>disabled={loading} on the button -- why?</strong>
+  <p>So the user can't fire a second request while the first is in flight. Without it, a frustrated user clicking three times fires three requests, three setStates, and the responses can arrive out of order (race condition -- last-write-wins on state, not last-fired). Disabling the button while loading is the cheap fix. The proper fix is request cancellation with <code>AbortController</code>, which is a Week 6 topic the day brief flagged. For now: disabled button, one request at a time.</p>
+</div>
+
+<h2>What I noticed running it</h2>
+
+<p>
+  Searched my handle, got my profile. Searched <code>octocat</code>, got the GitHub mascot. Searched <code>thisuserdefinitelydoesnotexist1234</code>, got "User not found" -- the 404 path. Watched the network tab: clean 200, clean 404, no console errors. The on-submit pattern handles all three.
+</p>
+
+<p>
+  The rate-limit warning in the day brief is real. GitHub's unauthenticated limit is 60 requests per hour per IP. I burned through six during testing without thinking; that's 10% gone in the first minute. The day brief's advice -- only fetch on Search click, never on every keystroke -- is the only thing that keeps you under the limit. Same energy as not blasting your AWS API key every render.
+</p>
+
+<h2>What I'd build on top</h2>
+
+<p>
+  Search the user's repos as a second call (<code>https://api.github.com/users/{username}/repos</code>) and render the top three by star count. That's a second fetch chained off the first -- which raises the question of whether to fire both in parallel or sequentially. Parallel with <code>Promise.all</code> is the right move when neither depends on the other, which is the case here (you can fetch the user and the repos at the same time off the username). One more pattern I want to land before the week is out.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

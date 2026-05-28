@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Category Filter / NCD W5D3</title>
+<meta name="description" content="Exercise 4: category filter buttons stacked on top of the search filter, empty state for zero matches.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F3F7;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Category Filter + Empty State</h1>
+<div class="subtitle">Exercise 4 / 7 . Level 2 . 30 min</div>
+
+<p>
+  Stack a category filter on top of the search filter. Add a "No products found" state when nothing matches. This is the exercise where conditional rendering and list rendering actually meet -- the UI has to handle "here are results," "here are some results," and "here are no results" without any of those branches feeling tacked on.
+</p>
+
+<h2>The chained filter</h2>
+
+<pre><code>const CATEGORIES = ["All", "Electronics", "Books", "Clothing"];
+
+function ProductList() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [category, setCategory] = useState("All");
+
+  const visible = products
+    .filter((p) =&gt;
+      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter((p) =&gt;
+      category === "All" ? true : p.category === category
+    );
+
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Products&lt;/h2&gt;
+
+      &lt;input
+        type="text"
+        value={searchTerm}
+        onChange={(e) =&gt; setSearchTerm(e.target.value)}
+        placeholder="Search products..."
+      /&gt;
+
+      &lt;div className="cat-row"&gt;
+        {CATEGORIES.map((c) =&gt; (
+          &lt;button
+            key={c}
+            onClick={() =&gt; setCategory(c)}
+            style={{
+              fontWeight: c === category ? "bold" : "normal",
+              borderColor: c === category ? "#5E957A" : "#C7C5BF",
+            }}
+          &gt;
+            {c}
+          &lt;/button&gt;
+        ))}
+      &lt;/div&gt;
+
+      {visible.length === 0 ? (
+        &lt;p&gt;No products found.&lt;/p&gt;
+      ) : (
+        visible.map((p) =&gt; (
+          &lt;ProductCard
+            key={p.id}
+            name={p.name}
+            price={p.price}
+            category={p.category}
+          /&gt;
+        ))
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Why two .filter() calls instead of one combined predicate?</strong>
+  <p>Readability and composition. One filter does one thing -- search -- and the next filter does one thing -- category. If I add a third (price range, in stock, etc.), it slots into the chain without rewriting the predicate. Performance is the same to within a rounding error at this size. If the list were millions of rows I'd think about a single pass, but at five rows the cost of two passes is invisible and the code is cleaner.</p>
+</div>
+
+<div class="answer">
+  <strong>Why the ternary for "All" instead of a special case?</strong>
+  <p>The "All" button has to mean "skip the category filter." Returning <code>true</code> for every item is the cleanest way to express that without branching out of the chain. <code>category === "All" ? true : p.category === category</code> reads in English as "if category is All keep it, otherwise keep it when categories match." One line, no early return, the chain stays intact.</p>
+</div>
+
+<div class="answer">
+  <strong>Why ternary for the empty state instead of two AND expressions?</strong>
+  <p>Either works. The ternary makes the "exactly one of these renders" relationship explicit, which is what I actually mean. <code>{visible.length === 0 &amp;&amp; ...} {visible.length &gt; 0 &amp;&amp; ...}</code> would do the same thing but it asks the reader to check that the two conditions are exhaustive and disjoint. The ternary makes that structural by construction.</p>
+</div>
+
+<h2>What I noticed running it</h2>
+
+<p>
+  Clicked "Books," typed "react." Got just "React Handbook." Cleared the search, still on Books, got both. Switched to "Clothing" with nothing typed, got "Running Shoes." Searched "headphones" with "Clothing" still selected, got "No products found." That last one is the empty state actually firing -- and it firing for the <em>right</em> reason (category disagrees) is what I was testing. The fix in that case is the user picking "All," not the app being smart.
+</p>
+
+<p>
+  The active-button styling is doing too much inline. For real I'd lift those styles into CSS classes -- a <code>.cat-btn.active</code> -- but inline was faster for the lab. Same pattern as the "make it work in JSX first, lift to CSS once it's right" rule.
+</p>
+
+<h2>What I'd build on top</h2>
+
+<p>
+  Persist <code>category</code> and <code>searchTerm</code> to the URL as query params. Then refreshing the page or sharing a link keeps the filtered view. <code>useSearchParams</code> when I get to react-router; for now I'd hand-roll it with <code>window.history.replaceState</code> inside an effect. Same shape, just two more "inputs" that happen to live in the URL bar instead of state.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

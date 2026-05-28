@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Error Handling / NCD W5D4</title>
+<meta name="description" content="Exercise 2: break the URL on purpose, watch the error state fire, write a user-friendly fallback with a retry.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26A0;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Error Handling</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 20 min</div>
+
+<p>
+  Intentionally break the URL. Verify the error state actually fires. Replace the bare error message with something a real user could read. Then fix the URL and confirm nothing else regressed. Small exercise, real habit.
+</p>
+
+<h2>Breaking it</h2>
+
+<p>
+  Changed <code>posts</code> to <code>BROKEN</code> in the URL. Saved, reloaded, watched: "Loading posts..." for a beat, then "Error: Failed to fetch posts." Good -- the <code>!response.ok</code> branch threw, the <code>catch</code> caught it, <code>setError</code> populated, <code>finally</code> flipped loading off. The error path is wired the same as the success path -- both run through <code>finally</code>, so the spinner doesn't get stuck. That symmetry is what makes the try/catch/finally pattern actually correct, not just defensive.
+</p>
+
+<h2>The user-friendly fallback</h2>
+
+<pre><code>if (error) {
+  return (
+    &lt;div className="err-card"&gt;
+      &lt;h2&gt;Something went wrong&lt;/h2&gt;
+      &lt;p&gt;We couldn't load the posts. Check your connection and try again.&lt;/p&gt;
+      &lt;p className="err-detail"&gt;&lt;code&gt;{error}&lt;/code&gt;&lt;/p&gt;
+      &lt;button onClick={() =&gt; window.location.reload()}&gt;Retry&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Why show the raw error text at all?</strong>
+  <p>For me, not for the user. The big copy ("We couldn't load the posts...") is what a normal user reads and acts on. The small <code>&lt;code&gt;</code> line below is a hook for triage -- if someone screenshots this and sends it to me, I want to be able to tell "404" from "network offline" from "CORS blocked" without asking. It's the same instinct as a kernel panic that prints both a friendly message and the stack trace: humans get one, debuggers get the other.</p>
+</div>
+
+<div class="answer">
+  <strong>Why window.location.reload() instead of a proper retry?</strong>
+  <p>Cheapest possible thing that works. A real retry would re-call the fetch function from inside React state, without reloading the page -- which means lifting the fetch into a callback I can re-invoke, and resetting <code>loading</code>/<code>error</code>/<code>data</code> back to their initial values. That's a refactor I'd do in a real app. For a lab error state it's fine to nuke and reload, because the cost of doing it right is bigger than the cost of the workaround.</p>
+</div>
+
+<div class="answer">
+  <strong>What about a network failure (offline)?</strong>
+  <p>Different code path. <code>response.ok</code> only matters if the request actually completed. If the browser is offline, <code>fetch</code> rejects with a TypeError -- "Failed to fetch" or similar. That throw lands in the same <code>catch</code> block and produces the same error state. The error <em>message</em> is different (the user sees a different <code>err.message</code> in the small line), but the UX is the same. The pattern handles both with one branch, which is exactly the point.</p>
+</div>
+
+<h2>Fixed and verified</h2>
+
+<p>
+  Put <code>posts</code> back in the URL. Reloaded. Loading state for a beat, then the list rendered. Diffed the file against pre-break to make sure nothing else regressed -- only the URL string changed (and the error UI was kept, because there's no reason to remove the friendly fallback once you have it).
+</p>
+
+<h2>What I noticed</h2>
+
+<p>
+  Every fetch I write from now on gets the friendly-error UI from the start, not as a "do this later." It's the kind of thing that's free to add at the start (you're already writing the error branch, you might as well make it useful) and expensive to retrofit later (you have to find every fetch in the codebase). Habit, not feature.
+</p>
+
+<p>
+  The smaller observation: the day brief is right that users leave on a white screen. The cost of a 30-second friendly-error component is approximately zero. The cost of losing a user because they hit a flaky API call is not zero. The asymmetry is the argument.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

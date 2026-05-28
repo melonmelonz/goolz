@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Search + Filter / NCD W5D3</title>
+<meta name="description" content="Exercise 3: live search box that filters the product list with .filter() chained into .map().">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F50D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Search + Filter</h1>
+<div class="subtitle">Exercise 3 / 7 . Level 2 . 30 min</div>
+
+<p>
+  Add a search box. Type, the list narrows. This is where the data-as-the-truth idea pays its first dividend: the list isn't being mutated -- it's being projected through a filter. The original <code>products</code> array doesn't change. What changes is which subset of it gets handed to <code>.map()</code> on each render.
+</p>
+
+<h2>The change</h2>
+
+<pre><code>function ProductList() {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const visible = products.filter((p) =&gt;
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Products&lt;/h2&gt;
+
+      &lt;input
+        type="text"
+        value={searchTerm}
+        onChange={(e) =&gt; setSearchTerm(e.target.value)}
+        placeholder="Search products..."
+      /&gt;
+
+      {visible.map((p) =&gt; (
+        &lt;ProductCard
+          key={p.id}
+          name={p.name}
+          price={p.price}
+          category={p.category}
+        /&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Why .toLowerCase() on both sides?</strong>
+  <p>Case-insensitive match. Without it, typing "book" would miss "Books" because the comparison is exact. Lowercase the haystack, lowercase the needle, compare. Same trick I use in Python with <code>.lower()</code>. There are fancier options (locale-aware collation, unicode normalization) but for an ASCII product list it doesn't matter.</p>
+</div>
+
+<div class="answer">
+  <strong>Why compute "visible" before the return instead of inline?</strong>
+  <p>Readability. The <code>{visible.map(...)}</code> in the JSX reads cleanly; <code>{products.filter(...).map(...)}</code> inline gets noisy fast, especially once Exercise 4 adds the category filter as a second <code>.filter()</code> in the chain. Pull the derived value out, name it. Same instinct as breaking up a Rust iterator chain into intermediate <code>let</code> bindings when it gets long.</p>
+</div>
+
+<div class="answer">
+  <strong>Where does visible "live"?</strong>
+  <p>It's a regular const inside the function body. It exists for one render, then it's gone. Next render rebuilds it from the current <code>products</code> and current <code>searchTerm</code>. This is the pattern: state holds the inputs, derived values are recomputed on every render from those inputs. No <code>useState</code> for <code>visible</code>, because there's nothing to remember between renders -- it can always be recomputed.</p>
+</div>
+
+<h2>What I noticed running it</h2>
+
+<p>
+  Typed "head", got just the headphones. Typed "book", got both books. Cleared the input, got all five back. The list updates on every keystroke and it's instant. Yesterday's "<code>UI = f(state)</code>" thing is now the shape of every interaction: the state is <code>searchTerm</code>, the function is "filter products by it and render," the UI is whatever falls out.
+</p>
+
+<p>
+  Smaller thing I want to remember: the input has a <code>placeholder</code>, not a label. For a real form I'd want a proper <code>&lt;label&gt;</code> for accessibility. Skipping it in lab is fine; in PEEK's TUI mockups I'd be more careful, because screen-reader users are exactly the kind of "different operator on the same machine" the project is built to think about.
+</p>
+
+<h2>What I'd build on top</h2>
+
+<p>
+  Debounce the input. Right now every keystroke filters the list, which is free at five items and expensive at five thousand. <code>setTimeout</code> the actual filter call, cancel on the next keystroke, fire it 200ms after the user stops typing. Don't need it here, but it's the kind of "scales the same approach without changing the model" detail I'd want to know I can add when it's needed.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 5 -- Day 3 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 5 Day 3. More React: events, lists, conditional rendering. First Codex CLI session.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F501;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 3 -- Events, Lists, Conditional Rendering</h1>
+<div class="subtitle">NCD . WK5 . D3 . seven exercises loaded . first codex cli session</div>
+
+<p>
+  Yesterday React stopped being abstract. Today is the day it stops being a toy. Forms that track what you type. Lists that update when data changes. UI that appears and disappears when the user does something. The bridge from "look at this static thing I rendered" to "look at this thing that responds to me."
+</p>
+
+<p>
+  The second half of the day brief is what I actually want to think about: Codex CLI. I've been using Claude Code as my daily driver since Phase 1, so the "agent in your terminal that reads your files and edits them" model isn't new to me. What <em>is</em> new is the cohort framing -- session discipline as the actual skill, not the tool. The Phase 2 gate at the end of Week 8 tests whether I can scope, prompt with context, and read a diff like a critic. That's the same skill across every agent, which is why the program is right to drill it as a transferable thing instead of a vendor pitch.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- What Does This Component Do?</div>
+  <p><b>Q1 -- &lt;Greeting name="Maria" isLoggedIn={true} /&gt;:</b> renders <code>&lt;h1&gt;Welcome back, Maria!&lt;/h1&gt;</code>. The early <code>if</code> hits, the function returns before the second <code>return</code> ever executes.</p>
+  <p><b>Q2 -- isLoggedIn={false}:</b> the <code>if</code> body is skipped, control falls through to <code>return &lt;h1&gt;Please sign in.&lt;/h1&gt;</code>.</p>
+  <p><b>Q3 -- which pattern?</b> Early-return conditional rendering. One of the three from the lecture, the one to reach for when a condition means "stop here, don't render the rest." The other two are the ternary (A or B) and the logical AND (something or nothing).</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> built React components with props and state -- favorites list as the capstone. Felt the <code>UI = f(state)</code> inversion for the first time.</p>
+  <p><b>What I'm doing today:</b> events (onChange, onSubmit), lists with .map(), conditional rendering, then a full to-do app and the component-decomposition pass. Closing the day with the first Codex CLI session against real React code.</p>
+  <p><b>Where I'm stuck:</b> not stuck, but flagging it -- I want to be careful that "I already use an agent" doesn't make me skip the discipline reps. The whole point of the Phase 2 gate is the method, and the method only gets sharp through honest logs of sessions that went badly. Going to keep <code>cli-session-log.md</code> honest, not curated.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Controlled Form</span>
+      <span class="ex-desc">name + email inputs, live preview, onSubmit clears the fields</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Product List</span>
+      <span class="ex-desc">array of objects, ProductCard component, .map() with keys</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Search + Filter</span>
+      <span class="ex-desc">live search box, case-insensitive .filter() chained into .map()</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Category Filter</span>
+      <span class="ex-desc">All/Electronics/Books/Clothing buttons, double filter, empty state</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">To-Do App</span>
+      <span class="ex-desc">add, toggle, delete, remaining count, no empty items</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-6.html">
+      <span class="ex-num">Exercise 6</span>
+      <span class="ex-title">Component Decomposition</span>
+      <span class="ex-desc">break the to-do app into TodoForm / TodoStats / TodoList / TodoItem</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-7.html">
+      <span class="ex-num">Exercise 7</span>
+      <span class="ex-title">First Codex CLI Session</span>
+      <span class="ex-desc">scope, prompt, diff, decide, log -- one task on real code</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- The Codex CLI Session I Ran</div>
+  <p>
+    Two minutes in the breakout. I picked Exercise 7's "persist the to-do list to localStorage" task. Goal sentence I wrote down first: "In <code>src/TodoApp.jsx</code>, persist <code>todos</code> to localStorage so it survives a page refresh; load on mount, save on every change." That was the whole scope. One file, one feature, one sentence.
+  </p>
+  <p>
+    The prompt referenced the file by name, mentioned the existing <code>useState</code> pattern, asked for a diff before applying. What came back: one <code>useState</code> initializer changed to read from <code>localStorage.getItem("todos")</code> with a JSON.parse and a try/catch, plus a <code>useEffect</code> that writes on every change. I read the diff and noticed the agent had also reformatted an unrelated arrow function on the way through. I rejected that line and re-prompted with "only the localStorage changes, leave the rest of the file alone." Second diff was clean. Applied.
+  </p>
+  <p>
+    My partner asked: "what would you do differently next session?" Two things. One, I'd add "do not modify any other code" to the original prompt instead of catching it in review. Two, I'd have asked it to add a comment explaining why the try/catch is there (corrupted localStorage), because in two weeks I won't remember. Both small. Both the kind of thing the log catches if I keep the log honest.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    The <code>.filter().filter().map()</code> chain in Exercise 4 is the moment React stopped feeling like a UI thing and started feeling like data plumbing. The view is just a projection of an array. Whatever shape the array takes, the view follows. Filter buttons don't "change the list" -- they change what slice of the list is rendered. The data is the same data the whole time. That's the same separation I want in every system I build: the state is the truth, the view is a function of it, and the events are the only thing allowed to mutate the truth.
+  </p>
+  <p>
+    The Codex CLI thing that clicked: scope is the entire game. The bad-session demo in the lecture wasn't bad because the agent is dumb -- it was bad because "make this app better" forces the agent to invent the scope, and once the agent invents the scope, you're reviewing <em>its</em> goals against <em>your</em> intentions instead of the diff against the goal. Scoping the task in one sentence before the prompt is the same discipline as writing the function signature before the body. Same shape, same payoff.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

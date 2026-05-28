@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Phase 2 First API / NCD W5D4</title>
+<meta name="description" content="Exercise 5: first real API connection for the Phase 2 capstone (ReEntry Tech). Jobs feed via JSONPlaceholder stand-in, schema-mapped against Week 4's data model.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F195;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Phase 2 -- First API Connection</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 3 . 45 min . first wire to ReEntry Tech</div>
+
+<p>
+  This is the first piece of the actual Phase 2 capstone -- <strong>ReEntry Tech</strong>, the jobs / training-program board for people coming home from incarceration that I scoped during Week 4. The real API I'd want is something like a federated re-entry resource feed (CareerOneStop, state DOL APIs, the Reentry Resource Center listings) -- but none of those are stood up as a clean public JSON endpoint, so today's exercise uses JSONPlaceholder as a shaped stand-in. The plumbing is real. The data is mock. The schema mapping is the work that's actually load-bearing.
+</p>
+
+<h2>Schema mapping from Week 4</h2>
+
+<p>
+  Pulled up my W4D3 data model. The <code>Posting</code> entity I sketched has these fields:
+</p>
+
+<pre><code>Posting {
+  id:           uuid
+  title:        string         // job title or program name
+  org:          string         // employer or training provider
+  body:         text           // description
+  category:     enum           // job / certification / wraparound
+  location:     string
+  posted_at:    timestamp
+  contact_url:  string
+}</code></pre>
+
+<p>
+  JSONPlaceholder's <code>/posts</code> endpoint returns objects shaped like:
+</p>
+
+<pre><code>{
+  userId: 1,
+  id:     1,
+  title:  "sunt aut facere...",
+  body:   "quia et suscipit\nsuscipit recusandae..."
+}</code></pre>
+
+<p>
+  Three fields line up cleanly (id, title, body). Three don't (userId is a foreign key to a user the UI doesn't care about; org / category / location / posted_at / contact_url all need to be synthesized at the boundary or stubbed). For today, I'm mapping at the fetch boundary -- the React code never sees the raw shape, only the <code>Posting</code> shape. That's the seam where the real API switch will happen later: replace the mapper, leave the UI alone.
+</p>
+
+<h2>The mapper + the fetch</h2>
+
+<pre><code>const API_BASE = import.meta.env.VITE_API_BASE_URL; // jsonplaceholder
+
+const STUB_CATEGORIES = ["job", "certification", "wraparound"];
+const STUB_ORGS = ["BronxWorks", "Osborne Association", "STRIVE NY",
+                   "Center for Employment Opportunities", "Fortune Society"];
+
+function intoPosting(raw) {
+  return {
+    id:          String(raw.id),
+    title:       raw.title.replace(/^\w/, (c) =&gt; c.toUpperCase()),
+    org:         STUB_ORGS[raw.id % STUB_ORGS.length],
+    body:        raw.body.replace(/\n/g, " "),
+    category:    STUB_CATEGORIES[raw.id % STUB_CATEGORIES.length],
+    location:    "New York, NY",
+    posted_at:   new Date(Date.now() - raw.id * 86400000).toISOString(),
+    contact_url: `mailto:intake@reentrytech.example`,
+  };
+}
+
+function PostingsBoard() {
+  const [postings, setPostings] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+
+  useEffect(() =&gt; {
+    async function load() {
+      try {
+        const res = await fetch(`${API_BASE}/posts?_limit=12`);
+        if (!res.ok) throw new Error(`upstream returned ${res.status}`);
+        const raw = await res.json();
+        setPostings(raw.map(intoPosting));
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) return &lt;p&gt;Loading openings...&lt;/p&gt;;
+  if (error)   return (
+    &lt;div className="err-card"&gt;
+      &lt;h2&gt;Couldn't reach the listings&lt;/h2&gt;
+      &lt;p&gt;Try again in a minute, or reach the team at intake@reentrytech.example.&lt;/p&gt;
+      &lt;p&gt;&lt;code&gt;{error}&lt;/code&gt;&lt;/p&gt;
+    &lt;/div&gt;
+  );
+
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;Open Listings&lt;/h1&gt;
+      &lt;p className="count"&gt;{postings.length} active&lt;/p&gt;
+      &lt;ul className="postings"&gt;
+        {postings.map((p) =&gt; (
+          &lt;li key={p.id} className={`posting cat-${p.category}`}&gt;
+            &lt;header&gt;
+              &lt;span className="cat"&gt;{p.category}&lt;/span&gt;
+              &lt;h2&gt;{p.title}&lt;/h2&gt;
+              &lt;p className="org"&gt;{p.org} . {p.location}&lt;/p&gt;
+            &lt;/header&gt;
+            &lt;p&gt;{p.body}&lt;/p&gt;
+            &lt;a href={p.contact_url}&gt;Reach intake&lt;/a&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/section&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Why map at the fetch boundary instead of in the component?</strong>
+  <p>So the component never has to know about the upstream shape. If the real API ships in two weeks with different field names, I rewrite <code>intoPosting</code> and the rest of the file doesn't change. Same architectural principle as a database repository -- keep the I/O shape and the domain shape separate, with one named function as the bridge. The mapper is also the only place that knows about the stub data, which keeps the mocks from leaking everywhere.</p>
+</div>
+
+<div class="answer">
+  <strong>Why stub org / category / location instead of leaving them blank?</strong>
+  <p>Two reasons. One -- the UI is the thing I'm building today, and it needs realistic shapes to design against. A list of postings where every posting has "(missing)" for org and category looks broken whether it is or isn't. Two -- if I render blanks today I'll forget the fields exist and the UI won't be ready for them when the real API lands. Stubs keep the schema honest in the rendered output. They're flagged with the comment "// STUB" in the source so future-me knows where to swap.</p>
+</div>
+
+<div class="answer">
+  <strong>Why an empty deps array on useEffect for this one?</strong>
+  <p>Same reason as Ex 1. Fetch once on mount, don't re-fetch on every render. Eventually this becomes a real query with filter inputs (category, location, posted-since) which will mean re-fetching when those inputs change -- at which point the deps array gets the filter values added. Pattern stays the same, the contents of the array grow as the inputs grow. Forward-flag: that's the Week 6 thing where I want to be sure I'm not also leaking on unmount.</p>
+</div>
+
+<h2>What I noticed</h2>
+
+<p>
+  The schema-mapping exercise is doing more work than the React. JSONPlaceholder gives me four fields; my domain wants eight. The four-to-eight mapping is the thing I'd be doing all of Phase 2 anyway -- every external integration is some version of "the upstream gives you what the upstream gives you, and your app wants what your app wants, and you live in the seam between them." Doing it today against a fake API is rehearsal for doing it later against a real one with worse documentation.
+</p>
+
+<p>
+  The other quiet win: I have a working board with twelve listings, real loading and error states, env-driven base URL, schema-mapped data, and a comment in <code>intoPosting</code> pointing future-me at the swap point. Two weeks ago this would have been a static HTML mockup. Today it's the actual data pipeline for the capstone, just with mock data flowing through it. That's not a small step -- that's the whole shape of "real apps work this way."
+</p>
+
+<p>
+  Tomorrow is Vibe Code Friday. I want to use it to either (a) replace the stub with a real federated re-entry resource feed if I can find one, or (b) add the category filter inputs from W5D3 onto this so the data model and the UI converge another step. Probably (b) -- the API hunt is going to take longer than a Friday, and the filter work is incremental progress on the same file.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

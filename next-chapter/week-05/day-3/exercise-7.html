@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 7 -- First Codex CLI Session / NCD W5D3</title>
+<meta name="description" content="Exercise 7: scope, prompt, diff, decide, log. First Codex CLI session against the to-do app -- localStorage persistence.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F916;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>First Codex CLI Session</h1>
+<div class="subtitle">Exercise 7 / 7 . Level 2 . 35 min . Phase 2 gate prep -- session 1</div>
+
+<p>
+  Codex CLI isn't new shape for me -- I've been running Claude Code as my daily agent since Phase 1, so the "agent in the terminal that reads files and writes diffs" model is the same. What <em>is</em> new is putting it through the cohort's session-discipline rubric explicitly: scope, prompt, review, decide, log. Anyone can install a CLI. The Phase 2 gate is about whether the loop above stays tight.
+</p>
+
+<p>
+  Setup was the documented one-liner -- <code>npm install -g @openai/codex</code>, <code>export OPENAI_API_KEY=...</code> (TA-issued cohort key, not my own), <code>codex</code> inside the to-do project folder. Two-line session header, then the prompt.
+</p>
+
+<h2>The four-step method</h2>
+
+<p>
+  <strong>1. Read &amp; sketch.</strong> Opened <code>src/TodoApp.jsx</code> in vim, read it through. Wrote one sentence in a scratch file: <em>"Persist todos to localStorage so it survives a page refresh; load on mount, save on every change. Only this file."</em> The "only this file" was a deliberate fence -- localStorage is small enough to spill into other files if I let the agent run.
+</p>
+
+<p>
+  <strong>2. Try myself first.</strong> Before prompting, I sketched the shape on paper: <code>useState</code> initializer reads from localStorage with a JSON.parse and a fallback seed, plus a <code>useEffect</code> that writes <code>JSON.stringify(todos)</code> on every change. Two changes, both inside the existing file. Knowing the shape before asking is what turns "did the agent do the right thing?" into a yes/no instead of a vibe check.
+</p>
+
+<p>
+  <strong>3. Use Codex CLI strategically.</strong> The actual prompt I sent:
+</p>
+
+<pre><code>In src/TodoApp.jsx, persist `todos` to localStorage so it survives
+a page refresh. Use the existing useState + useEffect patterns
+already in this file. Initialize from localStorage on mount (fall
+back to the current seed array if the key is missing or unparseable),
+and write on every change. Only modify TodoApp.jsx. Show me the diff
+before applying.</code></pre>
+
+<p>
+  Three things load-bearing in there: file name, "existing patterns" (so it doesn't reach for a library), "only modify this file" (so it doesn't decide to refactor on the way through). Last sentence asks for the diff before applying, which is the gate I want to keep open every session.
+</p>
+
+<p>
+  <strong>4. Reflect.</strong> Diff came back -- mostly right. The <code>useState</code> initializer was a lazy initializer (passing a function, not a value, which is the right shape because the JSON parse shouldn't run on every render). The <code>useEffect</code> had <code>[todos]</code> as the dependency array. Both right. But the agent had also reformatted <code>addTodo</code> -- changed the arrow style and re-indented an unrelated line. That's exactly the "touched something I didn't expect" thing the lecture warned about.
+</p>
+
+<h2>Keep / Reject / Modify</h2>
+
+<p>
+  <strong>Modify.</strong> Re-prompted: "Keep only the localStorage changes. Revert the changes to addTodo." Second diff was clean -- just the initializer and the new <code>useEffect</code>. Applied. Refreshed the page, todos survived. Cleared localStorage in DevTools, refreshed, fell back to the seed. Both branches of the fallback worked on the first try.
+</p>
+
+<h2>cli-session-log.md</h2>
+
+<pre><code># CLI Session Log -- Week 5 Day 3 (session 1)
+
+**Goal (one sentence):**
+Persist `todos` to localStorage in src/TodoApp.jsx, load on mount, save on every change, no other files.
+
+**Prompt:**
+[as above]
+
+**What came back (summary of the diff):**
+Lazy useState initializer reading from localStorage with try/catch + seed fallback.
+useEffect with [todos] dep writing JSON.stringify on change.
+Plus: an unrelated reformat of addTodo (rejected).
+
+**Decision:** Modify
+Asked for the localStorage changes only, revert the addTodo touch.
+
+**Result:**
+Second diff was clean, applied, verified both branches (seeded localStorage + empty localStorage).
+
+**One thing I'd do differently next session:**
+Put "do not modify any other functions in this file, even formatting" in the original
+prompt instead of catching the unrelated reformat in review. Cheaper to fence the
+agent up front than to reject and re-prompt.</code></pre>
+
+<h2>What I noticed</h2>
+
+<p>
+  The "unrelated reformat" thing is the single most important lesson from session one. The agent is helpful -- it sees a thing it thinks could be tidier and tidies it. That's fine in isolation. It's not fine in a session where the whole game is "is this diff exactly what I asked for, no more, no less." The fence has to be in the prompt, because it can't be in the review unless I'm willing to reject and re-prompt every time. The reject-and-reprompt loop works but it spends the rate-limit budget on noise.
+</p>
+
+<p>
+  The other thing: the prompt that worked was <em>longer</em> than the prompts I usually write. I default to terse because terse is faster. But terse means the agent has to guess at the fence, and when it guesses wrong I pay for it on the back end. The cohort's "scope, context, review" rubric is really "spend up front so you spend less on the back end." Same time, different distribution. I'd rather think for two minutes before sending than reject for two minutes after.
+</p>
+
+<p>
+  Logging this honestly is the part I'm going to have to discipline. The temptation is to write down the sessions that went well and quietly skip the ones that went sideways. The opposite is the right move -- the sideways ones are the ones I'll learn from in Week 8.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-6.html">&#9664; Exercise 6</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

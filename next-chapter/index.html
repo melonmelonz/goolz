@@ -1284,6 +1284,18 @@
       <div class="icon-img shortcut">⚛</div>
       <div class="icon-label">W5D2.react</div>
     </div>
+    <div class="icon" tabindex="0" title="Week 5 Day 3 -- Events, Lists, Conditional Rendering + first Codex CLI session (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-05/day-3/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-05/day-3/','_blank','noopener')">
+      <div class="icon-img shortcut">🔁</div>
+      <div class="icon-label">W5D3.events</div>
+    </div>
+    <div class="icon" tabindex="0" title="Week 5 Day 4 -- React + APIs: fetch, useEffect, env vars (opens in a new tab)"
+         ondblclick="window.open('/next-chapter/week-05/day-4/','_blank','noopener')"
+         onkeydown="if(event.key==='Enter')window.open('/next-chapter/week-05/day-4/','_blank','noopener')">
+      <div class="icon-img shortcut">📡</div>
+      <div class="icon-label">W5D4.fetch</div>
+    </div>
     <div class="icon" tabindex="0" title="Study Plan / Report Card" ondblclick="openWindow('win-rc')">
       <div class="icon-img">📊</div>
       <div class="icon-label">Report&nbsp;Card</div>
@@ -1392,6 +1404,14 @@
             <span class="fl-icon">⚛</span>
             <span class="fl-name">Day 2 — React: Thinking in Components</span>
           </li>
+          <li class="fl-day" onclick="window.open('/next-chapter/week-05/day-3/','_blank','noopener')">
+            <span class="fl-icon">🔁</span>
+            <span class="fl-name">Day 3 — Events, Lists, Conditional Rendering</span>
+          </li>
+          <li class="fl-day" onclick="window.open('/next-chapter/week-05/day-4/','_blank','noopener')">
+            <span class="fl-icon">📡</span>
+            <span class="fl-name">Day 4 — React + APIs (fetch / useEffect)</span>
+          </li>
 
           <li class="fl-section">Capstone</li>
           <li class="fl-day" onclick="window.open('/peek/','_blank','noopener')">
@@ -1402,7 +1422,7 @@
       </div>
     </div>
     <div class="status-bar">
-      <div class="status-pane">17 object(s)</div>
+      <div class="status-pane">19 object(s)</div>
     </div>
   </div>
 
@@ -3030,7 +3050,7 @@ Features needed:
 //  cache-bust key, Clippy changelog top entry, and anything else that
 //  needs to claim a version. Bump here, the rest follows.
 // ═══════════════════════════════════════════════
-const NCD_VERSION = 'v2.14.0';
+const NCD_VERSION = 'v2.16.0';
 window.NCD_VERSION = NCD_VERSION;
 // Surface the global into any DOM elements that should reflect it.
 // Boot tagline shows the marketing-style "2.3" (no leading v / patch), the
@@ -3672,6 +3692,28 @@ function calcMem(cmd) {
   const changelog = [
     {
       version: NCD_VERSION,
+      date: '2026-05-28',
+      title: 'Week 5 Day 4 -- React + APIs: fetch, useEffect, env vars',
+      notes: [
+        'W5D4 lives at /next-chapter/week-05/day-4/ -- five exercises in the mint/monospace style: fetch + display posts (JSONPlaceholder, useEffect, loading/data/error pattern from scratch), error handling (break the URL on purpose, write a user-friendly fallback), GitHub user search (on-submit fetch with 404 path, disabled button while loading, encodeURIComponent on the input), env variables (.env + VITE_ prefix + .gitignore, verify git status is clean), Phase 2 first API connection (ReEntry Tech postings board against JSONPlaceholder as stand-in, schema-mapped to the Week 4 Posting entity at the fetch boundary)',
+        'Ex 5 is the actual seed for the ReEntry Tech capstone -- intoPosting() mapper takes upstream {id, title, body} and emits the full {id, title, org, body, category, location, posted_at, contact_url} domain shape with stub orgs (BronxWorks, Osborne, STRIVE NY, CEO, Fortune Society) and stub categories (job, certification, wraparound). When the real federated re-entry feed lands, only intoPosting changes',
+        'The thing that clicked: data fetching in React is a discipline React makes uncomfortable on purpose. useEffect with [] forces explicitness about when, the three-state pattern forces honesty about what the user sees while waiting, try/catch/finally keeps the state machine symmetric. Same shape as SPI/DMA work on the BeaglePlay -- kick off the op, await the future, deal with whatever comes back',
+        'Course Materials window + desktop shortcut updated with W5D4.fetch; status bar count bumped 18 -> 19 objects',
+      ]
+    },
+    {
+      version: 'v2.15.0',
+      date: '2026-05-28',
+      title: 'Week 5 Day 3 -- Events, Lists, Conditional + first Codex CLI session',
+      notes: [
+        'W5D3 lives at /next-chapter/week-05/day-3/ -- seven exercises in the mint/monospace style: controlled form (name + email + live preview + onSubmit clears), product list (.map() with stable id keys), search filter (case-insensitive .filter() chained into .map()), category filter with empty state (chained double filter, active button styling, "No products found"), to-do app reskinned as BeaglePlay TODO (SPI loopback / panel driver probe / FB_FLUSH ioctl pre-seeded), component decomposition (split monolith into TodoForm + TodoStats + TodoList + TodoItem with props down / callbacks up), first Codex CLI session (localStorage persistence on the to-do app, with full cli-session-log.md entry)',
+        'First Codex CLI session went sideways in a useful way -- agent reformatted an unrelated function (addTodo) on its way through the localStorage diff, had to reject and re-prompt with "only the localStorage changes." Session-1 lesson logged: put the fence ("do not modify any other functions, even formatting") in the original prompt, not in the review. Cheaper up front than on the back end',
+        'The thing that clicked: scope is the entire game with CLI agents. The bad-session demo in lecture wasn\'t bad because the agent was dumb -- it was bad because vague prompts force the agent to invent the scope, and then you\'re reviewing its goals against your intentions instead of the diff against the goal. One-sentence scope before the prompt is the same discipline as writing the function signature before the body',
+        'Course Materials window + desktop shortcut updated with W5D3.events; status bar count bumped 17 -> 18 objects',
+      ]
+    },
+    {
+      version: 'v2.14.0',
       date: '2026-05-27',
       title: 'Week 5 Day 2 -- React: Thinking in Components',
       notes: [

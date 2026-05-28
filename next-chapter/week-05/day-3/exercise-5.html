@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- To-Do App / NCD W5D3</title>
+<meta name="description" content="Exercise 5: the classic React to-do app. Add, toggle, delete, count remaining. Reskinned as BeaglePlay TODO.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2705;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>To-Do App</h1>
+<div class="subtitle">Exercise 5 / 7 . Level 2 . 45 min</div>
+
+<p>
+  The classic React to-do. Built it once with the provided starter, then reskinned the seed data as <strong>BeaglePlay TODO</strong> -- same trick as the W5D2 favorites list, where exercises that are going to live on my disk for the next week might as well track the real work. Three real tasks pre-loaded: SPI loopback verify on rev-A2, ILI9341 panel driver probe scope, miscdev framebuffer FB_FLUSH ioctl pass.
+</p>
+
+<h2>The app</h2>
+
+<pre><code>import { useState } from "react";
+
+function TodoApp() {
+  const [todos, setTodos] = useState([
+    { id: 1, text: "SPI loopback verify on rev-A2",     completed: true  },
+    { id: 2, text: "ILI9341 panel driver probe scope",  completed: false },
+    { id: 3, text: "miscdev framebuffer FB_FLUSH ioctl", completed: false },
+  ]);
+  const [inputValue, setInputValue] = useState("");
+
+  function addTodo(e) {
+    e.preventDefault();
+    if (inputValue.trim() === "") return;
+    setTodos([...todos, { id: Date.now(), text: inputValue, completed: false }]);
+    setInputValue("");
+  }
+
+  function toggleTodo(id) {
+    setTodos(todos.map((t) =&gt;
+      t.id === id ? { ...t, completed: !t.completed } : t
+    ));
+  }
+
+  function deleteTodo(id) {
+    setTodos(todos.filter((t) =&gt; t.id !== id));
+  }
+
+  const remaining = todos.filter((t) =&gt; !t.completed).length;
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;BeaglePlay TODO&lt;/h1&gt;
+      &lt;form onSubmit={addTodo}&gt;
+        &lt;input
+          type="text"
+          value={inputValue}
+          onChange={(e) =&gt; setInputValue(e.target.value)}
+          placeholder="next bring-up step..."
+        /&gt;
+        &lt;button type="submit"&gt;Add&lt;/button&gt;
+      &lt;/form&gt;
+
+      &lt;ul&gt;
+        {todos.map((t) =&gt; (
+          &lt;li key={t.id}&gt;
+            &lt;input
+              type="checkbox"
+              checked={t.completed}
+              onChange={() =&gt; toggleTodo(t.id)}
+            /&gt;
+            &lt;span style={{
+              textDecoration: t.completed ? "line-through" : "none"
+            }}&gt;{t.text}&lt;/span&gt;
+            &lt;button onClick={() =&gt; deleteTodo(t.id)}&gt;Delete&lt;/button&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+
+      &lt;p&gt;{remaining} item{remaining !== 1 ? "s" : ""} remaining&lt;/p&gt;
+      {todos.length === 0 &amp;&amp; &lt;p&gt;Inbox zero. Suspicious.&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Why [...todos, newTodo] and not todos.push(newTodo)?</strong>
+  <p>React diffs state by reference, not by value. <code>push</code> mutates the existing array -- same reference, React sees no change, no re-render. <code>[...todos, newTodo]</code> builds a new array with the new reference, React sees the change, re-renders. Same lesson for <code>toggleTodo</code> and <code>deleteTodo</code> -- the <code>.map()</code> and <code>.filter()</code> calls return new arrays. Immutable updates aren't a style preference here; they're a correctness requirement.</p>
+</div>
+
+<div class="answer">
+  <strong>Why { ...t, completed: !t.completed } in toggle?</strong>
+  <p>Same reason at the object level. The other items in the list pass through by reference (untouched), but the toggled item gets a fresh object with the flipped flag. React's diff then knows exactly which one changed and re-renders just that <code>&lt;li&gt;</code>. Spread, override one field, return. The pattern is identical to Rust's struct update syntax (<code>SomeStruct { completed: !t.completed, ..t }</code>) which is what tipped me off that React's immutable update isn't a hack -- it's the same shape that languages with proper records use natively.</p>
+</div>
+
+<div class="answer">
+  <strong>Why Date.now() for the id?</strong>
+  <p>Quick monotonically-increasing-enough unique key for a lab. In a real app I'd want a real UUID (<code>crypto.randomUUID()</code> is built in) because <code>Date.now()</code> collides if you call it twice in the same millisecond, which sounds impossible until you're hitting a button five times to test. For three keystrokes in lab it's fine. For PEEK's TUI state I'd reach for the real UUID.</p>
+</div>
+
+<h2>Extensions I added</h2>
+
+<p>
+  The "Clear completed" button -- one line, <code>setTodos(todos.filter((t) =&gt; !t.completed))</code>. The All / Active / Completed filter buttons -- another <code>useState</code> for the filter mode, an extra <code>.filter()</code> in the chain before the map (same shape as Ex 4). Both were the kind of thing I expected to take fifteen minutes and took two -- because the data model was already right. Once <code>todos</code> is the truth and the render is a projection, everything else is just another filter.
+</p>
+
+<h2>What I noticed</h2>
+
+<p>
+  Trace-through, what the day brief asked: typing "Buy groceries" -> <code>setInputValue</code> fires on every keystroke, re-renders the input. Click Add -> <code>addTodo</code>, <code>preventDefault</code>, builds new array with the new todo appended, clears input. Click the checkbox -> <code>toggleTodo(id)</code>, <code>.map</code> rebuilds the list with the matching item's <code>completed</code> flipped. Click Delete -> <code>deleteTodo(id)</code>, <code>.filter</code> rebuilds the list without it. At every step the state object that React stores is a fresh value. The DOM updates are a downstream consequence I never wrote code for.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="exercise-6.html">Exercise 6 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

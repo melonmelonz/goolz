@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 6 -- Component Decomposition / NCD W5D3</title>
+<meta name="description" content="Exercise 6: break the to-do app into TodoForm, TodoStats, TodoList, TodoItem. Props flow down, callbacks flow up.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F9E9;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Component Decomposition</h1>
+<div class="subtitle">Exercise 6 / 7 . Level 3 . 45 min</div>
+
+<p>
+  Take the monolithic <code>TodoApp</code> from Ex 5 and split it into pieces. The interesting part isn't the cutting -- it's deciding where the seams go and where state lives. The rule I worked from: state lives at the lowest common ancestor of every component that needs to read it or change it. <code>todos</code> belongs in <code>TodoApp</code> because both <code>TodoStats</code> and <code>TodoList</code> need to read it, and <code>TodoForm</code> needs to change it.
+</p>
+
+<h2>The tree</h2>
+
+<pre><code>TodoApp                  &lt;- owns todos, defines addTodo / toggle / delete
+ |-- TodoForm            &lt;- owns inputValue, calls onAdd(text)
+ |-- TodoStats           &lt;- reads remaining count
+ \-- TodoList            &lt;- reads todos
+      \-- TodoItem       &lt;- reads one todo, calls onToggle(id) / onDelete(id)
+</code></pre>
+
+<h2>The split</h2>
+
+<pre><code>function TodoForm({ onAdd }) {
+  const [inputValue, setInputValue] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (inputValue.trim() === "") return;
+    onAdd(inputValue);
+    setInputValue("");
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input
+        value={inputValue}
+        onChange={(e) =&gt; setInputValue(e.target.value)}
+        placeholder="next bring-up step..."
+      /&gt;
+      &lt;button type="submit"&gt;Add&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+
+function TodoStats({ remaining }) {
+  return &lt;p&gt;{remaining} item{remaining !== 1 ? "s" : ""} remaining&lt;/p&gt;;
+}
+
+function TodoItem({ todo, onToggle, onDelete }) {
+  return (
+    &lt;li&gt;
+      &lt;input
+        type="checkbox"
+        checked={todo.completed}
+        onChange={() =&gt; onToggle(todo.id)}
+      /&gt;
+      &lt;span style={{
+        textDecoration: todo.completed ? "line-through" : "none"
+      }}&gt;{todo.text}&lt;/span&gt;
+      &lt;button onClick={() =&gt; onDelete(todo.id)}&gt;Delete&lt;/button&gt;
+    &lt;/li&gt;
+  );
+}
+
+function TodoList({ todos, onToggle, onDelete }) {
+  return (
+    &lt;ul&gt;
+      {todos.map((t) =&gt; (
+        &lt;TodoItem
+          key={t.id}
+          todo={t}
+          onToggle={onToggle}
+          onDelete={onDelete}
+        /&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+
+function TodoApp() {
+  const [todos, setTodos] = useState([ /* same seed */ ]);
+
+  function addTodo(text) {
+    setTodos([...todos, { id: Date.now(), text, completed: false }]);
+  }
+  function toggleTodo(id) {
+    setTodos(todos.map((t) =&gt;
+      t.id === id ? { ...t, completed: !t.completed } : t
+    ));
+  }
+  function deleteTodo(id) {
+    setTodos(todos.filter((t) =&gt; t.id !== id));
+  }
+
+  const remaining = todos.filter((t) =&gt; !t.completed).length;
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;BeaglePlay TODO&lt;/h1&gt;
+      &lt;TodoForm onAdd={addTodo} /&gt;
+      &lt;TodoList todos={todos} onToggle={toggleTodo} onDelete={deleteTodo} /&gt;
+      &lt;TodoStats remaining={remaining} /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Why does TodoForm own its own inputValue, but TodoApp own todos?</strong>
+  <p>Scope of who-needs-it. <code>inputValue</code> is only meaningful inside the form -- nobody else reads it, nobody else changes it. Pulling it up to <code>TodoApp</code> would be lifting state for no reason. <code>todos</code> is read by <code>TodoList</code> and <code>TodoStats</code> and mutated by all three operations from <code>TodoForm</code>, so it belongs at the common parent. Rule of thumb: state goes as low as possible without being inaccessible to the components that need it.</p>
+</div>
+
+<div class="answer">
+  <strong>Why pass onAdd as a callback instead of giving TodoForm setTodos directly?</strong>
+  <p>Encapsulation. <code>TodoForm</code> doesn't need to know <em>how</em> a todo gets added -- it just needs to fire "here is the text, the parent figures out the rest." If I later swap <code>setTodos</code> for a reducer, or add server-sync, or validate before insert, the form code doesn't change. The callback boundary is the seam where the form's responsibility ends.</p>
+</div>
+
+<div class="answer">
+  <strong>Did splitting it make anything worse?</strong>
+  <p>A little, honestly. The original 50-line monolith was easier to read end-to-end. The split is 90 lines across four functions and the data flow is more abstract -- you have to jump between files (in a real project) to follow a click through to a state update. The tradeoff is worth it once any of these pieces gets reused or once the file would otherwise grow past a screen. At three components and one file the win is the practice, not the production payoff.</p>
+</div>
+
+<h2>What I noticed</h2>
+
+<p>
+  The seam between <code>TodoList</code> and <code>TodoItem</code> is the one that feels most "right." <code>TodoList</code> only knows about the collection, <code>TodoItem</code> only knows about one item plus two callbacks. Neither one knows what the state looks like in <code>TodoApp</code>. If I wanted to swap <code>todos</code> for a paginated remote query tomorrow, <code>TodoItem</code> wouldn't notice. That's exactly the decoupling I get out of trait objects in Rust -- the caller and the callee agree on the interface, not the implementation.
+</p>
+
+<p>
+  The seam I'm <em>least</em> sure about is the inline styling on <code>TodoItem</code>. Pulling the strike-through style up to CSS would let <code>TodoItem</code> stop carrying display logic and just toggle a class. Reasonable refactor for next pass. Not doing it now because the exercise wasn't about CSS.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-5.html">&#9664; Exercise 5</a>
+  <span class="spacer"></span>
+  <a href="exercise-7.html">Exercise 7 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
