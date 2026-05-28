@@ -16,7 +16,7 @@
 <div class="subtitle">Exercise 4 / 5 . Level 2 . 20 min</div>
 
 <p>
-  Smallest exercise of the week. Probably the most important. Move the API base URL out of the source, into a <code>.env</code> file, read it through <code>import.meta.env.VITE_*</code>, add <code>.env</code> to <code>.gitignore</code>, restart the dev server, verify <code>git status</code> shows no <code>.env</code>. Five steps, two minutes, a habit for life.
+  Smallest exercise of the week. Probably the most important. Move the API base URL out of the source, into a <code>.env</code> file, read it through <code>import.meta.env.VITE_*</code>, add <code>.env</code> to <code>.gitignore</code>, restart the dev server, verify <code>git status</code> shows no <code>.env</code>. Five steps, two minutes.
 </p>
 
 <h2>The .env file</h2>
@@ -45,12 +45,12 @@ const response = await fetch(
 
 <div class="answer">
   <strong>Why does the variable name need the VITE_ prefix?</strong>
-  <p>Vite's safety rail. By default Vite refuses to expose any env var to client-side code -- because anything bundled into the browser is, in effect, public. The VITE_ prefix is an opt-in: "yes, I know this will be readable by anyone who downloads the JS bundle." For things that <em>shouldn't</em> be in the browser (a real secret key for a paid API, anything that should only be hit server-side), you'd omit the prefix and access it from a server function, not the React component. The prefix is a hint to me about what I'm about to leak.</p>
+  <p>Vite's safety rail. By default Vite refuses to expose any env var to client-side code, because anything bundled into the browser is, in effect, public. The VITE_ prefix is an opt-in: "yes, I know this will be readable by anyone who downloads the JS bundle." For things that <em>shouldn't</em> be in the browser (a real secret key for a paid API, anything that should only be hit server-side), you would omit the prefix and access it from a server function, not the React component. The prefix is a hint to me about what I am about to leak.</p>
 </div>
 
 <div class="answer">
   <strong>If VITE_ vars are still public, what was the point?</strong>
-  <p>Two things. First, even public-but-configurable beats hardcoded -- the same code can hit prod and dev base URLs without editing source. Second, it's the same mechanism for things that <em>are</em> secrets when you do it on the server side (Cloudflare Worker bindings, Node API routes, etc.). Same syntax, different runtime safety. Learning the habit on the public side means I don't fumble the syntax when it's the real secret on the server side later.</p>
+  <p>Two things. Even public-but-configurable beats hardcoded. The same code can hit prod and dev base URLs without editing source. And it is the same mechanism for things that <em>are</em> secrets when you do it on the server side (Cloudflare Worker bindings, Node API routes, etc.). Same syntax, different runtime safety. Learning the habit on the public side means I don't fumble the syntax when it is the real secret on the server side later.</p>
 </div>
 
 <div class="answer">
@@ -60,7 +60,7 @@ const response = await fetch(
 
 <div class="answer">
   <strong>What if you accidentally commit .env before adding it to .gitignore?</strong>
-  <p>Once it's in git history it's effectively public, even if you delete it in the next commit -- the secret is in the history, and the history is on GitHub. The fix is to rotate the secret (generate a new key, invalidate the old one) AND scrub the file from history with <code>git filter-repo</code> or BFG. The lesson is: <code>.gitignore</code> first, <em>then</em> create <code>.env</code>. Reversing that order has cost people real money.</p>
+  <p>Once it is in git history it is effectively public, even if you delete it in the next commit. The secret is in the history, and the history is on GitHub. The fix is to rotate the secret (generate a new key, invalidate the old one) AND scrub the file from history with <code>git filter-repo</code> or BFG. The lesson is: <code>.gitignore</code> first, <em>then</em> create <code>.env</code>. Reversing that order has cost people real money.</p>
 </div>
 
 <h2>What I verified</h2>
@@ -70,17 +70,17 @@ On branch main
 nothing to commit, working tree clean</code></pre>
 
 <p>
-  The <code>.env</code> file is present on disk (next to <code>package.json</code>), the app reads it, but <code>git status</code> doesn't see it. That's the configuration working. If I'd skipped the <code>.gitignore</code> step, <code>.env</code> would have shown up under "Untracked files" -- which is the signal to stop and fix the gitignore before doing anything else.
+  The <code>.env</code> file is present on disk (next to <code>package.json</code>), the app reads it, but <code>git status</code> doesn't see it. That is the configuration working. If I had skipped the <code>.gitignore</code> step, <code>.env</code> would have shown up under "Untracked files", which is the signal to stop and fix the gitignore before doing anything else.
 </p>
 
-<h2>What I noticed</h2>
+<h2>Where this maps to my other work</h2>
 
 <p>
-  The Free Dictionary API I used in W4D2 didn't need a key, so I never had to think about this. The GitHub one I'm using today doesn't either (rate-limited but not keyed). But the OpenWeatherMap example in the day brief does, and so will most of the third-party APIs I'll touch in Phase 2. Getting the hygiene right on a no-key URL today means the muscle memory is already there when the key is real next week.
+  The Free Dictionary API I used in W4D2 didn't need a key, so I never had to think about this. The GitHub one I am using today doesn't either (rate-limited but not keyed). But the OpenWeatherMap example in the day brief does, and so will most of the third-party APIs I will touch in Phase 2. Getting the hygiene right on a no-key URL today means the muscle memory is already there when the key is real next week.
 </p>
 
 <p>
-  My PEEK / BeaglePlay work has the analog of this -- never commit <code>~/.ssh/id_ed25519</code>, never paste a serial key into a config file that's in source control. The web side is the same shape, just with bots scanning the GitHub firehose instead of a person reading your repo. The class of mistake is identical. The fix is identical. The cost of one mistake on either side can be real money.
+  My PEEK / BeaglePlay work has the analog of this. Never commit <code>~/.ssh/id_ed25519</code>. Never paste a serial key into a config file that is in source control. The web side is the same shape, just with bots scanning the GitHub firehose instead of a person reading your repo.
 </p>
 
 <nav class="ex-nav">

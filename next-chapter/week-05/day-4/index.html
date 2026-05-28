@@ -16,24 +16,24 @@
 <div class="subtitle">NCD . WK5 . D4 . five exercises loaded . the day the data shows up from somewhere else</div>
 
 <p>
-  Today is the day the data stops being hardcoded. Up to now, every array in every component has been a <code>const</code> sitting at the top of the file. Today the array gets fetched from a URL and arrives whenever it arrives -- which means everything I just learned about <code>useState</code> and <code>map</code> and conditional rendering has to also handle "the data isn't here yet" and "the data tried to come and something went wrong." Three states for one render path. That's the pattern of the whole day.
+  Today the data stops being hardcoded. Up to now, every array in every component has been a <code>const</code> sitting at the top of the file. Today the array gets fetched from a URL and arrives whenever it arrives. Which means everything I just learned about <code>useState</code> and <code>map</code> and conditional rendering also has to handle "the data isn't here yet" and "the data tried to come and something went wrong." Three states for one render path. The pattern of the whole day.
 </p>
 
 <p>
-  The async stuff isn't new to me from yesterday -- I've been pumping bytes around in Rust and through SPI buses for the last three weeks, where everything is "fire a transaction, wait for it to complete, deal with whatever it returns." The DMA-driven SPI transfers I'm wrangling on the BeaglePlay are exactly the same shape as <code>fetch</code>: kick off an op, get a future back, await it. JavaScript's <code>Promise</code> is just a userland version of the same thing. What's actually new today is the React-shaped wrapper around it -- <code>useEffect</code>, the three-state pattern, the cleanup-on-unmount fence.
+  The async stuff is not new to me from yesterday. I have been pumping bytes around in Rust and through SPI buses for the last three weeks, where everything is "fire a transaction, wait for it to complete, deal with whatever it returns." The DMA-driven SPI transfers I am wrangling on the BeaglePlay are the same shape as <code>fetch</code>: kick off an op, get a future back, await it. JavaScript's <code>Promise</code> is a userland version of the same thing. What is actually new today is the React-shaped wrapper around it. <code>useEffect</code>, the three-state pattern, the cleanup-on-unmount fence.
 </p>
 
 <div class="card">
   <div class="card-label">Morning Warm-up -- What Order?</div>
   <p><b>Predict:</b> A, C, B.</p>
-  <p><b>Why:</b> JS doesn't block on <code>setTimeout</code>. It queues the callback on the event loop and moves on. <code>console.log("C")</code> runs synchronously right after <code>setTimeout</code> is <em>called</em> (not after the timer fires). One second later the event loop drains the queued callback and "B" prints. This is the exact problem the rest of the day solves -- async behavior is the default, and <code>async</code>/<code>await</code> is the syntax that lets you write it in linear-looking code.</p>
+  <p><b>Why:</b> JS doesn't block on <code>setTimeout</code>. It queues the callback on the event loop and moves on. <code>console.log("C")</code> runs synchronously right after <code>setTimeout</code> is <em>called</em> (not after the timer fires). One second later the event loop drains the queued callback and "B" prints. This is the exact problem the rest of the day solves. Async behavior is the default, and <code>async</code>/<code>await</code> is the syntax that lets you write it in linear-looking code.</p>
 </div>
 
 <div class="card">
   <div class="card-label">Standup</div>
-  <p><b>What I did yesterday:</b> events, lists, conditional rendering, to-do app, component decomposition, and the first Codex CLI session against real React code. Logged the session in <code>cli-session-log.md</code> -- the agent re-formatted an unrelated function I had to reject, which I'm filing as the session-1 lesson.</p>
+  <p><b>What I did yesterday:</b> events, lists, conditional rendering, to-do app, component decomposition, and the first Codex CLI session against real React code. Logged the session in <code>cli-session-log.md</code>. The agent reformatted an unrelated function I had to reject, which I am filing as the session-1 lesson.</p>
   <p><b>What I'm doing today:</b> connecting React to live APIs. <code>fetch</code>, <code>async</code>/<code>await</code>, <code>useEffect</code>, the loading/data/error trio. Closing with a real API connection for whatever piece of my Phase 2 project I can wire up today.</p>
-  <p><b>Where I'm stuck:</b> not stuck. The thing I'm watching for: the day brief mentioned cleanup-on-unmount as a Week-6 topic when we hit Next.js. I want to remember that the three-state pattern as written today is going to leak state if a component unmounts mid-fetch -- it'll try to <code>setLoading(false)</code> on a component that's already gone and React will warn. Logging it so I don't pretend it's done.</p>
+  <p><b>Where I'm stuck:</b> not stuck. The thing I'm watching for: the day brief mentioned cleanup-on-unmount as a Week-6 topic when we hit Next.js. The three-state pattern as written today will leak state if a component unmounts mid-fetch. It will try to <code>setLoading(false)</code> on a component that is already gone and React will warn. Logging it so I don't pretend it's done.</p>
 </div>
 
 <h2>Exercises</h2>
@@ -79,23 +79,23 @@
 <div class="card" style="margin-top:28px;">
   <div class="card-label">Verbal Mini-Demo -- Loading / Data / Error</div>
   <p>
-    Pair partner asked me to walk the three-state pattern. Pulled up the JSONPlaceholder posts from Ex 1: <code>posts</code> starts as <code>[]</code>, <code>loading</code> starts as <code>true</code>, <code>error</code> starts as <code>null</code>. On mount, <code>useEffect</code> fires once (empty deps), kicks off the async fetch. While the request is in flight the component renders "Loading posts..." -- which is the only branch the user sees right now because <code>loading</code> is true.
+    Pair partner asked me to walk the three-state pattern. Pulled up the JSONPlaceholder posts from Ex 1. <code>posts</code> starts as <code>[]</code>, <code>loading</code> starts as <code>true</code>, <code>error</code> starts as <code>null</code>. On mount, <code>useEffect</code> fires once (empty deps) and kicks off the async fetch. While the request is in flight the component renders "Loading posts...", which is the only branch the user sees right now because <code>loading</code> is true.
   </p>
   <p>
-    When the promise resolves: <code>setPosts(data)</code> stages new data, <code>setLoading(false)</code> stages the flag flip, the <code>finally</code> block guarantees that flag flip happens whether the fetch succeeded or failed. React batches the two state updates into one re-render, the new render evaluates the conditionals fresh -- <code>loading</code> is now false, <code>error</code> is still null, falls through to the data branch, renders the list.
+    When the promise resolves: <code>setPosts(data)</code> stages new data, <code>setLoading(false)</code> stages the flag flip, the <code>finally</code> block guarantees that flag flip happens whether the fetch succeeded or failed. React batches the two state updates into one re-render. The new render evaluates the conditionals fresh. <code>loading</code> is now false, <code>error</code> is still null, falls through to the data branch, renders the list.
   </p>
   <p>
-    The error branch is the same shape, just driven by <code>catch</code>. The trick I want to remember: <code>finally</code> is what makes the pattern symmetric. Without it, the failure branch would forget to flip <code>loading</code> and the spinner would spin forever on errors. Try/catch <em>and</em> finally is the trio that keeps the state machine honest.
+    The error branch is the same shape, just driven by <code>catch</code>. The trick I want to remember: <code>finally</code> is what makes the pattern symmetric. Without it, the failure branch would forget to flip <code>loading</code> and the spinner would spin forever on errors.
   </p>
 </div>
 
 <div class="card">
   <div class="card-label">The Thing That Clicked Today</div>
   <p>
-    Data fetching in React isn't a feature -- it's a discipline that React makes uncomfortable on purpose. <code>useEffect</code> with an empty dep array is the framework forcing you to be explicit about <em>when</em> the side effect runs ("once, when this thing first appears"). The three states aren't React's fault either -- they're the fault of the network being slow and unreliable. React is just refusing to pretend that data is synchronous, which is the same honesty I want out of any system: don't hide the cost, show me the cost so I can decide what to do about it.
+    Data fetching in React isn't a feature. It is a discipline that React makes uncomfortable on purpose. <code>useEffect</code> with an empty dep array is the framework forcing you to be explicit about <em>when</em> the side effect runs ("once, when this thing first appears"). The three states aren't React's fault either. They are the fault of the network being slow and unreliable. React is refusing to pretend that data is synchronous, which is the same honesty I want out of any system. Don't hide the cost, show me the cost so I can decide what to do about it.
   </p>
   <p>
-    The env-var stuff in Ex 4 is the smallest exercise but it's the one I needed most. I've been sloppy about secrets in personal projects, and the "bots find your API key within minutes" line in the day brief is not hyperbole -- I've watched it happen to someone in the cohort during week 4. Adding <code>.env</code> to <code>.gitignore</code> and reading <code>import.meta.env.VITE_*</code> instead of hardcoding URLs is a thirty-second habit that saves a hundred-dollar surprise later. Starting it on every project from today forward, no exceptions.
+    The env-var stuff in Ex 4 is the smallest exercise but it is the one I needed most. I have been sloppy about secrets in personal projects, and the "bots find your API key within minutes" line in the day brief is not hyperbole. I watched it happen to someone in the cohort during week 4. Adding <code>.env</code> to <code>.gitignore</code> and reading <code>import.meta.env.VITE_*</code> instead of hardcoding URLs is a thirty-second habit that saves a hundred-dollar surprise later. Starting it on every project from today forward.
   </p>
 </div>
 

@@ -16,13 +16,13 @@
 <div class="subtitle">Exercise 2 / 5 . Level 1 . 20 min</div>
 
 <p>
-  Intentionally break the URL. Verify the error state actually fires. Replace the bare error message with something a real user could read. Then fix the URL and confirm nothing else regressed. Small exercise, real habit.
+  Intentionally break the URL. Verify the error state actually fires. Replace the bare error message with something a real user could read. Fix the URL and confirm nothing else regressed. Small exercise.
 </p>
 
 <h2>Breaking it</h2>
 
 <p>
-  Changed <code>posts</code> to <code>BROKEN</code> in the URL. Saved, reloaded, watched: "Loading posts..." for a beat, then "Error: Failed to fetch posts." Good -- the <code>!response.ok</code> branch threw, the <code>catch</code> caught it, <code>setError</code> populated, <code>finally</code> flipped loading off. The error path is wired the same as the success path -- both run through <code>finally</code>, so the spinner doesn't get stuck. That symmetry is what makes the try/catch/finally pattern actually correct, not just defensive.
+  Changed <code>posts</code> to <code>BROKEN</code> in the URL. Saved, reloaded, watched: "Loading posts..." for a beat, then "Error: Failed to fetch posts." Good. The <code>!response.ok</code> branch threw, the <code>catch</code> caught it, <code>setError</code> populated, <code>finally</code> flipped loading off. The error path is wired the same as the success path. Both run through <code>finally</code>, so the spinner doesn't get stuck.
 </p>
 
 <h2>The user-friendly fallback</h2>
@@ -40,33 +40,29 @@
 
 <div class="answer">
   <strong>Why show the raw error text at all?</strong>
-  <p>For me, not for the user. The big copy ("We couldn't load the posts...") is what a normal user reads and acts on. The small <code>&lt;code&gt;</code> line below is a hook for triage -- if someone screenshots this and sends it to me, I want to be able to tell "404" from "network offline" from "CORS blocked" without asking. It's the same instinct as a kernel panic that prints both a friendly message and the stack trace: humans get one, debuggers get the other.</p>
+  <p>For me, not for the user. The big copy ("We couldn't load the posts...") is what a normal user reads and acts on. The small <code>&lt;code&gt;</code> line below is a hook for triage. If someone screenshots this and sends it to me, I want to be able to tell "404" from "network offline" from "CORS blocked" without asking. Same instinct as a kernel panic that prints both a friendly message and the stack trace. Humans get one, debuggers get the other.</p>
 </div>
 
 <div class="answer">
   <strong>Why window.location.reload() instead of a proper retry?</strong>
-  <p>Cheapest possible thing that works. A real retry would re-call the fetch function from inside React state, without reloading the page -- which means lifting the fetch into a callback I can re-invoke, and resetting <code>loading</code>/<code>error</code>/<code>data</code> back to their initial values. That's a refactor I'd do in a real app. For a lab error state it's fine to nuke and reload, because the cost of doing it right is bigger than the cost of the workaround.</p>
+  <p>Cheapest possible thing that works. A real retry would re-call the fetch function from inside React state, without reloading the page. That means lifting the fetch into a callback I can re-invoke, and resetting <code>loading</code>/<code>error</code>/<code>data</code> back to their initial values. A refactor I would do in a real app. For a lab error state it is fine to nuke and reload, because the cost of doing it right is bigger than the cost of the workaround.</p>
 </div>
 
 <div class="answer">
   <strong>What about a network failure (offline)?</strong>
-  <p>Different code path. <code>response.ok</code> only matters if the request actually completed. If the browser is offline, <code>fetch</code> rejects with a TypeError -- "Failed to fetch" or similar. That throw lands in the same <code>catch</code> block and produces the same error state. The error <em>message</em> is different (the user sees a different <code>err.message</code> in the small line), but the UX is the same. The pattern handles both with one branch, which is exactly the point.</p>
+  <p>Different code path. <code>response.ok</code> only matters if the request actually completed. If the browser is offline, <code>fetch</code> rejects with a TypeError ("Failed to fetch" or similar). That throw lands in the same <code>catch</code> block and produces the same error state. The error <em>message</em> is different (the user sees a different <code>err.message</code> in the small line), but the UX is the same.</p>
 </div>
 
 <h2>Fixed and verified</h2>
 
 <p>
-  Put <code>posts</code> back in the URL. Reloaded. Loading state for a beat, then the list rendered. Diffed the file against pre-break to make sure nothing else regressed -- only the URL string changed (and the error UI was kept, because there's no reason to remove the friendly fallback once you have it).
+  Put <code>posts</code> back in the URL. Reloaded. Loading state for a beat, then the list rendered. Diffed the file against pre-break to make sure nothing else regressed. Only the URL string changed (and the error UI was kept, because there is no reason to remove the friendly fallback once you have it).
 </p>
 
-<h2>What I noticed</h2>
+<h2>Carry-forward</h2>
 
 <p>
-  Every fetch I write from now on gets the friendly-error UI from the start, not as a "do this later." It's the kind of thing that's free to add at the start (you're already writing the error branch, you might as well make it useful) and expensive to retrofit later (you have to find every fetch in the codebase). Habit, not feature.
-</p>
-
-<p>
-  The smaller observation: the day brief is right that users leave on a white screen. The cost of a 30-second friendly-error component is approximately zero. The cost of losing a user because they hit a flaky API call is not zero. The asymmetry is the argument.
+  Every fetch I write from now on gets the friendly-error UI from the start, not as a "do this later." It is free to add at the start (the error branch is already there, might as well make it useful) and expensive to retrofit later (you have to find every fetch in the codebase). The cost of a 30-second friendly-error component is approximately zero. The cost of losing a user because they hit a flaky API call on first try is not.
 </p>
 
 <nav class="ex-nav">

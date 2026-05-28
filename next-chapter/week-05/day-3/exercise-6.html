@@ -16,7 +16,7 @@
 <div class="subtitle">Exercise 6 / 7 . Level 3 . 45 min</div>
 
 <p>
-  Take the monolithic <code>TodoApp</code> from Ex 5 and split it into pieces. The interesting part isn't the cutting -- it's deciding where the seams go and where state lives. The rule I worked from: state lives at the lowest common ancestor of every component that needs to read it or change it. <code>todos</code> belongs in <code>TodoApp</code> because both <code>TodoStats</code> and <code>TodoList</code> need to read it, and <code>TodoForm</code> needs to change it.
+  Take the monolithic <code>TodoApp</code> from Ex 5 and split it. The interesting part isn't the cutting. It is deciding where the seams go and where state lives. The rule I worked from: state lives at the lowest common ancestor of every component that needs to read it or change it. <code>todos</code> belongs in <code>TodoApp</code> because both <code>TodoStats</code> and <code>TodoList</code> need to read it, and <code>TodoForm</code> needs to change it.
 </p>
 
 <h2>The tree</h2>
@@ -116,27 +116,27 @@ function TodoApp() {
 
 <div class="answer">
   <strong>Why does TodoForm own its own inputValue, but TodoApp own todos?</strong>
-  <p>Scope of who-needs-it. <code>inputValue</code> is only meaningful inside the form -- nobody else reads it, nobody else changes it. Pulling it up to <code>TodoApp</code> would be lifting state for no reason. <code>todos</code> is read by <code>TodoList</code> and <code>TodoStats</code> and mutated by all three operations from <code>TodoForm</code>, so it belongs at the common parent. Rule of thumb: state goes as low as possible without being inaccessible to the components that need it.</p>
+  <p>Scope of who-needs-it. <code>inputValue</code> is only meaningful inside the form. Nobody else reads it. Nobody else changes it. Pulling it up to <code>TodoApp</code> would be lifting state for no reason. <code>todos</code> is read by <code>TodoList</code> and <code>TodoStats</code> and mutated by all three operations from <code>TodoForm</code>, so it belongs at the common parent. Rule of thumb: state goes as low as possible without being inaccessible to the components that need it.</p>
 </div>
 
 <div class="answer">
   <strong>Why pass onAdd as a callback instead of giving TodoForm setTodos directly?</strong>
-  <p>Encapsulation. <code>TodoForm</code> doesn't need to know <em>how</em> a todo gets added -- it just needs to fire "here is the text, the parent figures out the rest." If I later swap <code>setTodos</code> for a reducer, or add server-sync, or validate before insert, the form code doesn't change. The callback boundary is the seam where the form's responsibility ends.</p>
+  <p>Encapsulation. <code>TodoForm</code> doesn't need to know <em>how</em> a todo gets added. It just needs to fire "here is the text, the parent figures out the rest." If I later swap <code>setTodos</code> for a reducer, or add server-sync, or validate before insert, the form code doesn't change. The callback boundary is the seam where the form's responsibility ends.</p>
 </div>
 
 <div class="answer">
   <strong>Did splitting it make anything worse?</strong>
-  <p>A little, honestly. The original 50-line monolith was easier to read end-to-end. The split is 90 lines across four functions and the data flow is more abstract -- you have to jump between files (in a real project) to follow a click through to a state update. The tradeoff is worth it once any of these pieces gets reused or once the file would otherwise grow past a screen. At three components and one file the win is the practice, not the production payoff.</p>
+  <p>A little, honestly. The original 50-line monolith was easier to read end-to-end. The split is 90 lines across four functions and the data flow is more abstract. You have to jump between files (in a real project) to follow a click through to a state update. The tradeoff is worth it once any of these pieces gets reused or once the file would otherwise grow past a screen. At three components and one file the win is the practice, not the production payoff.</p>
 </div>
 
-<h2>What I noticed</h2>
+<h2>Where the seams landed</h2>
 
 <p>
-  The seam between <code>TodoList</code> and <code>TodoItem</code> is the one that feels most "right." <code>TodoList</code> only knows about the collection, <code>TodoItem</code> only knows about one item plus two callbacks. Neither one knows what the state looks like in <code>TodoApp</code>. If I wanted to swap <code>todos</code> for a paginated remote query tomorrow, <code>TodoItem</code> wouldn't notice. That's exactly the decoupling I get out of trait objects in Rust -- the caller and the callee agree on the interface, not the implementation.
+  The seam between <code>TodoList</code> and <code>TodoItem</code> is the one that feels most right. <code>TodoList</code> only knows about the collection. <code>TodoItem</code> only knows about one item plus two callbacks. Neither one knows what the state looks like in <code>TodoApp</code>. If I wanted to swap <code>todos</code> for a paginated remote query tomorrow, <code>TodoItem</code> wouldn't notice. That is the decoupling I get out of trait objects in Rust. The caller and the callee agree on the interface, not the implementation.
 </p>
 
 <p>
-  The seam I'm <em>least</em> sure about is the inline styling on <code>TodoItem</code>. Pulling the strike-through style up to CSS would let <code>TodoItem</code> stop carrying display logic and just toggle a class. Reasonable refactor for next pass. Not doing it now because the exercise wasn't about CSS.
+  The seam I am <em>least</em> sure about is the inline styling on <code>TodoItem</code>. Pulling the strike-through style up to CSS would let <code>TodoItem</code> stop carrying display logic and just toggle a class. Reasonable refactor for next pass. Not doing it now because the exercise wasn't about CSS.
 </p>
 
 <nav class="ex-nav">

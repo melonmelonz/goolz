@@ -16,7 +16,7 @@
 <div class="subtitle">Exercise 3 / 5 . Level 2 . 45 min</div>
 
 <p>
-  Lookup tool. Type a username, click search, render the profile. The shape that's different from Ex 1: the fetch fires on click, not on mount. So <code>useEffect</code> doesn't get involved at all -- the async function runs straight out of the submit handler. Same three states (loading/data/error), same try/catch/finally, just kicked off by a user action instead of a mount.
+  Lookup tool. Type a username, click search, render the profile. The shape that is different from Ex 1: the fetch fires on click, not on mount. So <code>useEffect</code> doesn't get involved at all. The async function runs straight out of the submit handler. Same three states (loading/data/error), same try/catch/finally, just kicked off by a user action instead of a mount.
 </p>
 
 <h2>The component</h2>
@@ -89,38 +89,38 @@ function GitHubSearch() {
 
 <div class="answer">
   <strong>Why no useEffect here?</strong>
-  <p>Because the fetch is event-driven, not mount-driven. <code>useEffect</code> is the right tool when "when this thing first appears on screen, run X." When the trigger is a click instead, just call the async function from the click handler -- the handler itself is the equivalent of the effect. Reaching for <code>useEffect</code> on click-driven fetches is a common over-application of the hook. It's not needed and it actively makes the code harder to follow.</p>
+  <p>The fetch is event-driven, not mount-driven. <code>useEffect</code> is the right tool when "when this thing first appears on screen, run X." When the trigger is a click instead, just call the async function from the click handler. The handler itself is the equivalent of the effect. Reaching for <code>useEffect</code> on click-driven fetches is a common over-application of the hook. It is not needed and it actively makes the code harder to follow.</p>
 </div>
 
 <div class="answer">
   <strong>Why reset user/error/loading at the top of handleSearch?</strong>
-  <p>Without it, a second search runs with the first search's result still in state. The flicker would be: previous user still on screen, loading flag goes up, new user arrives, swap. With the reset: previous user disappears immediately, loading state shows, new user arrives. Less confusing. Same lesson as making sure interim states are explicit -- the user should never see stale data labelled as if it's fresh.</p>
+  <p>Without it, a second search runs with the first search's result still in state. The flicker would be: previous user still on screen, loading flag goes up, new user arrives, swap. With the reset: previous user disappears immediately, loading state shows, new user arrives. Less confusing. The user should never see stale data labelled as if it is fresh.</p>
 </div>
 
 <div class="answer">
   <strong>encodeURIComponent on username -- why?</strong>
-  <p>Defensive. Most GitHub handles are URL-safe (alphanumerics and hyphens) but the input is user-controlled. If somebody types a space or a slash, the URL breaks in a way that's annoying to debug. <code>encodeURIComponent</code> escapes anything that would break the URL. It's the same one-line habit as parameterized SQL queries -- always do it, never trust the input shape, the cost is nothing.</p>
+  <p>Defensive. Most GitHub handles are URL-safe (alphanumerics and hyphens) but the input is user-controlled. If somebody types a space or a slash, the URL breaks in a way that is annoying to debug. <code>encodeURIComponent</code> escapes anything that would break the URL. The same one-line habit as parameterized SQL queries. Always do it, never trust the input shape, the cost is nothing.</p>
 </div>
 
 <div class="answer">
   <strong>disabled={loading} on the button -- why?</strong>
-  <p>So the user can't fire a second request while the first is in flight. Without it, a frustrated user clicking three times fires three requests, three setStates, and the responses can arrive out of order (race condition -- last-write-wins on state, not last-fired). Disabling the button while loading is the cheap fix. The proper fix is request cancellation with <code>AbortController</code>, which is a Week 6 topic the day brief flagged. For now: disabled button, one request at a time.</p>
+  <p>So the user can't fire a second request while the first is in flight. Without it, a frustrated user clicking three times fires three requests, three setStates, and the responses can arrive out of order (race condition, last-write-wins on state, not last-fired). Disabling the button while loading is the cheap fix. The proper fix is request cancellation with <code>AbortController</code>, which is a Week 6 topic the day brief flagged. For now: disabled button, one request at a time.</p>
 </div>
 
-<h2>What I noticed running it</h2>
+<h2>Running it</h2>
 
 <p>
-  Searched my handle, got my profile. Searched <code>octocat</code>, got the GitHub mascot. Searched <code>thisuserdefinitelydoesnotexist1234</code>, got "User not found" -- the 404 path. Watched the network tab: clean 200, clean 404, no console errors. The on-submit pattern handles all three.
+  Searched my handle, got my profile. Searched <code>octocat</code>, got the GitHub mascot. Searched <code>thisuserdefinitelydoesnotexist1234</code>, got "User not found". The 404 path. Watched the network tab: clean 200, clean 404, no console errors. The on-submit pattern handles all three.
 </p>
 
 <p>
-  The rate-limit warning in the day brief is real. GitHub's unauthenticated limit is 60 requests per hour per IP. I burned through six during testing without thinking; that's 10% gone in the first minute. The day brief's advice -- only fetch on Search click, never on every keystroke -- is the only thing that keeps you under the limit. Same energy as not blasting your AWS API key every render.
+  The rate-limit warning in the day brief is real. GitHub's unauthenticated limit is 60 requests per hour per IP. I burned through six during testing without thinking. That is 10% gone in the first minute. The day brief's advice (only fetch on Search click, never on every keystroke) is the only thing that keeps you under the limit.
 </p>
 
-<h2>What I'd build on top</h2>
+<h2>Twenty more minutes</h2>
 
 <p>
-  Search the user's repos as a second call (<code>https://api.github.com/users/{username}/repos</code>) and render the top three by star count. That's a second fetch chained off the first -- which raises the question of whether to fire both in parallel or sequentially. Parallel with <code>Promise.all</code> is the right move when neither depends on the other, which is the case here (you can fetch the user and the repos at the same time off the username). One more pattern I want to land before the week is out.
+  Search the user's repos as a second call (<code>https://api.github.com/users/{username}/repos</code>) and render the top three by star count. A second fetch chained off the first, which raises the question of parallel or sequential. <code>Promise.all</code> is the right move when neither depends on the other, which is the case here. You can fetch the user and the repos at the same time off the username. One more pattern I want to land before the week is out.
 </p>
 
 <nav class="ex-nav">

@@ -16,7 +16,7 @@
 <div class="subtitle">Exercise 1 / 7 . Level 1 . 25 min</div>
 
 <p>
-  First controlled-input pass. The "controlled" framing finally made sense when I wrote it instead of read it: React owns the value, the input just displays whatever's in state, the onChange handler is the only way the value moves. There is no "input.value" anywhere -- the input is a window into the state, not a place where data lives.
+  First controlled-input pass. The "controlled" framing finally made sense when I wrote it instead of reading about it. React owns the value. The input just displays whatever is in state. The onChange handler is the only way the value moves. There is no <code>input.value</code> anywhere. The input is a window into state, not a place where data lives.
 </p>
 
 <h2>The form</h2>
@@ -71,28 +71,28 @@ function ContactForm() {
 
 <div class="answer">
   <strong>What does e.preventDefault() do here?</strong>
-  <p>Stops the browser's default form-submit behavior, which is to navigate to the form's <code>action</code> URL (defaulting to the current page) and reload. In a SPA you never want that. Everything stays in JS, the page doesn't blink, state survives. Forget the line once and you'll watch your whole app disappear into a refresh on first submit -- which is exactly how I learned to remember it.</p>
+  <p>Stops the browser's default form-submit behavior, which is to navigate to the form's <code>action</code> URL (defaulting to the current page) and reload. In a SPA you never want that. Everything stays in JS, the page doesn't blink, state survives. Forget the line once and you will watch your whole app disappear into a refresh on first submit. Which is exactly how I learned to remember it.</p>
 </div>
 
 <div class="answer">
   <strong>Why use || "(empty)" in the preview?</strong>
-  <p>Cosmetic. <code>{name}</code> renders nothing when name is the empty string, which collapses the line awkwardly. The <code>||</code> falls back to a literal placeholder so the layout doesn't twitch as the user starts typing. Small detail, but the kind of thing that separates a sketch from a real form.</p>
+  <p>Cosmetic. <code>{name}</code> renders nothing when name is the empty string, which collapses the line and makes the layout twitch as the first character lands. The <code>||</code> falls back to a placeholder so the surrounding spacing stays put. Not strictly necessary, just less jumpy.</p>
 </div>
 
-<h2>What I noticed running it</h2>
+<h2>Running it</h2>
 
 <p>
-  The preview updates on <em>every keystroke</em>. That's the controlled-input promise made real. React is calling the function again on every character, rebuilding the virtual DOM, diffing, patching the &lt;p&gt; text node. At thousands of times per second that would matter; at typing speed it's invisible. Yesterday I would have called that wasteful. Today I get why it's the model: simpler reasoning, fast enough by default, expensive only when you build something that's actually expensive.
+  Preview updates on every keystroke. React calls the function again on every character, rebuilds the virtual DOM, diffs, patches the <code>&lt;p&gt;</code> text node. At a thousand characters per second that would be a problem. At human typing speed it is invisible. A week ago I would have called that wasteful. Today I get why it is the model.
 </p>
 
 <p>
-  One footgun I hit: I forgot to add the <code>value</code> prop on the email input the first time, only the <code>onChange</code>. The input still worked for typing, but <code>setEmail("")</code> on submit didn't clear it -- because the input wasn't actually controlled, it was just listening to changes. The clear silently failed. That's the uncontrolled / controlled split right there. You have to bind both directions or React isn't really in control.
+  Footgun I hit on the first pass. I added <code>onChange</code> on the email input and forgot the <code>value</code> prop. The input <em>looked</em> like it worked. Typing went into it fine. But <code>setEmail("")</code> on submit didn't clear it, because the input wasn't actually being driven from state. It was just emitting change events into nowhere. The clear silently no-op'd. That is the uncontrolled-versus-controlled split right there. Both bindings or it is not really controlled.
 </p>
 
-<h2>What I'd build on top</h2>
+<h2>Twenty more minutes</h2>
 
 <p>
-  Basic validation -- disable the submit button until both fields are non-empty and email contains an "@". That's a <code>const isValid = name &amp;&amp; email.includes("@")</code> and a <code>disabled={!isValid}</code> on the button. Same controlled-input mental model, just one more derived value computed from state. The pattern scales.
+  Basic validation. Disable submit until both fields are non-empty and email has an "@". One line of derived state (<code>const isValid = name &amp;&amp; email.includes("@")</code>) and a <code>disabled={!isValid}</code> on the button. Same controlled-input shape, just one more value computed off the existing state. Don't need a form library yet.
 </p>
 
 <nav class="ex-nav">

@@ -16,7 +16,7 @@
 <div class="subtitle">Exercise 2 / 7 . Level 1 . 25 min</div>
 
 <p>
-  The data-to-components transform that every list-rendering React snippet in the world boils down to. Array of objects in, array of JSX elements out, React renders the array. The piece I had to internalize: the <code>key</code> isn't a prop your component uses -- it's a hint to React's diffing algorithm. Your component never reads it. React reads it.
+  Array of objects in, array of JSX elements out, React renders the array. The piece I had to internalize: <code>key</code> isn't a prop the component uses. It is a hint to React's diffing algorithm. The component never reads it. React reads it.
 </p>
 
 <h2>The data + the component</h2>
@@ -57,33 +57,33 @@ function ProductList() {
 
 <div class="answer">
   <strong>Why .map() and not a for loop?</strong>
-  <p>JSX has to evaluate to an <em>expression</em>, not a statement. A <code>for</code> loop is a statement -- you can't drop it inside <code>{}</code> and have JSX work with it. <code>.map()</code> is an expression that returns an array, and JSX renders arrays of elements just fine. Same reason you use ternaries instead of <code>if</code> statements inside JSX. The expression rule.</p>
+  <p>JSX has to evaluate to an <em>expression</em>, not a statement. A <code>for</code> loop is a statement. You can't drop it inside <code>{}</code> and have JSX work with it. <code>.map()</code> is an expression that returns an array, and JSX renders arrays of elements just fine. Same reason you use ternaries instead of <code>if</code> statements inside JSX.</p>
 </div>
 
 <div class="answer">
   <strong>Why key={p.id} and not key={index}?</strong>
-  <p>Index-as-key works for static lists but breaks for dynamic ones. If you delete the first item, every remaining item shifts up by one -- but its key changes too, because the key was "position." React thinks every item changed, throws away their state, and re-mounts everything. With a stable id, React knows item id=3 is still item id=3 even if its position moved, and can shift the existing DOM nodes instead of rebuilding them. Cheap insurance against a class of bugs you don't see until you're shipping.</p>
+  <p>Index-as-key works for static lists but breaks for dynamic ones. Delete the first item and every remaining item shifts up by one, including its key, because the key was "position." React thinks every item changed, throws away their state, and re-mounts everything. With a stable id, React knows item id=3 is still item id=3 even if its position moved, and shifts the existing DOM nodes instead of rebuilding them. Cheap insurance against a class of bugs you don't see until you're shipping.</p>
 </div>
 
 <div class="answer">
   <strong>Why .toFixed(2) on the price?</strong>
-  <p>Float formatting. <code>49.99</code> happens to render as "49.99" but <code>49.9</code> would render as "49.9" and <code>49</code> as "49", and a product list with mixed price formatting looks broken. <code>.toFixed(2)</code> coerces to a string with exactly two decimal places. Real apps use a money library for currency math -- not a float, ever -- but for display formatting at this level it's fine.</p>
+  <p>Float formatting. <code>49.99</code> happens to render as "49.99" but <code>49.9</code> would render as "49.9" and <code>49</code> as "49". A product list with mixed price formatting looks broken. <code>.toFixed(2)</code> coerces to a string with exactly two decimal places. Real apps use a money library for currency math, never a float, but for display formatting at this level it is fine.</p>
 </div>
 
-<h2>What I noticed running it</h2>
+<h2>Running it</h2>
 
 <p>
-  Five cards rendered, clean. Opened the React DevTools and watched it: <code>ProductList</code> at the top, five <code>ProductCard</code> children below, each with its own props row. Each card is its own component instance with its own slot in the tree. That's the part that's invisible from the JSX but obvious once you see the tree -- you didn't write five cards, you wrote one component that React instantiated five times.
+  Five cards rendered, clean. Opened React DevTools and watched it: <code>ProductList</code> at the top, five <code>ProductCard</code> children below, each with its own props row. Each card is its own component instance with its own slot in the tree. That part is invisible from the JSX but obvious once you see the tree. I didn't write five cards. I wrote one component that React instantiated five times.
 </p>
 
 <p>
-  Tried <code>console.warn</code>-ing inside <code>ProductCard</code> and counted: five logs on first render, zero on subsequent renders. Because nothing changed, React skipped re-rendering. That's the diffing payoff. The "everything re-renders on every state change" worry I had yesterday turns out to be "everything re-renders if its inputs changed, otherwise no." Big difference.
+  Tried <code>console.warn</code>-ing inside <code>ProductCard</code> and counted. Five logs on first render, zero on subsequent renders. Nothing changed, so React skipped re-rendering. The "everything re-renders on every state change" worry I had yesterday turns out to be "everything re-renders if its inputs changed, otherwise no."
 </p>
 
-<h2>What I'd build on top</h2>
+<h2>Sort next</h2>
 
 <p>
-  Sort dropdown next to the heading -- "by name", "by price asc", "by price desc". One <code>useState</code> for the sort key, a sorted copy of <code>products</code> before the <code>.map()</code>, render the sorted version. Don't mutate the original array (that's a class of bug I'd carry over from Python by accident). <code>[...products].sort(...)</code> -- copy first, sort the copy.
+  Sort dropdown next to the heading. "by name", "by price asc", "by price desc". One <code>useState</code> for the sort key, a sorted copy of <code>products</code> before the <code>.map()</code>, render the sorted version. Don't mutate the original array (that is a class of bug I would carry over from Python by accident). <code>[...products].sort(...)</code>. Copy first, sort the copy.
 </p>
 
 <nav class="ex-nav">

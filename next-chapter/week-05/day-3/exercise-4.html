@@ -16,7 +16,7 @@
 <div class="subtitle">Exercise 4 / 7 . Level 2 . 30 min</div>
 
 <p>
-  Stack a category filter on top of the search filter. Add a "No products found" state when nothing matches. This is the exercise where conditional rendering and list rendering actually meet -- the UI has to handle "here are results," "here are some results," and "here are no results" without any of those branches feeling tacked on.
+  Stack a category filter on top of the search filter. Add a "No products found" state when nothing matches. This is the exercise where conditional rendering and list rendering meet. The UI has to handle "here are results," "here are some results," and "here are no results" without any of those branches feeling tacked on.
 </p>
 
 <h2>The chained filter</h2>
@@ -79,7 +79,7 @@ function ProductList() {
 
 <div class="answer">
   <strong>Why two .filter() calls instead of one combined predicate?</strong>
-  <p>Readability and composition. One filter does one thing -- search -- and the next filter does one thing -- category. If I add a third (price range, in stock, etc.), it slots into the chain without rewriting the predicate. Performance is the same to within a rounding error at this size. If the list were millions of rows I'd think about a single pass, but at five rows the cost of two passes is invisible and the code is cleaner.</p>
+  <p>Readability and composition. One filter does one thing (search), the next filter does one thing (category). If I add a third (price range, in stock, etc.), it slots into the chain without rewriting the predicate. Performance is the same to within a rounding error at this size. If the list were millions of rows I would think about a single pass. At five rows the cost of two passes is invisible and the code is cleaner.</p>
 </div>
 
 <div class="answer">
@@ -92,20 +92,20 @@ function ProductList() {
   <p>Either works. The ternary makes the "exactly one of these renders" relationship explicit, which is what I actually mean. <code>{visible.length === 0 &amp;&amp; ...} {visible.length &gt; 0 &amp;&amp; ...}</code> would do the same thing but it asks the reader to check that the two conditions are exhaustive and disjoint. The ternary makes that structural by construction.</p>
 </div>
 
-<h2>What I noticed running it</h2>
+<h2>Running it</h2>
 
 <p>
-  Clicked "Books," typed "react." Got just "React Handbook." Cleared the search, still on Books, got both. Switched to "Clothing" with nothing typed, got "Running Shoes." Searched "headphones" with "Clothing" still selected, got "No products found." That last one is the empty state actually firing -- and it firing for the <em>right</em> reason (category disagrees) is what I was testing. The fix in that case is the user picking "All," not the app being smart.
+  Clicked "Books," typed "react." Got "React Handbook." Cleared the search, still on Books, got both. Switched to "Clothing" with nothing typed, got "Running Shoes." Searched "headphones" with "Clothing" still selected, got "No products found." That last one is the empty state actually firing. Firing for the <em>right</em> reason (category disagrees) is what I was testing. The fix in that case is the user picking "All," not the app being smart.
 </p>
 
 <p>
-  The active-button styling is doing too much inline. For real I'd lift those styles into CSS classes -- a <code>.cat-btn.active</code> -- but inline was faster for the lab. Same pattern as the "make it work in JSX first, lift to CSS once it's right" rule.
+  The active-button styling is doing too much inline. For real I would lift those styles into CSS classes, a <code>.cat-btn.active</code>, but inline was faster for the lab.
 </p>
 
-<h2>What I'd build on top</h2>
+<h2>Twenty more minutes</h2>
 
 <p>
-  Persist <code>category</code> and <code>searchTerm</code> to the URL as query params. Then refreshing the page or sharing a link keeps the filtered view. <code>useSearchParams</code> when I get to react-router; for now I'd hand-roll it with <code>window.history.replaceState</code> inside an effect. Same shape, just two more "inputs" that happen to live in the URL bar instead of state.
+  Persist <code>category</code> and <code>searchTerm</code> to the URL as query params. Then refreshing the page or sharing a link keeps the filtered view. <code>useSearchParams</code> when I get to react-router. For now I would hand-roll it with <code>window.history.replaceState</code> inside an effect. Same shape, just two more inputs that happen to live in the URL bar instead of state.
 </p>
 
 <nav class="ex-nav">

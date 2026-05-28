@@ -16,7 +16,7 @@
 <div class="subtitle">Exercise 3 / 7 . Level 2 . 30 min</div>
 
 <p>
-  Add a search box. Type, the list narrows. This is where the data-as-the-truth idea pays its first dividend: the list isn't being mutated -- it's being projected through a filter. The original <code>products</code> array doesn't change. What changes is which subset of it gets handed to <code>.map()</code> on each render.
+  Add a search box. Type, the list narrows. The original <code>products</code> array doesn't change. What changes is which subset of it gets handed to <code>.map()</code> on each render. The list is being projected through a filter, not mutated.
 </p>
 
 <h2>The change</h2>
@@ -58,28 +58,28 @@
 
 <div class="answer">
   <strong>Why compute "visible" before the return instead of inline?</strong>
-  <p>Readability. The <code>{visible.map(...)}</code> in the JSX reads cleanly; <code>{products.filter(...).map(...)}</code> inline gets noisy fast, especially once Exercise 4 adds the category filter as a second <code>.filter()</code> in the chain. Pull the derived value out, name it. Same instinct as breaking up a Rust iterator chain into intermediate <code>let</code> bindings when it gets long.</p>
+  <p>Readability. The <code>{visible.map(...)}</code> in the JSX reads cleanly. <code>{products.filter(...).map(...)}</code> inline gets noisy fast, especially once Exercise 4 adds the category filter as a second <code>.filter()</code> in the chain. Pull the derived value out, name it. Same instinct as breaking up a Rust iterator chain into intermediate <code>let</code> bindings when it gets long.</p>
 </div>
 
 <div class="answer">
   <strong>Where does visible "live"?</strong>
-  <p>It's a regular const inside the function body. It exists for one render, then it's gone. Next render rebuilds it from the current <code>products</code> and current <code>searchTerm</code>. This is the pattern: state holds the inputs, derived values are recomputed on every render from those inputs. No <code>useState</code> for <code>visible</code>, because there's nothing to remember between renders -- it can always be recomputed.</p>
+  <p>It is a regular const inside the function body. It exists for one render, then it is gone. Next render rebuilds it from the current <code>products</code> and current <code>searchTerm</code>. State holds the inputs, derived values are recomputed on every render from those inputs. No <code>useState</code> for <code>visible</code>, because there is nothing to remember between renders. It can always be recomputed.</p>
 </div>
 
-<h2>What I noticed running it</h2>
+<h2>Running it</h2>
 
 <p>
-  Typed "head", got just the headphones. Typed "book", got both books. Cleared the input, got all five back. The list updates on every keystroke and it's instant. Yesterday's "<code>UI = f(state)</code>" thing is now the shape of every interaction: the state is <code>searchTerm</code>, the function is "filter products by it and render," the UI is whatever falls out.
+  Typed "head", got just the headphones. Typed "book", got both books. Cleared the input, got all five back. Updates on every keystroke and it is instant.
 </p>
 
 <p>
-  Smaller thing I want to remember: the input has a <code>placeholder</code>, not a label. For a real form I'd want a proper <code>&lt;label&gt;</code> for accessibility. Skipping it in lab is fine; in PEEK's TUI mockups I'd be more careful, because screen-reader users are exactly the kind of "different operator on the same machine" the project is built to think about.
+  Smaller thing I want to remember. The input has a <code>placeholder</code>, not a label. For a real form I would want a proper <code>&lt;label&gt;</code> for accessibility. Skipping it in lab is fine. In PEEK's TUI mockups I would be more careful, because screen-reader users are exactly the kind of "different operator on the same machine" the project is built to think about.
 </p>
 
-<h2>What I'd build on top</h2>
+<h2>Twenty more minutes</h2>
 
 <p>
-  Debounce the input. Right now every keystroke filters the list, which is free at five items and expensive at five thousand. <code>setTimeout</code> the actual filter call, cancel on the next keystroke, fire it 200ms after the user stops typing. Don't need it here, but it's the kind of "scales the same approach without changing the model" detail I'd want to know I can add when it's needed.
+  Debounce the input. Right now every keystroke filters the list, which is free at five items and expensive at five thousand. <code>setTimeout</code> the actual filter call, cancel on the next keystroke, fire it 200ms after the user stops typing. Don't need it here. The kind of detail I want to know I can add when it's needed.
 </p>
 
 <nav class="ex-nav">

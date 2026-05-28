@@ -16,7 +16,7 @@
 <div class="subtitle">Exercise 1 / 5 . Level 1 . 30 min</div>
 
 <p>
-  The canonical pattern. Three pieces of state, one <code>useEffect</code>, three render branches. Built it from the starter, traced through what the user sees at each stage, then modified -- post number prefix, rounded card corners, character count under each body. Modifications were trivial because the data plumbing was already right; everything in JSX was just reading from the same <code>posts</code> array.
+  The canonical pattern. Three pieces of state, one <code>useEffect</code>, three render branches. Built it from the starter, traced what the user sees at each stage, then modified: post number prefix, rounded card corners, character count under each body. Modifications were trivial. The data plumbing was already right and everything in JSX was just reading from the same <code>posts</code> array.
 </p>
 
 <h2>The component</h2>
@@ -67,17 +67,17 @@ function PostList() {
 
 <div class="answer">
   <strong>Why is the async function defined inside useEffect instead of being useEffect's callback?</strong>
-  <p><code>useEffect</code>'s callback cannot be async, because React expects it to return either nothing or a cleanup function -- and an async function always returns a Promise, which React would misread as a cleanup. The workaround is what's above: define an async function inside the effect, then call it. Same behavior, no Promise leakage to React. (You can also do <code>(async () =&gt; { ... })()</code> as an IIFE, but the named function is easier to read.)</p>
+  <p><code>useEffect</code>'s callback cannot be async, because React expects it to return either nothing or a cleanup function, and an async function always returns a Promise, which React would misread as a cleanup. The workaround is what's above: define an async function inside the effect, then call it. Same behavior, no Promise leakage to React. (You can also do <code>(async () =&gt; { ... })()</code> as an IIFE, but the named function is easier to read.)</p>
 </div>
 
 <div class="answer">
   <strong>Why the empty array [] at the end of useEffect?</strong>
-  <p>The dependency array tells React when to re-run the effect. <code>[]</code> means "never re-run -- only fire on mount." If I left it off entirely, the effect would run on every render -- and since the effect updates state and state updates trigger re-renders, that's an infinite fetch loop. Pass an empty array on purpose; React lints for missing deps but won't catch missing brackets the same way.</p>
+  <p>The dependency array tells React when to re-run the effect. <code>[]</code> means "never re-run, only fire on mount." Leave it off entirely and the effect would run on every render. Since the effect updates state and state updates trigger re-renders, that is an infinite fetch loop. Pass an empty array on purpose. React lints for missing deps but won't catch missing brackets the same way.</p>
 </div>
 
 <div class="answer">
   <strong>Why response.ok and not just check for data?</strong>
-  <p><code>fetch</code> only rejects on network failure, not on HTTP error responses. A 500 from the server returns a Response object, not a throw -- <code>await response.json()</code> would happily parse whatever the server sent (maybe an HTML error page) and you'd get garbage in <code>posts</code>. <code>response.ok</code> is true for 200-299 and false for everything else. Throwing on <code>!response.ok</code> is what makes the failure path actually go through the <code>catch</code>.</p>
+  <p><code>fetch</code> only rejects on network failure, not on HTTP error responses. A 500 from the server returns a Response object, not a throw. <code>await response.json()</code> would happily parse whatever the server sent (maybe an HTML error page) and you'd get garbage in <code>posts</code>. <code>response.ok</code> is true for 200-299 and false for everything else. Throwing on <code>!response.ok</code> is what makes the failure path actually go through the <code>catch</code>.</p>
 </div>
 
 <h2>Trace I wrote out</h2>
@@ -90,14 +90,14 @@ function PostList() {
   <li>React batches both updates into one re-render. <code>loading: false, posts: [10 items], error: null</code>. Both early returns are skipped, falls into the JSX return. User sees the list.</li>
 </ol>
 
-<h2>What I noticed</h2>
+<h2>The second await</h2>
 
 <p>
-  The hidden second await -- <code>response.json()</code> -- is the one that trips people up. <code>fetch</code> resolves as soon as headers are available, not when the full body has arrived. <code>response.json()</code> reads the body and parses it, which is its own async op. The day brief's "envelope vs letter" framing is correct and I want to keep it. Skip the second await and you get a Promise where you wanted an object, and the JSX renders <code>[object Promise]</code>, which is exactly the kind of error that makes you stare for thirty seconds.
+  <code>response.json()</code> is the one that trips people up. <code>fetch</code> resolves as soon as headers are available, not when the full body has arrived. <code>response.json()</code> reads the body and parses it, which is its own async op. The day brief's "envelope vs letter" framing is correct and I want to keep it. Skip the second await and you get a Promise where you wanted an object, and the JSX renders <code>[object Promise]</code>, which is the kind of error that makes you stare for thirty seconds.
 </p>
 
 <p>
-  Modifications were small. Post number is just <code>i + 1</code> -- the second arg to <code>.map</code> is the index. Character count is <code>post.body.length</code>. Rounded corners is CSS. None of it needed any state changes, because all three are just functions of data that's already there. That's the payoff of the pattern: once the data is in state, you can read any derived value from it for free.
+  Modifications were small. Post number is <code>i + 1</code>. The second arg to <code>.map</code> is the index. Character count is <code>post.body.length</code>. Rounded corners is CSS. None of it needed any state changes, because all three are functions of data that is already there.
 </p>
 
 <nav class="ex-nav">
