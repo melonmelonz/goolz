@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 6 -- Day 1 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 6 Day 1. Next.js Intro: React plus a server. File-based routing, layouts, server vs. client components.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x25B2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 1 -- Next.js Intro: React Plus a Server</h1>
+<div class="subtitle">NCD . WK6 . D1 . five exercises loaded . react gets a backend</div>
+
+<p>
+  Last week I shipped a Cloudflare Pages site with serverless functions and KV, all in plain Preact with no build step. That worked because the project was small and the backend was two API endpoints. This week React gets a server of its own. Next.js. The framework that Netflix, TikTok, Notion, and the learning platform we are using right now run on. When job postings say "React developer" they increasingly mean "Next.js developer," which I take at face value because the companies hiring are the ones writing the postings.
+</p>
+
+<p>
+  What Next.js adds is not complicated to list: file-based routing, server-side rendering, API routes, layouts that persist across navigation, and a deployment story that is one command. What is actually new to think about is the server/client split. Every component is a server component by default. It runs on the server, sends HTML to the browser, and the browser never sees the JavaScript. If you need <code>useState</code> or <code>onClick</code> or anything interactive, you mark the file <code>"use client"</code> and it runs in the browser. The discipline is: start on the server, opt into the client only when you need interactivity. Keep client components small and focused.
+</p>
+
+<p>
+  I have been living in the Cloudflare Workers world where everything runs at the edge by default. Next.js server components are the same idea applied to React. The server does the work, the browser gets the result. The difference is that Next.js gives you a framework opinion about where the boundary is, and the <code>"use client"</code> directive is how you declare it. In Workers I make that choice by deciding what goes in a Function vs. what ships as static HTML. Here the framework makes it structural.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- What Pages Does Your App Need?</div>
+  <p><b>Phase 2 app (ReEntry Tech):</b></p>
+  <p>1. Home page -- landing, explanation of what the platform does</p>
+  <p>2. Opportunities list -- all job postings, certifications, wraparound services</p>
+  <p>3. Opportunity detail -- single posting with full description, org info, contact</p>
+  <p>4. Submit a resource -- form for partner orgs to submit new opportunities</p>
+  <p><b>Static vs. interactive:</b> Home is static. List is mostly static but needs search/filter (client). Detail is static (server component, just fetches and displays). Submit is fully interactive (form state, validation, POST).</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did last week:</b> built React apps with components, state, props, and API fetching. Shipped mute-pixel to Cloudflare Pages with serverless functions, KV, and a passphrase-gated PixelLab generator. Learned that deploying is not a separate phase from building when the infrastructure is code.</p>
+  <p><b>What I'm doing today:</b> learning Next.js. File-based routing, layouts, the server/client component split. Setting up the scaffold for Phase 2.</p>
+  <p><b>Where I'm stuck:</b> not stuck. The thing I am watching: the day brief says <code>params</code> is a Promise in Next.js 15+ and you have to <code>await</code> it before destructuring. That is a breaking change from earlier Next.js versions, and I know the internet is full of tutorials that skip the <code>await</code>. Flagging it now so I do not copy-paste myself into a runtime error later.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- What Next.js Adds to React</div>
+  <p>The comparison table from lecture:</p>
+  <table>
+    <tr><th>What you need</th><th>Plain React (Vite)</th><th>Next.js</th></tr>
+    <tr><td>Routing</td><td>Install react-router, configure it</td><td>Create a folder. Done.</td></tr>
+    <tr><td>API endpoints</td><td>Separate Node server</td><td><code>route.js</code> in <code>api/</code></td></tr>
+    <tr><td>Server-side rendering</td><td>Not built in</td><td>Default behavior</td></tr>
+    <tr><td>Database access</td><td>Separate backend project</td><td>Same project, server components</td></tr>
+    <tr><td>Deployment</td><td>Figure it out</td><td><code>vercel deploy</code></td></tr>
+  </table>
+  <p>Next.js is not replacing React. It IS React with server capabilities, routing, and structure built in.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- File-Based Routing</div>
+  <p>The folder structure IS the routing. No router library, no config file.</p>
+<pre><code>app/
+  page.js          -->  /          (home page)
+  about/
+    page.js        -->  /about
+  contact/
+    page.js        -->  /contact
+  blog/
+    page.js        -->  /blog
+    [id]/
+      page.js      -->  /blog/1, /blog/2, /blog/any-id</code></pre>
+  <p>Create a folder, put a <code>page.js</code> in it, the route exists. The <code>[id]</code> with square brackets is a dynamic route; it matches any value and hands it to your component as a parameter.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Layouts</div>
+  <p><code>layout.js</code> wraps every page. Navigation, footer, overall structure. When users navigate, the layout stays and only the page content swaps. <code>{children}</code> is where the current page gets inserted.</p>
+<pre><code>// app/layout.js
+export default function RootLayout({ children }) {
+  return (
+    &lt;html lang="en"&gt;
+      &lt;body&gt;
+        &lt;nav&gt;...&lt;/nav&gt;
+        &lt;main&gt;{children}&lt;/main&gt;
+        &lt;footer&gt;...&lt;/footer&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+  );
+}</code></pre>
+  <p>This is the pattern I have been doing by hand on every project. On goolz.org the Win95 desktop chrome is a layout. On mute-pixel the starfield + header + footer is a layout. Next.js makes it structural instead of manual.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Server vs. Client Components</div>
+  <p><b>Server components</b> (the default): run on the server, send finished HTML, can access the database directly, cannot use <code>useState</code>, <code>useEffect</code>, or event handlers. Fast because the browser gets ready-to-display HTML.</p>
+  <p><b>Client components</b> (opt-in): run in the browser, needed for interactivity. Add <code>"use client"</code> at the top of the file. Can use <code>useState</code>, <code>useEffect</code>, <code>onClick</code>, <code>onChange</code>.</p>
+<pre><code>// SERVER component (default, no directive)
+export default function WelcomeBanner() {
+  return &lt;h1&gt;Welcome to the app!&lt;/h1&gt;;
+}
+
+// CLIENT component (note the directive)
+"use client";
+import { useState } from "react";
+export default function Counter() {
+  const [count, setCount] = useState(0);
+  return &lt;button onClick={() =&gt; setCount(count + 1)}&gt;{count}&lt;/button&gt;;
+}</code></pre>
+  <p><b>Rule of thumb:</b> start with server components. Only add <code>"use client"</code> when you need interactivity. Keep client components small: a button, a form, a toggle. Not entire pages.</p>
+  <p>Convention for file placement: shared client components go in <code>app/components/</code>. Route-specific components (a form that lives only on the recipes page) get colocated inside that route folder.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Create and Explore a Next.js Project</span>
+      <span class="ex-desc">npx create-next-app, understand every file in app/, replace the home page</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">File-Based Routing -- Three Pages, No Router</span>
+      <span class="ex-desc">create about/ and contact/ directories, link between them with plain a tags</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Shared Layout with Navigation</span>
+      <span class="ex-desc">root layout with nav, footer, {children}; next/link for client-side navigation</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Client Components -- When and Why</span>
+      <span class="ex-desc">Counter and ThemeToggle; see the server component error, fix with "use client"</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Plan Your Phase 2 Routes</span>
+      <span class="ex-desc">translate Week 4 user stories into a real Next.js folder structure with dynamic routes</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- Server vs. Client Components</div>
+  <p>
+    Partner asked me to explain the split using my Counter component. Page.js on the home route is a server component. It runs on the server, renders to HTML, ships to the browser. The browser never sees the JSX or the import statements. It gets finished HTML. Inside that page I import Counter, which has <code>"use client"</code> at the top. That directive is the boundary. Everything in Counter.jsx ships to the browser as JavaScript. The browser hydrates it, wires up the <code>onClick</code> handlers, and <code>useState</code> works because it is running in a browser context.
+  </p>
+  <p>
+    Without <code>"use client"</code>, Next.js tries to run Counter on the server. The server hits <code>useState</code>, which does not exist in a server context, and throws. The error message is explicit: "You're importing a component that needs useState. It only works in a Client Component." The fix is one line at the top of the file. The lesson is that the default is the server, and you opt into the client. Not the other way around.
+  </p>
+  <p>
+    Follow-up question from partner: "Can you nest a server component inside a client component?" Short answer: not directly. A client component can render <code>{children}</code> passed from a server parent, but it cannot import and render a server component. The boundary only goes one direction. Server can import client. Client cannot import server. This matters for keeping the client bundle small.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    File-based routing is not a feature. It is an opinion about where decisions should live. In plain React I install react-router, create a routes config, map paths to components, and maintain that mapping as the app grows. In Next.js I create a folder. The decision about what URL a page lives at is made by the file system, not by a config file I have to keep in sync. The same thing is true of layouts. I do not configure a layout provider. I create a <code>layout.js</code> file in a directory and everything below that directory gets wrapped.
+  </p>
+  <p>
+    This is the same pattern I saw on Friday with Cloudflare Pages Functions. Put a JavaScript file in <code>functions/api/</code> and the API route exists. No router, no config, no registration. The file system is the source of truth for routing. Next.js and Cloudflare Pages arrived at the same conclusion from different directions. I think this is where web development is heading: fewer config files, more convention. The structure IS the config.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
