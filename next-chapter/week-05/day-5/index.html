@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 5 -- Day 5 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 5 Day 5. Shipping to the edge: Cloudflare Pages, serverless functions, KV storage, and a no-build Preact app.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F680;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 5 -- Shipping: Cloudflare Pages + Serverless</h1>
+<div class="subtitle">NCD . WK5 . D5 . the thing goes live</div>
+
+<p>
+  All week I have been building components, fetching data, wiring state. None of it is on the internet. It runs on localhost and dies when I close the terminal. Friday is about fixing that. The project is <a href="https://mute-pixel.pages.dev">mute-pixel</a>, a pixel art gallery for a game called MUTE. Static HTML, a Preact front end with no build step, Cloudflare Pages Functions for the serverless backend, KV for persistence, and a third-party API (PixelLab) for generating new pixel art on demand. The whole thing deploys with one command. No CI pipeline, no Docker, no YAML.
+</p>
+
+<p>
+  Cloudflare Pages is the part that surprised me. I expected "static hosting" to mean "dump files on a CDN." It does that, but it also runs serverless functions if you put JavaScript files in a <code>functions/</code> directory. No extra config. The runtime figures it out. So the static gallery and the API that generates new art live in the same repo, deploy together, and share a KV namespace. I am used to the Rust/kernel world where "it just works" means someone buried the complexity in a proc macro you will need to understand eventually. Here the complexity is genuinely gone. The function runs at the edge, cold-starts in milliseconds, and I never think about servers.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- Where Does Your Code Run?</div>
+  <p><b>Three deployment models:</b></p>
+  <p>1. <b>Static:</b> HTML/CSS/JS served from a CDN. No server logic. GitHub Pages, Netlify, Cloudflare Pages (without functions). The browser does all the work.</p>
+  <p>2. <b>Server:</b> A process runs 24/7 (Node, Django, Rails). Handles every request. You pay for idle time. You manage the box or the container.</p>
+  <p>3. <b>Serverless/Edge:</b> Functions spin up per-request at the CDN edge. No idle cost, no server management. Cloudflare Workers, Pages Functions, AWS Lambda@Edge. The constraint: short-lived, stateless by default, so you lean on KV or a database for persistence.</p>
+  <p>mute-pixel is model 3. The static gallery is a CDN asset. The <code>/api/generate</code> and <code>/api/gallery</code> endpoints are Pages Functions that run at the edge closest to the user.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> finished the React + API exercises. Wired JSONPlaceholder into a component with the loading/data/error pattern. The three-state discipline from D4 is already muscle memory: <code>useState</code> for each state, <code>useEffect</code> with empty deps for the initial fetch, <code>finally</code> to guarantee the loading flag flips.</p>
+  <p><b>What I'm doing today:</b> deploying a real project to Cloudflare Pages. Not a tutorial app. A gallery site with a passphrase-gated generator that calls PixelLab's API, stores results in KV, and displays them to anyone who visits. Preact instead of React because the whole thing is a single HTML file with ESM imports. No webpack, no vite, no build.</p>
+  <p><b>Where I'm stuck:</b> not stuck, but I am watching one thing. The <code>wrangler pages deploy .</code> command uploads everything in the working directory. If there are large build artifacts (Rust <code>target/</code> dirs, <code>node_modules</code>) it will try to upload them and choke. Learned that the hard way on another project. The fix is to move them out before deploying or add them to <code>.gitignore</code>. No <code>.deployignore</code> exists for Pages, to my knowledge.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Stack</div>
+  <p><b>Frontend:</b> Single-file Preact app. <code>import { render, h } from 'https://esm.sh/preact@10.23.2'</code> and <code>import htm from 'https://esm.sh/htm@3.1.1'</code> in a <code>&lt;script type="module"&gt;</code>. No JSX transform, no bundler. htm tagged templates compile to h() calls at runtime. The trade-off: slightly larger parse cost on first load, but zero build infrastructure to maintain. For a gallery site with 200 assets and a generator form, it is more than enough.</p>
+  <p><b>Backend:</b> Two Pages Functions. <code>functions/api/generate.js</code> validates the passphrase, calls PixelLab, stores the base64 PNG in KV. <code>functions/api/gallery.js</code> lists all stored generations. The passphrase is a Cloudflare secret (<code>wrangler pages secret put GATE_SECRET</code>), never in the repo.</p>
+  <p><b>Storage:</b> Cloudflare KV. Key pattern: <code>gen:{timestamp}:{uuid-slice}</code>. Value: JSON with prompt, timestamp, cost, and the base64 image. KV is eventually consistent and read-optimized, which is the right fit. Writes are rare (someone generates art), reads are frequent (everyone views the gallery).</p>
+  <p><b>Deploy:</b> <code>npx wrangler pages deploy . --project-name mute-pixel</code>. That is the whole pipeline. No git hook, no CI. The Pages project has Git Provider set to "No" so <code>git push</code> does not trigger a deploy. Deliberate. I want to control when the site updates.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Generator</div>
+  <p>The community generator is the interesting part. A visitor types a prompt ("a cracked alien obelisk with glowing runes"), picks an asset type (game object, character, environment, tile, freeform), and hits generate. The backend prepends context based on the asset type: "top-down game object sprite, transparent background, pixel art, MUTE game style" gets concatenated with whatever the user typed. The idea is that every generation looks like it belongs in the MUTE world without the user needing to know how to prompt for pixel art.</p>
+  <p>The passphrase gate is not security. It is credit protection. PixelLab charges per generation. The passphrase is shared with people I trust not to burn through the balance. The constant-time compare in the function is probably overkill for a shared secret that anyone with the passphrase can use, but it costs nothing and the habit is worth keeping.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">What I Would Do Differently</div>
+  <p>KV stores the full base64 PNG inline in the JSON value. For a gallery that grows over time this is going to get expensive on reads. Each gallery load fetches every stored image. The right move is R2 (Cloudflare's object store) for the image blobs and KV for the metadata with an R2 key reference. I skipped it because KV alone is simpler and the gallery has maybe a dozen community generations right now. When it hits 50+ images the gallery endpoint will start feeling slow and that is when R2 earns its setup cost.</p>
+  <p>I also tried using PixelLab's <code>generate-with-style-v2</code> endpoint with the original Doug concept art as a style reference image. The results were too constrained; everything came back super pixelated, matching the reference resolution instead of the requested output size. Backed off to text-only style guidance via <code>create-image-pixflux</code>. The text prompt does enough. Sometimes the simpler tool is the right tool.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    Deploying is not a separate skill from building. The function that handles <code>POST /api/generate</code> is 80 lines of JavaScript. The KV read in the gallery endpoint is four lines. The Preact front end is one HTML file. The deploy command is one line. There is no "ops" layer here. The code <em>is</em> the infrastructure. I write a function, put it in <code>functions/</code>, and it exists at the edge. The mental model from the kernel work, where deploying means cross-compiling, flashing a board, praying the device tree is right, and watching serial output for panics, made me expect deployment to be a separate phase with its own failure modes. For edge serverless it is not. The failure modes are in the code, not in the deploy. Which means I can iterate on a live site as fast as I can iterate on localhost. That changes how I think about when to ship.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
