@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Full Week 4 Model / NCD W6D2</title>
+<meta name="description" content="Exercise 5: add the many-to-many Tag relation, connectOrCreate in the seed, the implicit join table, and the Prisma client singleton for Next.js.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Translate the Full Week 4 Model</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 3 . 35 min</div>
+
+<p>
+  Goal: take the complete ReEntry Tech data model from Week 4 and make it real -- every table, every relation, sample data across all of them. The piece I have been building toward is the many-to-many: tags. An opportunity can be "remote" and "no-experience" and "transportation-provided" at once, and each of those tags applies to many opportunities. The single-foreign-key trick from Exercise 3 cannot express that.
+</p>
+
+<h2>Adding Tag (many-to-many)</h2>
+
+<pre><code>model Opportunity {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  type        String       @default("job")
+  location    String?
+  remote      Boolean      @default(false)
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  org         Organization @relation(fields: [orgId], references: [id])
+  orgId       Int
+  tags        Tag[]
+}
+
+model Tag {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  opportunities Opportunity[]
+}</code></pre>
+
+<p>
+  Both sides carry a list: <code>tags Tag[]</code> on Opportunity, <code>opportunities Opportunity[]</code> on Tag. No foreign key on either, because neither side owns the other. After <code>db push</code>, Studio shows a third table I never declared: <code>_OpportunityToTag</code>.
+</p>
+
+<div class="answer">
+  <strong>What is _OpportunityToTag?</strong>
+  <p>The join table Prisma created for me. A many-to-many cannot live as a column on either side -- one opportunity has many tags and one tag has many opportunities, so neither row can hold a single foreign key. The standard relational answer is a third table where each row pairs one opportunity id with one tag id. "Warehouse Associate is remote" is one row; "Warehouse Associate is no-experience" is another. Prisma manages this implicit join table automatically. I have hand-built these as bridge tables in raw SQL before; here I wrote <code>tags Tag[]</code> and it appeared. If I needed extra columns on the relationship itself -- say, who added the tag and when -- I would promote it to an explicit join model, but I do not need that yet.</p>
+</div>
+
+<h2>Seeding with connectOrCreate</h2>
+
+<p>
+  Tags are shared across opportunities, so I cannot just <code>create</code> them inline the way I did with opportunities -- the second time I used "remote" it would try to create a duplicate and hit the <code>@unique</code> on <code>name</code>. The right tool is <code>connectOrCreate</code>: connect to the existing tag if it is there, create it if it is not.
+</p>
+
+<pre><code>const tag = (name) => ({ where: { name }, create: { name } });
+
+await prisma.organization.create({
+  data: {
+    name: "Second Chance Staffing",
+    email: "hire@secondchancestaffing.org",
+    verified: true,
+    opportunities: {
+      create: [
+        {
+          title: "Warehouse Associate",
+          type: "job",
+          location: "Newark, NJ",
+          tags: {
+            connectOrCreate: [
+              tag("no-experience"),
+              tag("transportation-provided"),
+            ],
+          },
+        },
+        {
+          title: "Remote Data Entry",
+          type: "job",
+          remote: true,
+          tags: {
+            connectOrCreate: [
+              tag("remote"),
+              tag("no-experience"),
+            ],
+          },
+        },
+      ],
+    },
+  },
+});</code></pre>
+
+<p>
+  "no-experience" is created on the first opportunity and reused -- connected -- on the second. After the seed, the Tag table has each name exactly once, and <code>_OpportunityToTag</code> has the pairings. The little <code>tag()</code> helper just spares me retyping the <code>where</code>/<code>create</code> shape for every tag.
+</p>
+
+<h2>The piece for tomorrow: a single Prisma client</h2>
+
+<p>
+  I am querying from Next.js server components tomorrow, and there is a well-known footgun I want handled before I get there. In development, Next.js hot-reloads on every save. If I do <code>new PrismaClient()</code> at module scope in a route, each reload makes a fresh client and opens a new pool of database connections. They pile up and eventually Neon refuses new connections. The fix is the standard global singleton -- create the client once and reuse it across reloads. <code>lib/prisma.js</code>:
+</p>
+
+<pre><code>import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis;
+
+export const prisma =
+  globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}</code></pre>
+
+<div class="answer">
+  <strong>Why stash it on globalThis instead of just a module-level const?</strong>
+  <p>Because hot reload throws away the module and re-evaluates it, so a plain module-level <code>const</code> is recreated every save -- which is the leak. <code>globalThis</code> survives the reload, so <code>globalForPrisma.prisma ?? new PrismaClient()</code> reuses the existing client instead of spawning another. I guard the assignment with <code>NODE_ENV !== "production"</code> because production does not hot-reload and I do not want to lean on a global there. This is the same instinct as a connection pool in any long-lived server: make the expensive resource once, share it. It maps directly onto how I think about a Worker holding a single binding rather than reconnecting per request.</p>
+</div>
+
+<h2>Push, seed, verify</h2>
+
+<pre><code>$ npx prisma db push
+$ npx prisma db seed
+$ npx prisma studio</code></pre>
+
+<p>
+  Four tables now: Organization, Opportunity, Tag, and the implicit <code>_OpportunityToTag</code>. The full Week 4 model for ReEntry Tech is a real database -- one-to-many from orgs to opportunities, many-to-many from opportunities to tags, seeded with data that looks like the actual app. Tomorrow it stops being a Studio curiosity and starts feeding API routes and pages.
+</p>
+
+<div class="answer">
+  <strong>What I would add next, deliberately not today</strong>
+  <p>An <code>Applicant</code> / <code>Application</code> side -- people applying to opportunities -- which is another many-to-many with status on the relationship, so it would be an explicit join model, not implicit. And <code>onDelete</code> behavior on the org relation, decided per the product question from the verbal demo (deactivate, do not cascade-delete an org's history). I am noting these instead of building them because the assignment is to translate the Week 4 model, and bolting on speculative tables now would just be schema I have to maintain before I have a reason to. Build what the model says; add the rest when the feature needs it.</p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

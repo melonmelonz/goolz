@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Seed the Database / NCD W6D2</title>
+<meta name="description" content="Exercise 4: write an ESM seed script, register it in package.json, use nested create, and learn why delete order matters with foreign keys.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Seed the Database</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: fill the empty tables with sample data I can develop against. An empty database is useless for building UI -- tomorrow I read this data into Next.js pages, and I need rows to read. A seed script is a repeatable way to load them.
+</p>
+
+<h2>The script (ESM)</h2>
+
+<p>
+  My Next.js project has <code>"type": "module"</code> in <code>package.json</code>, so the seed uses <code>import</code>, not <code>require</code>. Getting this wrong throws <code>require is not defined in ES module scope</code>, which is a confusing error if you do not know the cause. Here is <code>prisma/seed.js</code>:
+</p>
+
+<pre><code>import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+async function main() {
+  // children before parents -- see the footgun below
+  await prisma.opportunity.deleteMany();
+  await prisma.organization.deleteMany();
+
+  const goodwill = await prisma.organization.create({
+    data: {
+      name: "Second Chance Staffing",
+      email: "hire@secondchancestaffing.org",
+      verified: true,
+      opportunities: {
+        create: [
+          {
+            title: "Warehouse Associate",
+            description: "Full-time, no experience required. Felony-friendly employer.",
+            type: "job",
+            location: "Newark, NJ",
+          },
+          {
+            title: "CDL Class B Training",
+            description: "Six-week commercial driver certification with job placement.",
+            type: "certification",
+            location: "Newark, NJ",
+          },
+        ],
+      },
+    },
+  });
+
+  const bridge = await prisma.organization.create({
+    data: {
+      name: "Bridge Forward Services",
+      email: "intake@bridgeforward.org",
+      verified: false,
+      opportunities: {
+        create: [
+          {
+            title: "Housing Navigation",
+            description: "One-on-one help finding transitional housing.",
+            type: "service",
+          },
+          {
+            title: "Line Cook",
+            description: "Restaurant partner hiring directly from the program.",
+            type: "job",
+            location: "Jersey City, NJ",
+            remote: false,
+          },
+        ],
+      },
+    },
+  });
+
+  console.log("Seeded:");
+  console.log(`  ${goodwill.name} (verified) -- 2 opportunities`);
+  console.log(`  ${bridge.name} (unverified) -- 2 opportunities`);
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });</code></pre>
+
+<p>
+  The nested <code>create</code> is the nice part. I create an Organization and its Opportunities in one call -- Prisma inserts the org, grabs the generated id, and stamps it onto each opportunity's <code>orgId</code> automatically. I never touch the foreign key by hand. That is the ORM earning its keep.
+</p>
+
+<h2>Register and run</h2>
+
+<p>
+  In an ESM project the clean way to run a seed is to register it with Prisma. Top-level entry in <code>package.json</code>:
+</p>
+
+<pre><code>"prisma": {
+  "seed": "node prisma/seed.js"
+}</code></pre>
+
+<pre><code>$ npx prisma db seed
+
+Seeded:
+  Second Chance Staffing (verified) -- 2 opportunities
+  Bridge Forward Services (unverified) -- 2 opportunities</code></pre>
+
+<div class="answer">
+  <strong>Footgun: delete order with foreign keys</strong>
+  <p>I delete opportunities <em>before</em> organizations. The reverse order errors. If I delete an organization while opportunities still point at it via <code>orgId</code>, Postgres refuses -- the foreign key constraint will not let me orphan child rows. Delete the children first, then the parent. This is the same constraint from Exercise 3 showing its other face: it protected me from a bad insert there, and it is protecting me from a bad delete here. It is not the ORM being fussy; it is the database guaranteeing that every <code>orgId</code> always points at a real org. I want that guarantee, so I order my deletes around it.</p>
+</div>
+
+<div class="answer">
+  <strong>Why deleteMany at the top at all?</strong>
+  <p>So the seed is idempotent. I will run it many times today while iterating on the schema. Without the clear-out, every run stacks another full set of rows on top of the last, and the unique email constraint on Organization would start throwing on the second run anyway. Clearing first means "run this script and the database is in exactly this known state," every time. That repeatability is the whole reason a seed script beats clicking rows into Studio by hand.</p>
+</div>
+
+<h2>Verify in Studio</h2>
+
+<p>
+  Two orgs, four opportunities. Clicking an opportunity's <code>orgId</code> jumps to its organization; clicking an org shows its opportunities list. The relationship I wired in Exercise 3 is now populated and walkable. Real data, real links.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

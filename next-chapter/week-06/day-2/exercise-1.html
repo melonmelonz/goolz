@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Install Prisma + Neon / NCD W6D2</title>
+<meta name="description" content="Exercise 1: install Prisma in the Next.js project, connect to a serverless Postgres on Neon, prove the connection with db push.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Install Prisma and Connect to Neon</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 25 min</div>
+
+<p>
+  Goal: get Prisma into yesterday's Next.js project and pointed at a Postgres database I do not have to run myself. We are using Neon -- serverless Postgres in the cloud -- which is the right call for a cohort because there is nothing to install and it behaves the same on every machine. For me it is also a useful contrast: every database I have touched in this program lived inside Cloudflare's edge (KV). This one lives somewhere I connect to over a URL.
+</p>
+
+<h2>Neon signup</h2>
+
+<p>
+  Signed in with GitHub, created a project named <code>nextchapter-week6</code>, picked the closest region, left the Postgres version default. Neon then shows a connection string starting with <code>postgresql://</code>. I copied it somewhere safe and treated it like a password, because it is one.
+</p>
+
+<div class="answer">
+  <strong>Footgun: Neon gives you TWO connection strings</strong>
+  <p>The dashboard defaults to a <em>pooled</em> string (the host has <code>-pooler</code> in it) and offers a <em>direct</em> one if you expand the options. The pooled one routes through Neon's connection pooler, which is what you want for a serverless app making lots of short-lived connections. For schema operations -- <code>db push</code> and migrations -- the direct connection is the cleaner choice. For this week I set <code>DATABASE_URL</code> to the pooled string and it works fine for <code>db push</code>; in Week 8 when we add real migrations I will add a separate <code>DIRECT_URL</code> for those. Flagging it now so the distinction is not a surprise later.</p>
+</div>
+
+<h2>Install</h2>
+
+<pre><code>npm install prisma --save-dev
+npm install @prisma/client
+npx prisma init</code></pre>
+
+<p>
+  <code>prisma init</code> created two things: <code>prisma/schema.prisma</code> (the schema file, with a default generator and a postgresql datasource) and <code>.env</code> (with a placeholder <code>DATABASE_URL</code>). Nothing surprising; this is the same "scaffold a few files" move <code>create-next-app</code> made yesterday.
+</p>
+
+<h2>Guarding the secret</h2>
+
+<p>
+  Before I pasted anything real, I checked <code>.gitignore</code>. Next.js already had <code>.env*</code> in there, so the connection string will not get committed. I verified it instead of trusting it:
+</p>
+
+<pre><code>$ git check-ignore .env
+.env</code></pre>
+
+<div class="answer">
+  <strong>Why I ran git check-ignore instead of just eyeballing .gitignore</strong>
+  <p>Eyeballing tells you a pattern exists. <code>git check-ignore</code> tells you the file is <em>actually</em> ignored by the rules as they resolve, which is the thing I care about. It prints the path if ignored and nothing if not. A silent prompt would have meant my Neon credentials were one <code>git add .</code> away from being public. This is a thirty-second check that prevents a class of mistake I do not want to make with someone's reentry data downstream.</p>
+</div>
+
+<p>
+  Then I opened <code>.env</code> and replaced the placeholder with the real Neon string, verbatim, including <code>?sslmode=require</code> at the end:
+</p>
+
+<pre><code>DATABASE_URL="postgresql://USER:PASSWORD@HOST-pooler.neon.tech/DBNAME?sslmode=require"</code></pre>
+
+<h2>The schema.prisma it generated</h2>
+
+<pre><code>generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}</code></pre>
+
+<p>
+  Reads cleanly: generate a JS client, and connect to postgres at the URL in my env. The <code>env("DATABASE_URL")</code> indirection is the whole reason the secret stays out of the committed file -- the schema references the variable, never the value.
+</p>
+
+<h2>Proving the connection</h2>
+
+<pre><code>$ npx prisma db push
+
+Your database is now in sync with your Prisma schema. Done in 1.2s</code></pre>
+
+<p>
+  The schema has no models yet, so this pushed an empty schema. That is fine -- the point of this step was not to create tables, it was to prove the credentials, the SSL, and the network path all work end to end before I start defining models. Get the boring connectivity confirmed first, then build on solid ground.
+</p>
+
+<div class="answer">
+  <strong>Footgun: the first query is slow because Neon autosuspends</strong>
+  <p>Neon's free tier suspends the compute after a few minutes of inactivity. The first command after a nap takes a couple of seconds while it wakes up; subsequent ones are instant. I recognized this immediately because it is the exact same cold-start behavior I deal with on Cloudflare Workers. It is not a bug and it is not my connection string -- it is the database waking up. Worth knowing so I do not chase a phantom "slow Prisma" problem.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Prisma installed, <code>.env</code> holds a real Neon string and is verifiably gitignored, and <code>db push</code> round-trips to the cloud. The connection is proven. Next: give it something to create.
+</p>
+
+<nav class="ex-nav">
+  <a href="./">Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Define the First Model / NCD W6D2</title>
+<meta name="description" content="Exercise 2: define the Opportunity model, push it to Postgres, see the empty table in Prisma Studio, read the schema-to-table mapping.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Define the First Model</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 25 min</div>
+
+<p>
+  Goal: write a model, push it, and watch a real table show up in Studio. The brief uses a recipe example; I am building ReEntry Tech, so my first model is <code>Opportunity</code> -- the central thing in the app, a single posting that is either a job, a certification program, or a wraparound service.
+</p>
+
+<h2>The model</h2>
+
+<pre><code>model Opportunity {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  type        String   @default("job")
+  location    String?
+  remote      Boolean  @default(false)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}</code></pre>
+
+<p>
+  Every field choice here is deliberate. <code>title</code> is required because a listing with no title is not a listing. <code>description</code> is <code>String?</code> -- optional -- because a partner org might drop in a quick stub and fill the writeup later. <code>type</code> defaults to "job" since that is the most common posting. <code>remote</code> and <code>active</code> are booleans with sensible defaults so a new row is "not remote, currently active" unless told otherwise. <code>createdAt</code> stamps itself with <code>@default(now())</code> so I never set it by hand.
+</p>
+
+<h2>Push it</h2>
+
+<pre><code>$ npx prisma db push
+
+Your database is now in sync with your Prisma schema.
+Running generate... Generated Prisma Client in 78ms</code></pre>
+
+<div class="answer">
+  <strong>Did I need to run prisma generate separately?</strong>
+  <p>No. Modern <code>db push</code> runs <code>prisma generate</code> at the end automatically -- you can see "Running generate..." in the output above. I ran <code>npx prisma generate</code> once on its own anyway, just to watch what it does in isolation: it reads the schema and writes the typed client into <code>node_modules/.prisma/client</code>. That is the code my server components will import tomorrow. <code>db push</code> changes the <em>database</em>; <code>generate</code> changes the <em>client</em>. They usually run together, but they are two different jobs and it is worth knowing which is which.</p>
+</div>
+
+<h2>Studio</h2>
+
+<pre><code>$ npx prisma studio</code></pre>
+
+<p>
+  Opened on <code>localhost:5555</code>. The <code>Opportunity</code> table is listed. Clicking it shows the columns -- id, title, description, type, location, remote, active, createdAt -- and zero rows. Empty is expected; I add data in Exercise 4. The point of this step was to confirm the model became a table, and it did.
+</p>
+
+<h2>The mapping</h2>
+
+<table>
+  <tr><th>Prisma schema</th><th>What Postgres got</th></tr>
+  <tr><td><code>model Opportunity</code></td><td><code>Opportunity</code> table</td></tr>
+  <tr><td><code>id Int @id @default(autoincrement())</code></td><td><code>id</code> integer, primary key, SERIAL</td></tr>
+  <tr><td><code>title String</code></td><td><code>title</code> text, NOT NULL</td></tr>
+  <tr><td><code>description String?</code></td><td><code>description</code> text, nullable</td></tr>
+  <tr><td><code>remote Boolean @default(false)</code></td><td><code>remote</code> boolean, DEFAULT false</td></tr>
+  <tr><td><code>createdAt DateTime @default(now())</code></td><td><code>createdAt</code> timestamp, DEFAULT now()</td></tr>
+</table>
+
+<p>
+  This is the row I would have hand-written as <code>CREATE TABLE "Opportunity" (...)</code> with about nine lines of SQL and at least one typo. Instead I wrote nine lines of schema and the ORM emitted the SQL. The left column is the contract I maintain; the right column is the thing Prisma keeps in sync with it.
+</p>
+
+<div class="answer">
+  <strong>What does the ? actually change at the database level?</strong>
+  <p>It flips the column between <code>NOT NULL</code> and nullable. <code>title String</code> becomes <code>NOT NULL</code> -- Postgres rejects an insert with no title. <code>description String?</code> allows NULL, so a row with no description is legal. This is the database enforcing my data rules, not my JavaScript hoping it remembered to. That is the part I want for ReEntry Tech: the integrity guarantee lives one layer below the app code that might have a bug.</p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

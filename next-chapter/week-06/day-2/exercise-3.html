@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- A Relation / NCD W6D2</title>
+<meta name="description" content="Exercise 3: add the Organization model and wire a one-to-many relation to Opportunity, plus the footgun of adding a required foreign key to a populated table.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>A Second Model with a Relation</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: connect two models. Opportunities do not float free -- a partner organization posts them. So I add <code>Organization</code> and wire it to <code>Opportunity</code> as a one-to-many: one org, many opportunities.
+</p>
+
+<h2>The two models</h2>
+
+<pre><code>model Organization {
+  id            Int           @id @default(autoincrement())
+  name          String
+  email         String        @unique
+  website       String?
+  verified      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  opportunities Opportunity[]
+}
+
+model Opportunity {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  type        String       @default("job")
+  location    String?
+  remote      Boolean      @default(false)
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  org         Organization @relation(fields: [orgId], references: [id])
+  orgId       Int
+}</code></pre>
+
+<p>
+  Three new lines do the work. On Organization, <code>opportunities Opportunity[]</code> is the "many" side -- a virtual field, no column, just Prisma's handle for the list. On Opportunity, <code>org Organization @relation(...)</code> is the "one" side, and <code>orgId Int</code> is the real foreign-key column that stores the link. The <code>@relation(fields: [orgId], references: [id])</code> spells out the wiring: my <code>orgId</code> points at Organization's <code>id</code>.
+</p>
+
+<p>
+  I also put <code>@unique</code> on the org email. Two organizations with the same contact email is a data-entry error, and I would rather Postgres reject it at insert than discover duplicates later. Constraints in the schema beat checks in the app code, because the schema cannot be bypassed by a bug in a code path I forgot about.
+</p>
+
+<h2>Push</h2>
+
+<pre><code>$ npx prisma db push
+
+Your database is now in sync with your Prisma schema.</code></pre>
+
+<div class="answer">
+  <strong>Footgun: adding a required relation to a table that already has rows</strong>
+  <p>My Opportunity table was empty, so this pushed clean. But it would NOT have if I had seeded first. Adding <code>orgId Int</code> -- a required column -- to a table with existing rows fails, because those rows have no <code>orgId</code> and Postgres cannot satisfy NOT NULL. <code>db push</code> would either error or offer to wipe the table. The fixes: make it optional (<code>orgId Int?</code>) first, backfill, then tighten it; or give it a default; or reset since this is throwaway prototype data. I got lucky on ordering this time. The lesson I am writing down: define relations <em>before</em> you seed, or be ready to do a backfill. This is exactly the kind of thing that is harmless in week 6 and a production incident in month 6.</p>
+</div>
+
+<h2>Studio -- the link is visible</h2>
+
+<p>
+  Two tables now. The Opportunity table has a new <code>orgId</code> column. In Studio that column renders as a clickable link to the related Organization row, and the Organization table shows an <code>opportunities</code> count per row. The relationship is not just conceptual; Studio walks it both directions.
+</p>
+
+<pre><code>Organization (1) ----------&lt; Opportunity (many)
+  id                            id
+  name                          title
+  email  @unique               orgId  ---&gt; Organization.id
+  opportunities[]              org</code></pre>
+
+<div class="answer">
+  <strong>Why is this one-to-many and not many-to-many?</strong>
+  <p>Because a given opportunity is posted by exactly one organization -- it has a single owner. An org posts many listings, but a listing does not belong to several orgs at once. That is the definition of one-to-many, and it is why the foreign key lives on the Opportunity side (the "many" side always carries the key). The next exercise introduces a genuinely many-to-many relationship -- tags -- where that single-key model breaks down and Prisma needs a join table.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Two connected tables. Prisma manages the join: I can ask for an org and <code>include</code> its opportunities, or an opportunity and <code>include</code> its org, and never write the SQL JOIN myself. Next: put data in them.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 6 -- Day 2 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 6 Day 2. Connect to Postgres + Prisma. ORMs, schema, models, migrations, relations, seeding with Neon.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x25B2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 2 -- Connect to Postgres + Prisma</h1>
+<div class="subtitle">NCD . WK6 . D2 . five exercises loaded . the code becomes a database</div>
+
+<p>
+  Yesterday Next.js gave React a server. Today that server gets a database. Every project I have shipped in this program so far stored its state in Cloudflare KV -- a key-value store. KV is wonderful for what it is: write a string, read it back by its key, done. But it has no schema, no types, no relations, and no way to ask "give me every active opportunity from verified organizations." You can fake all of that in application code, and I have, and it gets ugly fast. Today is my first real relational database in this program, and the bridge to it is an ORM.
+</p>
+
+<p>
+  An ORM -- Object-Relational Mapper -- is the layer between my JavaScript and the SQL the database actually speaks. I describe my data once, as code, and the ORM generates the tables and the queries. The one we use is Prisma. It has three moving parts that are worth keeping straight: the <b>schema</b> (<code>schema.prisma</code>, where I define models), the <b>client</b> (the generated, type-safe JS I call from server components), and <b>Studio</b> (a visual browser for the rows). The pitch is that the schema is the single source of truth and everything else is derived from it. That is the same instinct I liked about file-based routing yesterday: one declaration, no second copy to keep in sync.
+</p>
+
+<p>
+  The honest reframe for me: I already know SQL. I have written <code>CREATE TABLE</code> and <code>SELECT ... WHERE</code> by hand. So the question is not "how do I avoid SQL," it is "what do I give up and what do I gain by letting a tool generate it." What I gain is types -- a typo in a field name is a compile error, not a 2am production surprise -- and migrations I do not have to hand-write. What I give up is some control and a layer of indirection I now have to understand. Fine trade for an app this size. I want to know where the seams are, though, which is why I am writing down every footgun I hit today.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- What's in Your Data Model?</div>
+  <p><b>Phase 2 app (ReEntry Tech):</b> a platform that connects people leaving incarceration with jobs, certifications, and wraparound services posted by verified partner organizations.</p>
+  <p><b>Main table:</b> <code>Opportunity</code> -- a single posting (a job, a certification program, or a service).</p>
+  <p><b>Three fields:</b> <code>title</code>, <code>description</code>, <code>type</code> (job / certification / service).</p>
+  <p><b>One relationship:</b> an <code>Organization</code> has many <code>Opportunity</code> records. And an <code>Opportunity</code> has many <code>Tag</code> records ("remote", "no-experience", "transportation-provided") -- which is a many-to-many, the harder one, so I am building toward it on purpose.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> set up the Next.js scaffold for Phase 2 -- file-based routing, a root layout, and the server vs. client component split. Planned the four routes ReEntry Tech needs.</p>
+  <p><b>What I'm doing today:</b> connecting that scaffold to a real Postgres database on Neon with Prisma. Defining the Organization / Opportunity / Tag models, pushing them, and seeding sample data.</p>
+  <p><b>Where I'm stuck:</b> not stuck. Two things I am watching. One, Neon hands you two connection strings -- a pooled one and a direct one -- and I want to make sure I point <code>db push</code> at the right one. Two, the classic Prisma-in-Next.js footgun where dev hot-reload opens a new database connection on every save and eventually exhausts the pool. I am going to set up the global singleton today even though I do not query from a route until tomorrow, so I do not get bitten later.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Why an ORM Instead of Raw SQL</div>
+  <p>The argument from lecture, with my own gloss:</p>
+  <table>
+    <tr><th>Problem with raw SQL</th><th>What the ORM does</th></tr>
+    <tr><td>SQL is a second language; you context-switch</td><td>You stay in JS/TS</td></tr>
+    <tr><td>Typos surface at runtime, no autocomplete</td><td>The generated client is typed; typos are compile errors</td></tr>
+    <tr><td>Schema and code drift apart by hand</td><td>The schema generates the client; one source of truth</td></tr>
+    <tr><td>String-built queries invite SQL injection</td><td>Parameterized queries by default</td></tr>
+  </table>
+  <p>The SQL injection point is the one I would underline for the cohort. It is not that Prisma is magic; it is that hand-concatenating user input into a query string is the original sin, and the ORM removes the temptation by never handing you the string.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Three Parts of Prisma</div>
+  <p><b>1. Schema</b> (<code>prisma/schema.prisma</code>) -- where models live. Each model maps to a table, each field to a column.</p>
+<pre><code>model Opportunity {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  type        String   @default("job")
+  createdAt   DateTime @default(now())
+}</code></pre>
+  <p>The attribute vocabulary I need today: <code>Int</code> / <code>String</code> / <code>Boolean</code> / <code>DateTime</code> for types, <code>?</code> for nullable, <code>@id</code> for the primary key, <code>@default(autoincrement())</code> for the serial id, <code>@default(now())</code> for timestamps, <code>@unique</code> for a uniqueness constraint.</p>
+  <p><b>2. Client</b> -- generated JS I import and call. No SQL.</p>
+<pre><code>const active = await prisma.opportunity.findMany({
+  where: { active: true },
+});</code></pre>
+  <p><b>3. Studio</b> -- <code>npx prisma studio</code> opens a spreadsheet-style view of the rows in the browser. Good for sanity-checking a seed.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Workflow (db push)</div>
+  <ol>
+    <li>Edit <code>prisma/schema.prisma</code>.</li>
+    <li><code>npx prisma db push</code> -- mirrors the schema onto the database.</li>
+    <li><code>npx prisma generate</code> -- regenerates the typed client (modern <code>db push</code> runs this for you).</li>
+    <li><code>npx prisma studio</code> -- eyeball the tables.</li>
+  </ol>
+  <p><b>db push vs. migrate dev:</b> <code>db push</code> just makes the database look like the schema. No history, no migration files. Perfect for the fast iteration I am doing this week. In Week 8 (deployment) we switch to <code>prisma migrate dev</code>, which writes migration files I commit to git, and <code>prisma migrate deploy</code>, which replays them in production. The one-line version: <code>db push</code> while the schema is still soft, <code>migrate dev</code> once it is real.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Relations</div>
+  <p>A relation is a connection between models. One-to-many is the common case: an Organization has many Opportunities.</p>
+<pre><code>model Organization {
+  id            Int           @id @default(autoincrement())
+  name          String
+  opportunities Opportunity[]   // the "many" side, a list
+}
+
+model Opportunity {
+  id     Int          @id @default(autoincrement())
+  org    Organization @relation(fields: [orgId], references: [id])
+  orgId  Int            // the foreign key column
+}</code></pre>
+  <p>The <code>[]</code> means "many." The <code>@relation(fields: [orgId], references: [id])</code> says "the <code>orgId</code> column on this row points at the <code>id</code> column on Organization." The <code>orgId Int</code> is the actual column that gets stored. Querying, Prisma does the join: <code>include: { opportunities: true }</code>.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Install Prisma and Connect to Neon</span>
+      <span class="ex-desc">npm install, prisma init, .env gitignore check, point DATABASE_URL at Neon, prove the connection with db push</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Define the First Model</span>
+      <span class="ex-desc">Opportunity model, push it, watch the empty table appear in Studio, read the schema-to-table mapping</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">A Second Model with a Relation</span>
+      <span class="ex-desc">add Organization, wire a one-to-many to Opportunity, and the footgun of adding a required FK to a populated table</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Seed the Database</span>
+      <span class="ex-desc">ESM seed script, register it in package.json, nested create, and why delete order matters with foreign keys</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Translate the Full Week 4 Model</span>
+      <span class="ex-desc">add the many-to-many Tag, connectOrCreate in the seed, the implicit join table, and the Prisma client singleton for tomorrow</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- Walk Through Your Schema</div>
+  <p>
+    Partner asked me to walk the ReEntry Tech schema and justify the choices. Three models. <code>Organization</code> is a partner org: <code>name</code> required, <code>email</code> with <code>@unique</code> because two orgs sharing an email is a data-entry mistake I want the database to reject, not something I check in app code, and <code>verified Boolean @default(false)</code> because a brand-new submission is untrusted until a human approves it. <code>Opportunity</code> is the posting: <code>title</code> required, <code>description String?</code> optional because a quick listing might not have a writeup yet, and <code>type</code> a string defaulting to "job."
+  </p>
+  <p>
+    The relations are the interesting part. Organization-to-Opportunity is one-to-many: the <code>opportunities Opportunity[]</code> on the org and the <code>org</code> plus <code>orgId</code> foreign key on the opportunity. One org posts many listings; each listing belongs to exactly one org. Opportunity-to-Tag is many-to-many: a "remote" tag applies to many opportunities, and one opportunity is both "remote" and "no-experience." So both sides carry a list and Prisma manages a hidden join table.
+  </p>
+  <p>
+    Partner's question: "What happens to the opportunities if I delete an organization?" Honest answer -- right now it would error, because the opportunities still hold an <code>orgId</code> pointing at a row that no longer exists and the foreign key constraint blocks the delete. To actually delete an org I would either delete its opportunities first or declare <code>onDelete: Cascade</code> on the relation. I have not added cascade yet because for ReEntry Tech I would rather deactivate an org than nuke every job it ever posted. That is a product decision the schema should reflect, and I will make it deliberately, not by default.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    The schema is not documentation that describes the database. The schema <em>is</em> the database. That sounds like a small distinction until you feel it. For two years my mental model was: the database is the real thing, and any diagram or model file is a hopeful description of it that goes stale the moment someone runs an <code>ALTER TABLE</code> by hand. Prisma inverts that. I edit one file, run one command, and the database rearranges itself to match. The file is upstream of the truth, not a snapshot of it.
+  </p>
+  <p>
+    It is the same lesson as file-based routing yesterday and Pages Functions on Friday, three layers down. Routing: the folder structure is the router. Functions: the file in <code>functions/api/</code> is the endpoint. Schema: the model in <code>schema.prisma</code> is the table. Each one takes a thing that used to be config you maintained separately and makes the declaration itself the source of truth. The pattern across all three is "stop describing the system, declare it, and let the tool derive the rest." That is the actual idea I am taking out of Week 6, and it is bigger than any one tool.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
