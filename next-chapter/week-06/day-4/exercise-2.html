@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- The POST Handler / NCD W6D4</title>
+<meta name="description" content="Exercise 2: add a POST handler beside GET on the same route, read the body, validate, create the row, return 201, and test it from the console.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The POST Handler</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 25 min</div>
+
+<p>
+  Goal: teach the existing route to accept a new opportunity. Yesterday's <code>route.js</code> only exported <code>GET</code>. Today I add <code>POST</code> right beside it -- same file, same URL, opposite verb -- so <code>/api/opportunities</code> both lists and creates depending on how you knock. This is the half I have done before in the notepad's KV save, so the new thing is small and specific: it writes to a real relational table now, and it returns the created row.
+</p>
+
+<h2>POST alongside GET</h2>
+
+<pre><code>// app/api/opportunities/route.js
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+// from yesterday
+export async function GET() {
+  try {
+    const opportunities = await prisma.opportunity.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(opportunities);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch opportunities" },
+      { status: 500 }
+    );
+  }
+}
+
+// new today
+export async function POST(request) {
+  try {
+    const body = await request.json();
+
+    if (!body.title || body.title.trim() === "") {
+      return NextResponse.json(
+        { error: "Title is required" },
+        { status: 400 }
+      );
+    }
+
+    const created = await prisma.opportunity.create({
+      data: {
+        title: body.title.trim(),
+        description: body.description?.trim() || "",
+        type: body.type || "job",
+      },
+    });
+
+    return NextResponse.json(created, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to create opportunity" },
+      { status: 500 }
+    );
+  }
+}</code></pre>
+
+<p>
+  Two exports, one file. Next.js routes by method automatically -- a GET to this path runs <code>GET</code>, a POST runs <code>POST</code>, and I never wrote a single line of "if method is...". That dispatch used to be my job in a Pages Function, where one handler switched on <code>request.method</code>. Here the function name <em>is</em> the method, which is cleaner and harder to get wrong.
+</p>
+
+<div class="answer">
+  <strong>body.title.trim() before testing, and ?. on the optionals</strong>
+  <p>Two small things doing real work. First, I validate <code>body.title.trim() === ""</code>, not just <code>!body.title</code>, because a title of <code>"   "</code> -- three spaces -- is truthy and would sail past a bare falsy check, then store a listing that looks blank. Trim first, then test emptiness. Second, <code>body.description?.trim()</code> with the optional-chaining <code>?.</code>: if description is missing entirely, <code>body.description</code> is undefined, and calling <code>.trim()</code> on undefined throws. The <code>?.</code> short-circuits to undefined instead, and the <code>|| ""</code> turns that into an empty string. So an absent optional field degrades to empty rather than crashing the whole create.</p>
+</div>
+
+<div class="answer">
+  <strong>Why 201, not 200</strong>
+  <p>GET returns 200 -- "here is what you asked for." POST returns <code>201 Created</code> -- a more specific success that means "I made a new resource." It is not pedantry; a client can read 201 and know a row was created without inspecting the body, and tooling, caches, and logs treat the two differently. Returning the created row <em>with</em> the 201 also hands the client the database-assigned <code>id</code> and <code>createdAt</code> it did not have -- which is exactly what tomorrow's "redirect to the new detail page" needs. Send back the thing you made, with the code that says you made it.</p>
+</div>
+
+<h2>Test it from the console</h2>
+
+<p>
+  No form needed yet -- I can exercise the endpoint straight from the browser console, which is also the proof that the route is reachable by anything, not just my UI:
+</p>
+
+<pre><code>fetch("/api/opportunities", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    title: "Forklift Certification -- evenings",
+    description: "Two-week evening program, transportation provided.",
+    type: "certification",
+  }),
+})
+  .then((r) =&gt; r.json())
+  .then((data) =&gt; console.log("created:", data));</code></pre>
+
+<p>
+  The console logs the new row, <code>id</code> and <code>createdAt</code> filled in by the database. Then I open <code>/api/opportunities</code> (a plain GET) and the new listing is in the array, on top because of yesterday's <code>orderBy</code> desc. It survives a page reload because it is in Postgres now, not in memory -- which is the entire difference today makes.
+</p>
+
+<div class="answer">
+  <strong>Footgun: forget the Content-Type header and request.json() throws</strong>
+  <p>If I drop <code>headers: { "Content-Type": "application/json" }</code>, the body still goes up, but the server does not know to parse it as JSON, and <code>await request.json()</code> throws -- which my try/catch turns into a 500 that reads "failed to create" and sends me hunting in the wrong place. The bug is not in the create; it is that the request never declared its content type. This is the exact pair the form will set for me in Exercise 3, but testing raw from the console means I set it by hand, and forgetting it once was a useful reminder of what the form is quietly doing.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  The endpoint creates. It reads a JSON body, refuses an empty title with a 400, inserts with Prisma, and returns the row with 201 -- and I proved all of it from the console before any form touched it. Both ends now exist independently: a form that captures (Exercise 1) and a route that persists (this one). Next they meet.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

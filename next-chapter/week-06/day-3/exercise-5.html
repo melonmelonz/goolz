@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- The Detail Page / NCD W6D3</title>
+<meta name="description" content="Exercise 5: a dynamic [id] route, findUnique, awaiting params, the not-found branch, and a related-listings section off the same org.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The Detail Page</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 3 . 35 min</div>
+
+<p>
+  Goal: click a card, land on a page showing that one opportunity in full. The list-and-detail pattern -- a feed of summaries that each link to a full record. Product pages, social posts, job boards, the docs I am reading right now: they all wear this shape. ReEntry Tech needs it because the board shows a title and a type, but the detail page is where someone actually reads the full description, sees the org, and decides whether to act.
+</p>
+
+<h2>The dynamic route</h2>
+
+<p>
+  The folder name in brackets is the new convention. <code>[id]</code> means "match anything here and hand it to me as <code>params.id</code>":
+</p>
+
+<pre><code>app/
+  opportunities/
+    page.js          -->  /opportunities       (the board)
+    [id]/
+      page.js        -->  /opportunities/7     (one listing)</code></pre>
+
+<pre><code>// app/opportunities/[id]/page.js
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+
+export default async function OpportunityDetailPage({ params }) {
+  const { id } = await params;
+
+  const opportunity = await prisma.opportunity.findUnique({
+    where: { id: parseInt(id, 10) },
+    include: { org: true, tags: true },
+  });
+
+  if (!opportunity) {
+    return (
+      &lt;div&gt;
+        &lt;h1&gt;Not Found&lt;/h1&gt;
+        &lt;p&gt;No opportunity with id {id}.&lt;/p&gt;
+        &lt;Link href="/opportunities"&gt;Back to all&lt;/Link&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;Link href="/opportunities"&gt;&amp;larr; Back to all&lt;/Link&gt;
+      &lt;h1&gt;{opportunity.title}&lt;/h1&gt;
+      &lt;span&gt;{opportunity.type}&lt;/span&gt;
+      &lt;p&gt;{opportunity.description || "No description provided."}&lt;/p&gt;
+      {opportunity.org &amp;&amp; &lt;p&gt;Posted by {opportunity.org.name}&lt;/p&gt;}
+      &lt;div&gt;
+        {opportunity.tags.map((t) =&gt; (
+          &lt;span key={t.id} className="tag"&gt;{t.label}&lt;/span&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>The two footguns that ate my first ten minutes</strong>
+  <p><b>One: await params.</b> In current Next.js <code>params</code> is a promise, so <code>const { id } = await params;</code> -- not <code>params.id</code> directly. Skip the await and you get a console warning and an <code>id</code> that is undefined-ish in a way that does not crash loudly, which is the worst kind of bug. <b>Two: parseInt the id.</b> The URL segment arrives as the string <code>"7"</code>, but my Prisma <code>id</code> column is an <code>Int</code>. <code>findUnique({ where: { id: "7" } })</code> is a type mismatch -- Prisma wants a number. <code>parseInt(id, 10)</code> with the explicit radix converts it. Both of these are the boundary between the URL (all strings) and the database (typed), and both bit me before I read the error closely enough to see they were boundary problems, not logic problems.</p>
+</div>
+
+<h2>findUnique vs findMany</h2>
+
+<p>
+  This is the first time I have reached for <code>findUnique</code> instead of <code>findMany</code>, and the distinction is exactly what it sounds like. <code>findMany</code> returns an array, possibly empty. <code>findUnique</code> returns one record or <code>null</code>, and it only works on a field the schema knows is unique -- the primary key, or anything marked <code>@unique</code>. So <code>findUnique({ where: { id } })</code> is legal but <code>findUnique({ where: { type: "job" } })</code> is not, because type is not unique and the query could match many. The return type tells you which to reach for: one thing or null, use findUnique; a list, use findMany.
+</p>
+
+<div class="answer">
+  <strong>The not-found branch is not optional, it is the whole point of a public URL</strong>
+  <p>The board only ever links to ids that exist, so it is tempting to skip the <code>if (!opportunity)</code> check. But <code>/opportunities/9999</code> is a public URL anyone can type, paste, or hit from a stale link after a listing gets deleted. Without the guard, <code>opportunity</code> is <code>null</code> and the next line -- <code>opportunity.title</code> -- throws "cannot read title of null," which Next.js turns into an ugly 500. The branch turns that into a calm "no opportunity with id 9999, here is the way back." This is the same lesson as Exercise 2's empty state, one level down: the user reached a real address, the answer is "nothing is here," and I should say so plainly instead of crashing.</p>
+</div>
+
+<h2>Related listings off the same org (the stretch)</h2>
+
+<p>
+  The detail page already loaded the org. Below the listing, I show the org's other postings -- a second query, scoped to the same org and excluding the one I am already looking at:
+</p>
+
+<pre><code>const alsoFromOrg = await prisma.opportunity.findMany({
+  where: {
+    orgId: opportunity.orgId,
+    NOT: { id: opportunity.id },
+  },
+  take: 4,
+});</code></pre>
+
+<p>
+  <code>NOT: { id: opportunity.id }</code> is "everything from this org except the current one," and <code>take: 4</code> caps it. This is the relation paying off: because an Organization has many Opportunities, "more from this employer" is a one-line query, not a data-modeling project. For ReEntry Tech that is a genuinely useful surface -- someone interested in one posting from a verified partner is plausibly interested in that partner's others.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Day 3 is done. The board lists, search filters, cards link, and each link opens a full record that handles the missing case and surfaces related listings. The read half of the app is real -- data flows schema to screen, with the joins, the empty states, and the type boundaries all handled deliberately. Tomorrow the arrows reverse: forms send data <em>back</em>, and the app starts holding things users put there instead of only what I seeded.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

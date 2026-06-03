@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Wire the Full Loop / NCD W6D4</title>
+<meta name="description" content="Exercise 3: connect form to fetch to route to database to UI, the server-vs-client board decision, onSuccess prepend vs router.refresh, and which I'd ship.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Wire the Full Loop</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 35 min</div>
+
+<p>
+  Goal: connect the two halves so submitting the form inserts a row and the new listing appears -- the full create loop, form to fetch to route to database to UI. The mechanical part is swapping yesterday's <code>console.log</code> for a real fetch. The interesting part is the question I flagged at standup: how does the list find out a new row exists, and what does answering that cost the board's architecture.
+</p>
+
+<h2>The form makes a real request</h2>
+
+<pre><code>// app/opportunities/create-form.js  (handleSubmit only)
+import { useRouter } from "next/navigation";
+// const router = useRouter();  inside the component
+
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  const res = await fetch("/api/opportunities", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, description, type }),
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    setError(data.error || "Something went wrong");
+    return;
+  }
+
+  setTitle("");
+  setDescription("");
+  setType("job");
+
+  if (onSuccess) onSuccess(data);   // path A: client state
+  router.refresh();                 // path B: re-pull server data
+}</code></pre>
+
+<p>
+  I check <code>res.ok</code> before celebrating -- a 400 from a missing title is still a completed fetch, so <code>res.ok</code> (true only for 2xx) is what separates "saved" from "rejected with a message." On success I clear the fields back to their initial state, including the select back to <code>"job"</code>, so the form is ready for the next entry instead of holding stale values.
+</p>
+
+<div class="answer">
+  <strong>The decision I sat on: onSuccess prepend vs. router.refresh</strong>
+  <p>Two ways to make the new row show, and I wired both to feel them. <b>Path A -- onSuccess:</b> the form calls back to the page with the created row, the page prepends it to a <code>useState</code> array, React re-renders, the listing appears instantly with zero extra network. The cost: the board must hold the list in client state, which means the board becomes a client component and loses yesterday's server-side simplicity. <b>Path B -- router.refresh():</b> tells Next.js to re-run the server render and re-pull the data, so a server-component board picks up the new row on its own. The cost: a round-trip to the server after every create, and a beat of latency before the row shows. Path A is faster and heavier; Path B is simpler and chattier.</p>
+</div>
+
+<h2>Path A: the board as a client component</h2>
+
+<pre><code>// app/opportunities/page.js  (client version)
+"use client";
+
+import { useState, useEffect } from "react";
+import CreateOpportunityForm from "./create-form";
+
+export default function OpportunitiesPage() {
+  const [opportunities, setOpportunities] = useState([]);
+
+  useEffect(() =&gt; {
+    fetch("/api/opportunities").then((r) =&gt; r.json()).then(setOpportunities);
+  }, []);
+
+  function handleNew(created) {
+    setOpportunities([created, ...opportunities]);
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Opportunities&lt;/h1&gt;
+      &lt;CreateOpportunityForm onSuccess={handleNew} /&gt;
+      {opportunities.map((o) =&gt; (
+        &lt;div key={o.id}&gt;{o.title}&lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<p>
+  Look at what this costs. Yesterday this page was a server component that did <code>await prisma.findMany()</code> inline -- no fetch, no effect, no loading gap. To get the instant-prepend behavior, the whole page flips to <code>"use client"</code>, the direct Prisma query becomes a <code>useEffect</code> + fetch through the API route, and the simplicity I praised on Day 3 is gone. This is the exact tradeoff the lecture warned about, and feeling it is the point: interactivity is not free, it is paid in client-side complexity.
+</p>
+
+<div class="answer">
+  <strong>What I'd actually ship: router.refresh on a server board</strong>
+  <p>Given the choice, I keep the board a server component and use <code>router.refresh()</code>. For ReEntry Tech, a listing appearing a few hundred milliseconds after submit instead of instantly is a non-issue -- nobody is rapid-firing opportunity posts -- and in exchange I keep the page server-rendered, the data fresh from one source, and zero list-state to keep in sync with the database. Path A's instant prepend is the right call for something that feels like typing -- a chat, a comment thread, a live cart. A create form that fires occasionally is not that. I would rather pay one round-trip than carry a client-state copy of the list that can silently drift from what is actually in Postgres. The optimistic-update version is a real technique; it is just heavier than this form earns.</p>
+</div>
+
+<h2>Test the loop</h2>
+
+<p>
+  Load the board, fill the form, submit. The new opportunity shows up. Then the test that proves it is real: reload the page. The listing is still there, because it is a row in Neon, not a value in memory. That reload-survives moment is the whole arc of the day -- before today, anything not in my seed script vanished on refresh.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Full loop closed. The app reads and writes; users put data in and it persists. I built both refresh paths, felt the server-to-client cost of the instant one, and decided <code>router.refresh()</code> on a server board is what I would ship here -- a decision, not a default. What is still missing is the wall: right now a one-space title or a novel-length one gets through. Next exercise.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

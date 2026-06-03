@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Add Search / NCD W6D3</title>
+<meta name="description" content="Exercise 3: a client component with live search over opportunities, the moment useState forces the page client-side, and in-memory filtering vs server-side query params.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Add Search (Client Component)</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: a search box that filters the board as I type. This is the exercise where yesterday's simple server component stops being enough, and I want to be precise about why, because the reason is the whole shape of Next.js. Search needs state -- the current query string, held across keystrokes. State means <code>useState</code>. <code>useState</code> only runs in a client component. And a client component cannot <code>await prisma.findMany()</code>, because it runs in the browser, where there is no database and no business having one. So the instant I want live search, the data has to come back through the API route I built in Exercise 1.</p>
+
+<h2>Pull the list into a client component</h2>
+
+<p>
+  I split the search UI out into its own file so only the interactive part pays the client-side cost:
+</p>
+
+<pre><code>// app/opportunities/opportunity-list.js
+"use client";
+
+import { useState, useEffect } from "react";
+
+export default function OpportunityList() {
+  const [opportunities, setOpportunities] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    fetch("/api/opportunities")
+      .then((r) =&gt; r.json())
+      .then((data) =&gt; {
+        setOpportunities(data);
+        setLoading(false);
+      });
+  }, []);
+
+  const q = search.toLowerCase();
+  const filtered = opportunities.filter(
+    (o) =&gt;
+      o.title.toLowerCase().includes(q) ||
+      (o.type &amp;&amp; o.type.toLowerCase().includes(q))
+  );
+
+  if (loading) return &lt;p&gt;Loading opportunities...&lt;/p&gt;;
+
+  return (
+    &lt;div&gt;
+      &lt;input
+        type="text"
+        placeholder="Search by title or type..."
+        value={search}
+        onChange={(e) =&gt; setSearch(e.target.value)}
+      /&gt;
+      &lt;p&gt;Showing {filtered.length} of {opportunities.length}&lt;/p&gt;
+      {filtered.map((o) =&gt; (
+        &lt;div key={o.id} className="opp"&gt;
+          &lt;h2&gt;{o.title}&lt;/h2&gt;
+          &lt;span&gt;{o.type}&lt;/span&gt;
+        &lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<p>
+  Notice what came back that I deleted yesterday: <code>loading</code> state, a spinner branch, a <code>useEffect</code> to fetch. All the machinery the server component let me skip is back, and it is back for a concrete reason -- a client component renders before its data arrives, so it has to represent the gap. The <code>filtered</code> array is derived on every render from <code>opportunities</code> and <code>search</code>; I do not store it in state, because it is a function of two things that already are state. Storing it would be a third source of truth to keep in sync, which is a bug waiting to happen.
+</p>
+
+<div class="answer">
+  <strong>The decision: filter in memory, not on the server</strong>
+  <p>I fetch all opportunities once and filter the array client-side as the user types. The alternative is to hit the server on every keystroke with <code>/api/opportunities?q=...</code> and let Postgres do the filtering. For ReEntry Tech right now -- a few dozen listings -- in-memory is obviously correct: one fetch, instant filtering, zero network per keystroke, and it works offline once loaded. Server-side filtering earns its keep when the table is too big to ship to the browser, or when the filter needs the database (full-text search, joins, ranking). Same tradeoff I would make caching anything: pull the whole set when it is small enough to hold, query per-request when it is not. I am holding it.</p>
+</div>
+
+<h2>The page shrinks to a shell</h2>
+
+<pre><code>// app/opportunities/page.js
+import OpportunityList from "./opportunity-list";
+
+export default function OpportunitiesPage() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Opportunities&lt;/h1&gt;
+      &lt;OpportunityList /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<p>
+  The page itself can stay a server component -- a plain heading and a child -- while only <code>OpportunityList</code> carries the <code>"use client"</code> boundary. That is the pattern the docs keep pushing: push the client directive as far down the tree as it will go, so the interactive island is small and everything above it still renders on the server.
+</p>
+
+<div class="answer">
+  <strong>Bonus I tried: server-side filtering by query param</strong>
+  <p>For the contrast, I taught the route to read a query param so a category filter can live in the URL:</p>
+<pre><code>export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get("type");
+  const opportunities = await prisma.opportunity.findMany({
+    where: type ? { type } : {},
+    orderBy: { createdAt: "desc" },
+  });
+  return NextResponse.json(opportunities);
+}</code></pre>
+  <p>Now <code>/api/opportunities?type=certification</code> filters server-side, and the filter is shareable -- it lives in the URL, so I can link straight to "all certifications." That is the real win of server-side filtering for me: not performance at this scale, but that the filtered view has an address. The text-search box stays client-side; a URL-shaped category filter would go server-side. Different jobs, different doors.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Live search works, and I can articulate the exact line I crossed to get it: state forced the client boundary, the client boundary forced the fetch, the fetch needed the route. The server component was simpler and I gave it up deliberately for one feature, not by habit. Next, make the thing look like an app.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

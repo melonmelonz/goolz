@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Build the Form / NCD W6D4</title>
+<meta name="description" content="Exercise 1: a controlled form component with state per field, a select with a default, preventDefault, and logging the payload before wiring any network.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Build the Form (Controlled Inputs)</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 30 min</div>
+
+<p>
+  Goal: a form that captures every field of a new Opportunity and proves it captured them -- no network yet, just the React side. I am isolating this on purpose. Controlled inputs are the part of React I have historically fumbled, so I want the form working and observable before I add the fetch, the route, and the database on top. Get the input loop right against a console log, then build the rest on something I trust.
+</p>
+
+<h2>The component</h2>
+
+<pre><code>// app/opportunities/create-form.js
+"use client";
+
+import { useState } from "react";
+
+export default function CreateOpportunityForm() {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState("job");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log("payload:", { title, description, type });
+    alert("Submitted -- check the console.");
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;label&gt;Title *&lt;/label&gt;
+      &lt;input
+        type="text"
+        value={title}
+        onChange={(e) =&gt; setTitle(e.target.value)}
+        placeholder="e.g. Warehouse Associate -- no experience"
+        required
+      /&gt;
+
+      &lt;label&gt;Description&lt;/label&gt;
+      &lt;textarea
+        value={description}
+        onChange={(e) =&gt; setDescription(e.target.value)}
+        rows={3}
+      /&gt;
+
+      &lt;label&gt;Type&lt;/label&gt;
+      &lt;select value={type} onChange={(e) =&gt; setType(e.target.value)}&gt;
+        &lt;option value="job"&gt;Job&lt;/option&gt;
+        &lt;option value="certification"&gt;Certification&lt;/option&gt;
+        &lt;option value="service"&gt;Service&lt;/option&gt;
+      &lt;/select&gt;
+
+      &lt;button type="submit"&gt;Add Opportunity&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+
+<p>
+  <code>"use client"</code> at the top because a form is interactive -- it holds state and responds to input, which is the definition of a client component. Three pieces of state, one per field. Each input is bound: <code>value</code> reads the state, <code>onChange</code> writes it. The field never holds its own value; React does, and the input is just a view of it.
+</p>
+
+<div class="answer">
+  <strong>The select defaults to "job" and that matters more than it looks</strong>
+  <p>I initialized <code>type</code> to <code>"job"</code>, not <code>""</code>. A select with no matching option shows a blank or the first option while state says something else, and you get the classic "I never touched the dropdown so my value is empty" bug on submit. By seeding state to a real option, the form is valid from the first render -- the user can submit without opening the dropdown and still get a sensible type. This mirrors the schema, where <code>type</code> has <code>@default("job")</code>. Form default and column default agreeing is one less surprise.</p>
+</div>
+
+<div class="answer">
+  <strong>Footgun I have hit before: controlled input with value but no onChange</strong>
+  <p>If I write <code>value={title}</code> and forget <code>onChange</code>, the field is frozen -- React owns the value, nothing updates it, and typing does nothing while the console screams about a controlled input without an onChange handler. The inverse is just as bad: <code>onChange</code> with no <code>value</code> makes an uncontrolled input that React does not track. It is both or neither. This is exactly where my old prototypes went wonky -- I would half-wire a field and then chase a "why can't I type" ghost. Both halves, every field, no exceptions.</p>
+</div>
+
+<h2>Drop it on the page to see it</h2>
+
+<pre><code>// temporarily, in app/opportunities/page.js
+import CreateOpportunityForm from "./create-form";
+// ...render &lt;CreateOpportunityForm /&gt; above the list</code></pre>
+
+<h2>Test it</h2>
+
+<p>
+  Fill the fields, submit, open the console (right-click, Inspect, Console). The payload object is there with exactly what I typed -- title, description, and the selected type. <code>e.preventDefault()</code> is doing its quiet job: without it the form would do a native submit and reload the page, blowing away the console log before I could read it. With it, the page stays put and I own the submit.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  The form captures clean data and I can watch it do so. No fetch, no route, no database -- and that is deliberate. The React half is proven against a log, so when the next exercise adds the network I will know any new bug is in the wiring, not the form. Next: the endpoint that will receive this payload.
+</p>
+
+<nav class="ex-nav">
+  <a href="./">Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

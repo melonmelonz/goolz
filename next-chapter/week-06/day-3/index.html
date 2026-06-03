@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 6 -- Day 3 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 6 Day 3. API Routes: READ. The full-stack loop -- route handlers, GET, server components vs client fetch, filtering, detail pages with Prisma + Next.js.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x25B2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 3 -- API Routes: READ</h1>
+<div class="subtitle">NCD . WK6 . D3 . five exercises loaded . the database reaches the screen</div>
+
+<p>
+  The database has rows in it now. Yesterday I defined Organization, Opportunity, and Tag, pushed them to Neon, and seeded a handful of real-ish listings. But none of it is visible. The whole thing lives in a Postgres instance in some region I picked off a dropdown, and the actual ReEntry Tech app -- the pages someone leaving SCI Somerset would open -- still renders nothing. Today closes that gap. Schema to screen, the full-stack loop, the thing every app I use does a hundred times a second.
+</p>
+
+<p>
+  Here is the honest reframe, because the lecture frames today as new and for me it mostly is not. I have written GET handlers before. Every Pages Function I shipped this program -- the visitor counter, the notepad's <code>functions/api/docs.js</code> -- was a request coming in, a read happening, JSON going back out. So "an API route returns data as JSON" is not the lesson. The two genuinely new things are: Next.js's <em>file convention</em> for routes (a <code>route.js</code> exporting a function named <code>GET</code>, same folder-is-the-router idea as the pages), and the part that actually surprised me -- a server component can skip the HTTP hop entirely and query Prisma inline. No fetch. No endpoint. The page <em>is</em> the data fetch.
+</p>
+
+<p>
+  That second one is worth sitting with. My instinct from two years of frontends is page-makes-a-request, request-hits-an-endpoint, endpoint-talks-to-the-database. Three hops, and the first one goes over the network. A Next.js server component collapses the first two: the component runs on the server, so it can <code>await prisma.opportunity.findMany()</code> directly and ship finished HTML. The API route still exists and still matters -- I need it the moment a client component wants data for search -- but it is no longer the only door to the database. Today I build both doors and write down exactly when I would reach for each.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- What Data Does Your First Page Need?</div>
+  <p><b>The page:</b> the Opportunities board -- the landing surface of ReEntry Tech, the first thing someone sees when they arrive.</p>
+  <p><b>The data it shows:</b> every active opportunity -- title, type (job / certification / service), the org that posted it, and its tags.</p>
+  <p><b>The table:</b> <code>Opportunity</code>, joined to <code>Organization</code> (one-to-many) and <code>Tag</code> (many-to-many). So: "When a user visits /opportunities, they should see all opportunities with their org name and tags, newest first."</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> connected the Next.js scaffold to Neon with Prisma. Defined Organization / Opportunity / Tag, pushed the schema, seeded sample rows, and set up the global Prisma client singleton in <code>lib/prisma.js</code> -- on purpose, a day early, so today's queries do not exhaust the connection pool on hot-reload.</p>
+  <p><b>What I'm doing today:</b> reading that data back out. A GET route at <code>/api/opportunities</code>, a server-component board page that queries Prisma directly, client-side search, styled cards, and a detail page per listing.</p>
+  <p><b>Where I'm stuck:</b> not stuck. One thing I am deciding rather than debugging -- which pages stay server components and which have to become client components. The board with live search needs <code>useState</code>, which forces it client-side, which means it can no longer query Prisma inline and has to go back through the API route. That tension is the actual content of today, so I am tracking where I cross the line and why.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Full-Stack Loop</div>
+  <p>The whole arc, one line per stage, my project plugged in:</p>
+  <table>
+    <tr><th>Stage</th><th>File</th><th>Does what</th></tr>
+    <tr><td>1. Schema</td><td><code>prisma/schema.prisma</code></td><td>defines the Opportunity model</td></tr>
+    <tr><td>2. Seed</td><td><code>prisma/seed.js</code></td><td>fills the table with sample rows (done yesterday)</td></tr>
+    <tr><td>3. Route</td><td><code>app/api/opportunities/route.js</code></td><td>GET handler, makes data reachable over HTTP</td></tr>
+    <tr><td>4. Page</td><td><code>app/opportunities/page.js</code></td><td>renders the data as a list</td></tr>
+  </table>
+  <p>Each stage is upstream of the next. The interesting wrinkle Next.js adds is that stage 4 can reach all the way back to stage 1 without stopping at stage 3 -- a server component page queries Prisma itself. Stage 3 is for when something on the client needs the data later.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- A GET Route Handler</div>
+  <p>The convention: a file at <code>app/api/&lt;thing&gt;/route.js</code> becomes the endpoint <code>/api/&lt;thing&gt;</code>, and you export a function named after the HTTP method.</p>
+<pre><code>// app/api/opportunities/route.js
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const opportunities = await prisma.opportunity.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  return NextResponse.json(opportunities);
+}</code></pre>
+  <p>Three lines of logic: query, wrap as JSON, return. <code>NextResponse.json()</code> sets the <code>Content-Type</code> and status for me -- the same headers I used to set by hand in a Pages Function. The <code>@/lib/prisma</code> import is the singleton from yesterday, not a fresh <code>new PrismaClient()</code>. That distinction is load-bearing and I have an exercise on why.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Server Component vs. Client Fetch</div>
+  <p>Two ways to get the same list onto the page. The choice is not stylistic -- it follows from whether the data reacts to the user.</p>
+<pre><code>// Option 1 -- server component (default). No fetch.
+export default async function OpportunitiesPage() {
+  const opps = await prisma.opportunity.findMany();
+  return ( /* render opps */ );
+}
+
+// Option 2 -- client component. Fetches the route.
+"use client";
+const [opps, setOpps] = useState([]);
+useEffect(() =&gt; {
+  fetch("/api/opportunities")
+    .then(r =&gt; r.json())
+    .then(setOpps);
+}, []);</code></pre>
+  <p>Option 1 is simpler and faster: it runs on the server, queries the database, and ships finished HTML -- no loading spinner, the data is already there when the page arrives. Option 2 costs a round-trip and a loading state, and you reach for it only when you need interactivity the server cannot pre-bake: search, filters, live updates. My rule for the week -- <b>static read, server component; reacts to the user, client component.</b></p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Build the GET Route</span>
+      <span class="ex-desc">/api/opportunities returns every row as JSON, test it in the browser, and why the import is the singleton and not a fresh client</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Render the Board (Server Component)</span>
+      <span class="ex-desc">query Prisma directly in the page, include the org relation, the empty-state branch, and no fetch anywhere</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Add Search (Client Component)</span>
+      <span class="ex-desc">the moment useState forces the page client-side, filter-in-memory vs. server-side query params, and which I picked</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Style the Cards</span>
+      <span class="ex-desc">a reusable OpportunityCard, a responsive auto-fill grid, type badges, and keeping presentation out of the data layer</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">The Detail Page</span>
+      <span class="ex-desc">dynamic [id] route, findUnique, awaiting params, the not-found branch, and a related-listings section off the same org</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- What Is an API Route</div>
+  <p>
+    Partner asked me to open my <code>route.js</code> and explain it like they had never seen Next.js. So: the file lives at <code>app/api/opportunities/route.js</code>, and that path on disk <em>is</em> the URL -- a request to <code>/api/opportunities</code> lands here, same folder-is-the-router idea as the pages. I export <code>async function GET()</code> because this handles the GET method; if I exported a <code>POST</code> too it would handle submissions, but that is tomorrow. Inside, <code>prisma.opportunity.findMany()</code> runs a <code>SELECT</code> against Postgres and hands back an array of plain objects. <code>NextResponse.json(opps)</code> serializes that array and sets the headers. That is the entire endpoint.
+  </p>
+  <p>
+    Their follow-up was the good one: "If the URL were wrong, where would the error show up?" Depends which URL. If my <em>fetch</em> string is wrong -- I typed <code>/api/opportunites</code>, missing a u -- Next.js has no route file there, returns a 404, and my <code>r.json()</code> chokes on an HTML error page instead of JSON. That surfaces in the browser console on the client. If the <em>database</em> URL is wrong, the route file is fine but <code>findMany</code> throws, and the error shows up server-side in my terminal, not the browser -- which is exactly why I want a try/catch returning a clean 500, so the client gets "failed to fetch opportunities" instead of a hang.
+  </p>
+  <p>
+    Then I showed them the part I actually find interesting: my board page does not call this route at all. It is a server component, so it queries Prisma directly and the route only exists for tomorrow's client-side search. Their reaction was mine yesterday -- "wait, so when do you even need the route?" And that is the whole lesson, so I let them sit in it.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    For years "the API" was a place. A separate server, its own repo half the time, a thing the frontend talked to over the wire and the two sides agreed on a contract and argued about it in standup. The mental model had a hard border down the middle, and a lot of my job was passing data across it cleanly. Today that border got blurry in a way I am still turning over. A server component is frontend -- it returns JSX, it renders a page -- and it also reaches straight into Postgres with no endpoint in between. The thing I was trained to treat as two machines is one function.
+  </p>
+  <p>
+    It is the same move as the last three days, one layer up again. Folder-is-the-router. File-is-the-endpoint. Schema-is-the-table. And now: the page can be the query. Each one erases a seam I used to maintain by hand and a contract I used to keep in sync. I keep waiting to find where the abstraction leaks -- and it does, the instant I need <code>useState</code> and the page snaps back to needing a real fetch and a real route. But that is the honest version of the lesson, not a disappointment in it. The seam is still there. Next.js just lets me not pay for it until the page actually earns the cost.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

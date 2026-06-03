@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Style the Cards / NCD W6D3</title>
+<meta name="description" content="Exercise 4: a reusable OpportunityCard component, a responsive auto-fill grid, type badges, and keeping presentation out of the data layer.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Style the Cards</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: turn the raw list into something that reads like a product. Cards, a grid that reflows, a colored badge per opportunity type. The data has not changed at all since Exercise 2 -- this is purely presentation -- and that separation is exactly the thing I want to keep clean. The query lives in one place; how a row looks lives in another.
+</p>
+
+<h2>A reusable card component</h2>
+
+<pre><code>// app/opportunities/opportunity-card.js
+import Link from "next/link";
+
+const TYPE_COLORS = {
+  job: "#5E957A",
+  certification: "#3498db",
+  service: "#9b59b6",
+};
+
+export default function OpportunityCard({ opportunity }) {
+  const badge = TYPE_COLORS[opportunity.type] || "#8A8E87";
+
+  return (
+    &lt;Link href={`/opportunities/${opportunity.id}`} className="card-link"&gt;
+      &lt;article className="opp-card"&gt;
+        &lt;div className="opp-card-head"&gt;
+          &lt;h2&gt;{opportunity.title}&lt;/h2&gt;
+          &lt;span className="badge" style={{ background: badge }}&gt;
+            {opportunity.type}
+          &lt;/span&gt;
+        &lt;/div&gt;
+        &lt;p&gt;{opportunity.description}&lt;/p&gt;
+        {opportunity.org &amp;&amp; (
+          &lt;div className="opp-card-foot"&gt;Posted by {opportunity.org.name}&lt;/div&gt;
+        )}
+      &lt;/article&gt;
+    &lt;/Link&gt;
+  );
+}</code></pre>
+
+<p>
+  A component that takes one <code>opportunity</code> prop and returns its visual. It does not know about the query, the array, or where the data came from -- hand it a row, it renders a card. That is the boundary I care about: the card is dumb about data, the page is dumb about layout, and neither has to change when the other does. The whole card is wrapped in a <code>Link</code> to <code>/opportunities/[id]</code>, which is the navigation hook Exercise 5 lands on.
+</p>
+
+<div class="answer">
+  <strong>The type-to-color map is a lookup, not a chain of ternaries</strong>
+  <p>I could have written <code>opp.type === "job" ? green : opp.type === "certification" ? blue : ...</code> and it would work. The object map <code>TYPE_COLORS[opportunity.type]</code> reads better, adds a new type with one line instead of a new branch, and -- the part I actually like -- the <code>|| "#8A8E87"</code> fallback means an unexpected type renders gray instead of crashing or rendering nothing. ReEntry Tech's types are a small fixed set today, but the day someone seeds a "housing" type I have not styled, it shows up gray and legible instead of breaking the grid. Defensive in the cheap, correct way.</p>
+</div>
+
+<h2>The grid</h2>
+
+<pre><code>// app/opportunities/page.js
+import { prisma } from "@/lib/prisma";
+import OpportunityCard from "./opportunity-card";
+
+export default async function OpportunitiesPage() {
+  const opportunities = await prisma.opportunity.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { org: true },
+  });
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Opportunities&lt;/h1&gt;
+      &lt;p&gt;{opportunities.length} listings&lt;/p&gt;
+      &lt;div className="opp-grid"&gt;
+        {opportunities.map((o) =&gt; (
+          &lt;OpportunityCard key={o.id} opportunity={o} /&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+/* in the stylesheet */
+.opp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}</code></pre>
+
+<p>
+  Note I dropped back to a server component here. Exercise 3's client list was for live search; this exercise is about presentation, so I render the styled grid the simple server-side way and would layer the search component back on top when I want both. The grid is one line of CSS doing real work: <code>auto-fill</code> with <code>minmax(300px, 1fr)</code> fits as many 300px-minimum columns as the viewport allows and stretches them to fill -- three across on a laptop, one on a phone, no media query. I keep relearning that the modern layout primitives make most of my old breakpoint code unnecessary.
+</p>
+
+<div class="answer">
+  <strong>Honest note: inline styles work but a real app moves them to CSS</strong>
+  <p>The lecture leans on inline <code>style={{}}</code> objects, which are fine for getting pixels on screen fast and I am not going to pretend otherwise mid-lab. But the genuine <code>:hover</code> lift on a card -- shadow grows, card rises a few pixels -- cannot be expressed inline, because there is no inline pseudo-class. So the hover lives in the stylesheet (<code>.opp-card { transition: ... } .opp-card:hover { transform: translateY(-2px); }</code>) and the structural styles can stay inline or move there too. The split I am drawing: dynamic per-row values like the badge color stay in JS where the data is; everything static and stateful-on-the-element lives in CSS where it belongs. Mixing those is how a codebase ends up with the same shadow defined four ways.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  It looks like an app now -- a reflowing grid of cards, color-coded by type, each one a link. And the data layer never moved: the query is identical to Exercise 2. Presentation got richer without the database knowing or caring. Last piece is the click target those cards already point at.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

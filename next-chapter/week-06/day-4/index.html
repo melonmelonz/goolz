@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 6 -- Day 4 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 6 Day 4. API Routes: CREATE. POST handlers, controlled forms, the full create loop, validation on both sides, success state, and Server Actions as the road not taken.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x25B2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 4 -- API Routes: CREATE</h1>
+<div class="subtitle">NCD . WK6 . D4 . five exercises loaded . the app starts holding what users give it</div>
+
+<p>
+  Yesterday the app could read. Every row it showed was a row I put there -- seed data, written from a script on my own machine. Today users can write. A form, a submit, data going up the wire, a row appearing in Postgres, the list refreshing to show it. That sounds like a small addition on top of yesterday and it is not. It is the line between a demo and an application. After today the database holds things I did not put there, which means I am now responsible for what gets in.
+</p>
+
+<p>
+  The honest reframe, same as yesterday: the POST handler itself is not new to me. The notepad I built two weeks ago has a <code>functions/api/docs.js</code> that takes a body, validates it, and writes to KV. So "read the request, validate, persist, respond" is a shape I know. What is new is everything around it. The React side -- controlled inputs, where every keystroke flows through state and back into the field -- I have only done badly before; my prototypes always go wonky here. And the part that genuinely reorganizes the page is that adding a form with state can force the whole page from a server component back to a client component, undoing exactly the simplicity I liked yesterday. That tradeoff is the spine of today.
+</p>
+
+<p>
+  There is also a fork in the road I want to name up front. Next.js offers Server Actions -- a way to run server code straight from a form with no separate API route at all, the <code>"use server"</code> directive doing what a whole endpoint used to. It is genuinely less code. I am deliberately not using it today. The traditional form-to-fetch-to-route-to-database path is the one that transfers to every backend I will ever touch -- it is just HTTP -- and I would rather own the mechanism before I let a framework hide it. Server Actions are Week 7. Today I build the loop by hand so I know what the shortcut is shortcutting.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- What Fields Does Your Create Form Need?</div>
+  <p><b>What they are creating:</b> a new Opportunity -- an org posting a job, a certification program, or a service.</p>
+  <p><b>The fields:</b> <code>title</code>, <code>description</code>, <code>type</code> (a select: job / certification / service).</p>
+  <p><b>Required vs. optional:</b> title required -- a listing with no title is not a listing. Type required but defaulted to "job," so the form is never blank. Description optional -- a quick post might not have a writeup yet, which is why I made the column <code>String?</code> yesterday.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> built the read half. A GET route, a server-component board that queries Prisma inline, client-side search, styled cards in a reflowing grid, and a detail page per listing with a related-from-this-org section.</p>
+  <p><b>What I'm doing today:</b> the create half. A controlled form, a POST handler on the same route, wiring the two so a submit inserts a row and the list updates, validation on both client and server, and a success state.</p>
+  <p><b>Where I'm stuck:</b> not stuck, but I have a real design decision to make and I do not love either option. To get the new item to appear after submit, I can either lift the list into client state and prepend the returned row (fast, but the board becomes a client component again, undoing yesterday's server-side simplicity), or keep the board server-side and call <code>router.refresh()</code> to re-pull (keeps the simplicity, costs a round-trip per create). I am going to do both in the same form so I can feel the difference, then write down which I would actually ship.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- POST Receives, GET Returns</div>
+  <p>Same URL, different verb, opposite direction of data:</p>
+  <table>
+    <tr><th>Request</th><th>Means</th><th>Direction</th></tr>
+    <tr><td>GET /api/opportunities</td><td>give me all opportunities</td><td>data comes out</td></tr>
+    <tr><td>POST /api/opportunities</td><td>here is a new opportunity</td><td>data goes in</td></tr>
+  </table>
+  <p>The URL names the resource, the method names the action -- that is REST, and it is the same model the notepad endpoints already follow. The body is where POST differs: it carries the new record as JSON, read server-side with <code>await request.json()</code>.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- A POST Handler</div>
+<pre><code>// app/api/opportunities/route.js  (alongside GET)
+export async function POST(request) {
+  try {
+    const body = await request.json();
+
+    if (!body.title || body.title.trim() === "") {
+      return NextResponse.json(
+        { error: "Title is required" },
+        { status: 400 }
+      );
+    }
+
+    const created = await prisma.opportunity.create({
+      data: {
+        title: body.title.trim(),
+        description: body.description?.trim() || "",
+        type: body.type || "job",
+      },
+    });
+
+    return NextResponse.json(created, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to create opportunity" },
+      { status: 500 }
+    );
+  }
+}</code></pre>
+  <p>Read the body, validate, <code>prisma.create</code>, return the new row with <code>201</code> -- the status code that specifically means "created," not just "ok." The status codes are not decoration; <code>400</code> is "your request was bad," <code>500</code> is "my server broke," <code>201</code> is "made the thing." A client can branch on those without parsing my prose.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Controlled Inputs</div>
+  <p>The React form pattern that I have historically gotten wrong: every input's value is bound to state, and every keystroke writes back to that state.</p>
+<pre><code>const [title, setTitle] = useState("");
+
+&lt;input
+  value={title}
+  onChange={(e) =&gt; setTitle(e.target.value)}
+/&gt;</code></pre>
+  <p>The input does not hold its own value -- React does. The field shows <code>title</code>, typing fires <code>onChange</code>, which calls <code>setTitle</code>, which re-renders with the new <code>title</code>, which the field shows. A loop, and React is the single source of truth for what is in the box. The payoff is that on submit I already have the values in state; I do not go digging them out of the DOM. <code>e.preventDefault()</code> in the submit handler stops the browser's default full-page reload so I can send the fetch myself.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Build the Form (Controlled Inputs)</span>
+      <span class="ex-desc">a client component with state per field, a select with a default, preventDefault, and logging the payload before any network</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">The POST Handler</span>
+      <span class="ex-desc">add POST beside GET on the same route, read the body, create the row, return 201, and test it from the console with fetch</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Wire the Full Loop</span>
+      <span class="ex-desc">form to fetch to route to database to UI, the server-vs-client board decision, onSuccess vs router.refresh, and which I'd ship</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Validate on Both Sides</span>
+      <span class="ex-desc">client validation for fast feedback, server validation as the real gate, why the client check is a courtesy and the server check is the law</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Success State</span>
+      <span class="ex-desc">a confirmation message, clearing the form, the disabled-while-submitting guard against double-posts, optional redirect to the new detail page</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- Walk Your Create Flow, Then Break It</div>
+  <p>
+    Partner had me trace the whole loop pointing at code. Submit fires <code>handleSubmit</code>, which calls <code>e.preventDefault()</code> so the page does not reload, then <code>fetch("/api/opportunities", { method: "POST", body: JSON.stringify(...) })</code>. That lands in my <code>POST</code> handler, which does <code>await request.json()</code>, checks <code>if (!body.title)</code>, calls <code>prisma.opportunity.create</code>, and returns the new row with 201. Back in the form, I read <code>response.ok</code>, clear the fields, and tell the page to show the new listing. Form to fetch to route to database to screen.
+  </p>
+  <p>
+    Then the fun half: they tried to break it. Empty title -- caught, "Title is required," because both my form and my handler check it. A single space -- this one I had to fix mid-demo, because <code>" "</code> is truthy, so <code>!body.title</code> passes and only <code>title.trim() === ""</code> catches it; good thing the handler trims before testing. A 5000-character title -- went straight in, because I had no max-length check yet, which is precisely the kind of gap this exercise exists to surface. Emoji and angle brackets in the description -- stored fine, and Prisma's parameterized queries meant the angle brackets were data, not an injection, which is the thing I underlined back on Day 2.
+  </p>
+  <p>
+    The question that landed: "What if someone skips your form entirely and POSTs from curl?" That is the whole argument for server-side validation. My form's checks are a courtesy to a cooperating user. Anyone can bypass the browser -- curl, Postman, the console -- and hit the route raw. The handler is the only check that actually runs no matter how the request arrives, so the handler is where the real validation has to live. The client check is for speed; the server check is for safety.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    Validation on both sides felt like duplication until I saw it as two different jobs wearing the same code. The client check exists to be kind -- instant feedback, no round-trip, "title is required" the moment you blur the field. It assumes a cooperating user in a browser and optimizes their experience. The server check assumes nothing. It assumes the request might come from curl, from a script, from someone who read my JavaScript and decided to skip it, from a future bug in my own client that sends garbage. Same rule -- "title cannot be empty" -- but one is a hint and the other is a wall. They are not redundant; they are aimed at different threats.
+  </p>
+  <p>
+    That reframed something I have been sloppy about for years. I used to think "validate the input" was one task you did once, ideally close to the user where the error message is friendliest. It is two tasks. The friendly one and the load-bearing one, and if you only do the friendly one your database is one curl command from garbage. For ReEntry Tech that is not abstract -- this data is about people's actual reentry, jobs and certifications they will act on, posted by orgs I marked verified. The wall has to be on the server because the server is the only place the wall cannot be walked around. The form is hospitality. The handler is the lock.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

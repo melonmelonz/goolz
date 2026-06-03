@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Build the GET Route / NCD W6D3</title>
+<meta name="description" content="Exercise 1: a GET route handler at /api/opportunities that returns every row as JSON, tested in the browser, and why the import is the singleton.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Build the GET Route</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 25 min</div>
+
+<p>
+  Goal: a working endpoint at <code>/api/opportunities</code> that returns every row in the table as JSON, provable by opening a URL. This is the part I have done before in a different costume -- a Pages Function is the same shape -- so my real job here is to learn the Next.js convention exactly and not paper over the one detail that is genuinely new to me: the import.
+</p>
+
+<h2>The file is the route</h2>
+
+<p>
+  No config, no router registration. I make a folder and a file and the path becomes the URL:
+</p>
+
+<pre><code>app/
+  api/
+    opportunities/
+      route.js     -->  /api/opportunities</code></pre>
+
+<p>
+  Same instinct as the pages yesterday. The directory structure is the routing table. <code>route.js</code> is the reserved filename for an endpoint, the way <code>page.js</code> is reserved for a rendered page.
+</p>
+
+<h2>The handler</h2>
+
+<pre><code>// app/api/opportunities/route.js
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  try {
+    const opportunities = await prisma.opportunity.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(opportunities);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch opportunities" },
+      { status: 500 }
+    );
+  }
+}</code></pre>
+
+<p>
+  <code>findMany</code> with no <code>where</code> is "give me all rows," and <code>orderBy: { createdAt: "desc" }</code> puts the newest listing on top, which is what a board wants. The try/catch is not ceremony. If Neon is asleep or the connection string rots, I want the client to receive a clean 500 with a message, not a thrown exception that leaks a stack trace or hangs the request. I learned that lesson the boring way on Workers.
+</p>
+
+<div class="answer">
+  <strong>The detail I actually came here for: import the singleton, never new PrismaClient()</strong>
+  <p>I import <code>{ prisma }</code> from <code>@/lib/prisma</code> -- the global singleton I set up yesterday -- and I do <em>not</em> write <code>const prisma = new PrismaClient()</code> at the top of the route. In dev, Next.js hot-reloads this module on every save, and a fresh client per reload opens a fresh pool of database connections that never get closed. After a dozen saves Neon starts refusing connections and the error looks like a database problem when it is actually a me problem. The singleton stashes one client on <code>globalThis</code> and reuses it across reloads. This is the single most common Prisma-in-Next.js footgun and the reason I built <code>lib/prisma.js</code> a day before I needed it.</p>
+</div>
+
+<h2>Test it in the browser</h2>
+
+<p>
+  Dev server running (<code>npm run dev</code>), then open the URL directly. A GET request is just visiting a URL, so the browser is the whole test rig:
+</p>
+
+<pre><code>http://localhost:3000/api/opportunities</code></pre>
+
+<p>
+  Out comes my seed data as raw JSON -- an array of objects, each with <code>id</code>, <code>title</code>, <code>type</code>, <code>createdAt</code>, <code>orgId</code>. Seeing the actual <code>createdAt</code> timestamps in descending order told me the <code>orderBy</code> took effect, not just that the query ran.
+</p>
+
+<div class="answer">
+  <strong>Footgun: createdAt comes back as a string, not a Date</strong>
+  <p>In my server code <code>createdAt</code> is a JS <code>Date</code> object. The moment it goes through <code>NextResponse.json()</code> it gets serialized to an ISO string like <code>"2026-06-01T14:22:09.001Z"</code>, because JSON has no date type. So anything consuming this endpoint receives a string and has to <code>new Date(...)</code> it back before calling <code>.toLocaleDateString()</code>. Not a bug, just the nature of crossing the wire -- but it is the kind of thing that bites you at render time with "createdAt.getFullYear is not a function," and I would rather know now than debug it in a card component later.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  The endpoint exists, returns the table as JSON, sorts newest-first, and fails safely. It is reachable by anything that can make an HTTP request. The interesting twist comes next -- the page I build in Exercise 2 will not actually call it.
+</p>
+
+<nav class="ex-nav">
+  <a href="./">Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

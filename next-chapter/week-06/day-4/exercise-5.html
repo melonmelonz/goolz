@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Success State / NCD W6D4</title>
+<meta name="description" content="Exercise 5: a confirmation message, clearing the form, the disabled-while-submitting guard against double-posts, and an optional redirect to the new detail page.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Success State</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 3 . 25 min</div>
+
+<p>
+  Goal: close the loop with feedback. Right now a successful submit clears the fields and the row appears, but the form says nothing -- the user is left guessing whether it worked. This exercise adds the small set of states that make the form feel finished: a loading state that prevents double-posts, a confirmation message, and optionally a redirect to the new listing. None of it is hard; all of it is the difference between a form that works and a form that feels trustworthy.
+</p>
+
+<h2>Loading state -- the guard against double submits</h2>
+
+<pre><code>const [loading, setLoading] = useState(false);
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  // ...client validation...
+  setLoading(true);
+  try {
+    const res = await fetch(/* ... */);
+    // ...handle response...
+  } finally {
+    setLoading(false);
+  }
+}
+
+&lt;button type="submit" disabled={loading}&gt;
+  {loading ? "Saving..." : "Add Opportunity"}
+&lt;/button&gt;</code></pre>
+
+<div class="answer">
+  <strong>This is the state I'd have skipped, and it is the most important one</strong>
+  <p>A success message is nice. The <code>disabled={loading}</code> guard is the one that prevents a real bug. Network requests take time, and an impatient user clicks Submit twice -- or five times -- before the first one returns. Without the guard, that is two or five identical opportunities in the database, and now I am writing a dedupe script. Disabling the button the instant the request starts makes the second click impossible. The <code>finally</code> block re-enables it whether the request succeeded or threw, so a failed submit does not leave the button stuck forever. I have lived the duplicate-rows version of this before; the fix is three lines and I will never not write them again.</p>
+</div>
+
+<h2>Success message</h2>
+
+<pre><code>const [success, setSuccess] = useState(false);
+
+// after a confirmed 201:
+setSuccess(true);
+setTimeout(() =&gt; setSuccess(false), 3000);
+
+// in the JSX:
+{success &amp;&amp; &lt;p className="ok"&gt;Opportunity posted.&lt;/p&gt;}
+{error &amp;&amp; &lt;p className="err"&gt;{error}&lt;/p&gt;}</code></pre>
+
+<p>
+  The message shows on success and clears itself after three seconds, so the form does not accumulate stale confirmations as the user posts several listings. Success and error are separate state, never both true -- I set <code>error("")</code> at the top of submit and only flip <code>success</code> after a confirmed 201, so the two messages cannot fight over the same spot.
+</p>
+
+<h2>The redirect alternative</h2>
+
+<pre><code>import { useRouter } from "next/navigation";
+const router = useRouter();
+
+// after a confirmed 201, instead of staying:
+router.push(`/opportunities/${data.id}`);</code></pre>
+
+<div class="answer">
+  <strong>Stay-and-confirm vs. redirect is a product decision, not a code one</strong>
+  <p>Two valid endings. <b>Stay and confirm:</b> the user remains on the board, sees "posted," and can immediately add another -- right for bulk entry, like an org loading ten postings in a sitting. <b>Redirect to the detail page:</b> <code>router.push</code> to <code>/opportunities/${data.id}</code> sends them to the listing they just made -- right when each create is a deliberate, one-off act they want to review. This is exactly why Exercise 2 returned the created row with its <code>id</code>: I cannot redirect to a record whose database id I do not have, and the 201 body is where that id comes from. For ReEntry Tech I would let a verified org bulk-post (stay and confirm) and redirect on the rare admin-creates-one path. Same two lines of code; the choice is about who is using the form and why.</p>
+</div>
+
+<h2>The full form state set</h2>
+
+<p>
+  Counting them up, the finished form holds: a value per field, <code>error</code>, <code>success</code>, and <code>loading</code>. That is the honest cost of a good form -- six-ish pieces of state, each earning its place. Compared to Day 3's server-component read page, which had zero state, this is the price of letting users write instead of only read. Worth it, but I want to see it plainly: interactivity is paid in state, and every state is a thing that can be wrong, so I keep them minimal and never store what I can derive.
+</p>
+
+<h2>Checkpoint -- and the week</h2>
+
+<p>
+  Day 4 done, and the create half is real: a guarded, validated, confirming form that inserts rows users will act on. Pulling back -- this week took ReEntry Tech from a Next.js scaffold to a database-backed app that reads and writes. Monday: a server. Tuesday: a database. Wednesday: it could show its data. Today: it can hold yours. The arrows now point both directions, and the seam I kept noticing -- folder-is-router, file-is-endpoint, schema-is-table, page-can-be-the-query -- is the same idea wearing four hats. Next week, Server Actions, where the create loop I just built by hand collapses into a directive. I am glad I built it the long way first.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Render the Board / NCD W6D3</title>
+<meta name="description" content="Exercise 2: render the opportunities board as a server component that queries Prisma directly, includes the org relation, and handles the empty state.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Render the Board (Server Component)</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 30 min</div>
+
+<p>
+  Goal: the data on the screen. The opportunities board, rendered from the database, as a list someone could actually read. And I am building it the simple way -- a server component that queries Prisma inline, no fetch, no endpoint, no loading state. This is the option that surprised me, so I want to feel it work before I reach for the heavier client-side version tomorrow.
+</p>
+
+<h2>The page</h2>
+
+<pre><code>// app/opportunities/page.js
+import { prisma } from "@/lib/prisma";
+
+export default async function OpportunitiesPage() {
+  const opportunities = await prisma.opportunity.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { org: true },
+  });
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Opportunities&lt;/h1&gt;
+      &lt;p&gt;{opportunities.length} listings&lt;/p&gt;
+
+      {opportunities.length === 0 ? (
+        &lt;p&gt;No opportunities yet. Check the seed.&lt;/p&gt;
+      ) : (
+        opportunities.map((opp) =&gt; (
+          &lt;div key={opp.id} className="opp"&gt;
+            &lt;h2&gt;{opp.title}&lt;/h2&gt;
+            &lt;p&gt;{opp.description}&lt;/p&gt;
+            &lt;div className="meta"&gt;
+              &lt;span&gt;{opp.type}&lt;/span&gt;
+              {opp.org &amp;&amp; &lt;span&gt;Posted by {opp.org.name}&lt;/span&gt;}
+            &lt;/div&gt;
+          &lt;/div&gt;
+        ))
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<p>
+  The function is <code>async</code> and I <code>await</code> the query right inside it. That only works because this is a server component -- it runs on the server, where talking to the database is allowed and ordinary. The page is not asking an API for data; it <em>is</em> the thing that gets the data. By the time any HTML reaches the browser, the rows are already baked into it.
+</p>
+
+<div class="answer">
+  <strong>include: { org: true } is the join I'd write by hand in SQL</strong>
+  <p>Without <code>include</code>, each opportunity comes back with an <code>orgId</code> (the foreign key, an integer) but no org object -- so <code>opp.org.name</code> would be undefined. Adding <code>include: { org: true }</code> tells Prisma to follow the relation and attach the full Organization row. In raw SQL this is a <code>JOIN organizations ON organizations.id = opportunities.org_id</code>; Prisma generates that join from the one word <code>org</code>. The cost is real -- it is more data per row and an extra join -- so you include relations you render and skip the ones you do not. I render the org name, so I include org.</p>
+</div>
+
+<h2>The empty-state branch</h2>
+
+<p>
+  The ternary on <code>opportunities.length === 0</code> is not decoration. The first time I loaded this page before seeding finished, I got a blank white nothing and spent a minute wondering if the query was broken when the table was just empty. A real app gets emptied all the time -- a fresh deploy, a filtered view with no matches, an org that deleted all its postings. "No opportunities yet" is the difference between "the page works and there is nothing to show" and "the page is broken," and the user cannot tell those apart unless I tell them.
+</p>
+
+<div class="answer">
+  <strong>No "use client", no useEffect, no loading spinner -- and that is the point</strong>
+  <p>Compare this to every React data-fetch I have written before: a <code>useState</code> for the list, a <code>useState</code> for loading, a <code>useEffect</code> that fetches, a <code>if (loading) return &lt;Spinner/&gt;</code>. All of that exists to handle the gap between "page rendered" and "data arrived." A server component has no gap -- the data is fetched before the render, on the server -- so all of that machinery just evaporates. Fewer states means fewer states to get wrong. I am keeping this page server-side as long as it has no reason to react to the user, which holds right up until I add search in Exercise 3.</p>
+</div>
+
+<h2>Test it</h2>
+
+<p>
+  <code>http://localhost:3000/opportunities</code>. The seed listings render as a plain list, the count is right, each one shows its org name -- which confirms the relation resolved, not just the base query. View-source on the page shows the titles already in the HTML, not injected by JS afterward. That is the server component doing its job: the data shipped with the document.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  The full-stack loop is closed for the read path. Schema, seed, and now a page that renders the rows -- with the relation joined and an honest empty state. It is unstyled and static. Exercise 3 makes it react to typing, and that is where the architecture has to bend.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

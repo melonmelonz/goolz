@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Validate on Both Sides / NCD W6D4</title>
+<meta name="description" content="Exercise 4: client validation for fast feedback, server validation as the real gate, and why the client check is a courtesy while the server check is the law.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270D;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Validate on Both Sides</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 25 min</div>
+
+<p>
+  Goal: put a real gate on the data. The verbal demo already found the holes -- a single-space title slipping through, a 5000-character title going straight in -- and this exercise closes them in the two places they have to be closed. Client-side, so a cooperating user gets instant feedback. Server-side, because that is the only check that runs no matter how the request arrives. Same rules, two purposes.
+</p>
+
+<h2>Client-side: fast and friendly</h2>
+
+<pre><code>// in handleSubmit, before the fetch
+setError("");
+
+if (!title.trim()) {
+  setError("Title is required.");
+  return;
+}
+if (title.trim().length &lt; 3) {
+  setError("Title must be at least 3 characters.");
+  return;
+}
+if (description.length &gt; 500) {
+  setError("Description must be 500 characters or less.");
+  return;
+}
+
+// ...then the fetch</code></pre>
+
+<p>
+  Each check sets an error string and returns before any network happens. No round-trip to learn the title is blank -- the user knows the instant they submit. The error renders above the form, the same <code>error</code> state the failed-fetch path already writes to, so good and bad outcomes share one display.
+</p>
+
+<div class="answer">
+  <strong>Client validation is a courtesy to a cooperating user. That is all it is.</strong>
+  <p>This code lives in JavaScript that runs in the user's browser, which means the user controls it completely. They can open devtools and delete these checks, disable JS, or skip the form and POST from curl. So client validation cannot protect anything -- it can only help someone who is already trying to do the right thing do it faster and with clearer feedback. It is hospitality, not security. The instant I treat it as the gate, my database is one curl command from garbage. Useful, worth writing, and load-bearing for exactly nothing.</p>
+</div>
+
+<h2>Server-side: the actual wall</h2>
+
+<pre><code>// app/api/opportunities/route.js  (POST validation block)
+const body = await request.json();
+const title = (body.title || "").trim();
+
+if (title === "") {
+  return NextResponse.json({ error: "Title is required" }, { status: 400 });
+}
+if (title.length &lt; 3) {
+  return NextResponse.json(
+    { error: "Title must be at least 3 characters" },
+    { status: 400 }
+  );
+}
+if (title.length &gt; 200) {
+  return NextResponse.json(
+    { error: "Title must be 200 characters or less" },
+    { status: 400 }
+  );
+}
+if (body.description &amp;&amp; body.description.length &gt; 500) {
+  return NextResponse.json(
+    { error: "Description must be 500 characters or less" },
+    { status: 400 }
+  );
+}
+
+const validTypes = ["job", "certification", "service"];
+const type = validTypes.includes(body.type) ? body.type : "job";
+
+const created = await prisma.opportunity.create({
+  data: { title, description: body.description?.trim() || "", type },
+});
+return NextResponse.json(created, { status: 201 });</code></pre>
+
+<p>
+  The server repeats every client check and adds the ones a friendly UI does not need but a database does -- a 200-char title cap, a type that has to be one of three known values. <code>validTypes.includes(...)</code> is the one the form cannot enforce: my select only offers three options, but a raw POST can send <code>type: "anything"</code>, and without the allowlist that garbage type goes into the column and breaks tomorrow's badge-color lookup. The form constrains the UI; the allowlist constrains the data.
+</p>
+
+<div class="answer">
+  <strong>The server check is the law because it cannot be walked around</strong>
+  <p>This code runs on my server, which the user does not control. It runs whether the request came from my form, from curl, from Postman, from a script someone wrote against my API, or from a future bug in my own client that sends malformed data. There is no path to <code>prisma.create</code> that skips it. That is the entire reason the same rule has to be written twice: the client copy is for speed and lives where the user can delete it; the server copy is for safety and lives where they cannot. Not redundant -- aimed at different things. And it connects to the SQL-injection note from Day 2: Prisma's parameterized queries mean malicious input is treated as data, but "treated as data" still lets someone store a 10MB title or an invalid type unless I validate. Parameterization stops injection; validation stops garbage. I need both.</p>
+</div>
+
+<h2>Test the gate</h2>
+
+<table>
+  <tr><th>Input</th><th>Expected</th></tr>
+  <tr><td>empty title (form)</td><td>"Title is required.", no request sent</td></tr>
+  <tr><td>2-char title (form)</td><td>"Title must be at least 3 characters."</td></tr>
+  <tr><td>single space, via curl</td><td>400 from server, never reaches create</td></tr>
+  <tr><td>type: "nonsense", via curl</td><td>coerced to "job", row stored clean</td></tr>
+  <tr><td>valid post</td><td>201, row created</td></tr>
+</table>
+
+<p>
+  The curl rows are the ones that matter -- they bypass the form entirely and still hit a wall. That is the proof the server validation is doing its job and not just echoing the client's.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  The data is gated. Friendly checks in the form, real checks in the handler, an allowlist on the one field the UI cannot police, and I tested the bypass path with curl, not just the happy path through my own UI. Last thing: tell the user it worked.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
