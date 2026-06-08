@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 7 -- Day 1 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 7 Day 1. TDD + AI: red/green/refactor, Vitest setup, the three TDD-with-AI patterns, mocking Prisma, and the AI failure modes that tests catch. Tests as the spec, and the spec as the prompt.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2713;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 1 -- TDD + AI</h1>
+<div class="subtitle">NCD . WK7 . D1 . four exercises loaded . the AI stops being trusted and starts being verified</div>
+
+<p>
+  Six weeks of building with an AI pair. I have watched it generate code, kept some of it, thrown some of it out, rewritten plenty of it by hand. The loop the whole time has been the same and I have known it was thin: I describe what I want, the model writes something confident, I read it, maybe I run it, and I hope. Today that loop gets a backbone. The move is to write the test first -- before the code exists -- watch it fail, then have the AI write code that makes it pass. The test is the spec, the spec is the prompt, and the passing test is the proof the model did the thing I asked instead of a thing that merely looks like it.
+</p>
+
+<p>
+  The reason this is more than a tidy habit is the inversion. Without tests, the AI's confidence is the only signal I have, and its confidence is not always earned -- it will hand me an <code>isEven</code> that breaks on a negative zero and never blink. With a test in front of it, there is nothing to be confident about; there is a bar, and the code clears it or it does not. Tests plus AI is strictly stronger than either alone, because the AI is genuinely excellent at two things -- turning a precise spec into an implementation, and answering "what edge cases am I missing" -- and a test suite is exactly the structure that puts both of those to work and then checks the result. The instinct that says "the AI writes the code so I need fewer tests" is backwards. It writes code faster than I can read it line by line. Tests are the only way to keep up.
+</p>
+
+<p>
+  Nothing here undoes Week 6. My ReEntry Tech app stays exactly where it left off Friday -- the Opportunities board reads, the form creates, Postgres holds it. Today I bolt Vitest on top, a fast modern runner that watches my files and flips red to green as I type, and I get reps on the cycle before it matters. Tomorrow, when I add UPDATE and DELETE, I write the failing tests first and let the AI implement against them. So today's stakes are deliberately small: a couple of pure functions, one feature built test-first with an AI pair, and one handler tested with Prisma faked out. The point is the discipline, not the difficulty.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Warm-up -- Predict The Tests For One Function</div>
+  <p><b>The function I picked:</b> the <code>GET /api/opportunities</code> handler from Friday. In plain English: "If I gave it a database with three listings, I'd expect an array of three back, newest first. If I gave it an empty database, I'd expect an empty array, not a crash."</p>
+  <p>That sentence is already a test -- two of them. I have been doing this informally for years; today is just the syntax that makes it executable, and the runner that holds me to it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did Friday:</b> finished Week 6 -- CREATE and READ both work. A POST handler that validates and inserts, a controlled form, a server-rendered board, client-side search, validation on both sides.</p>
+  <p><b>What I'm doing today:</b> adding tests to the app and learning TDD with an AI pair. Install Vitest, run a first failing test, TDD two pure utilities, build one small feature test-first with the AI, then test the GET handler with Prisma mocked.</p>
+  <p><b>Where I'm stuck:</b> not stuck, but I have a question I want to answer for myself by end of day -- does writing the test first actually feel slower, or does it just feel unfamiliar? I have a suspicion it is the second one and I want evidence either way.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Cycle Is Three Words</div>
+  <table>
+    <tr><th>Phase</th><th>What happens</th><th>State</th></tr>
+    <tr><td>Red</td><td>write a test for behavior that does not exist; run it; watch it fail</td><td>failing</td></tr>
+    <tr><td>Green</td><td>write the minimum code to pass; run it; watch it pass</td><td>passing</td></tr>
+    <tr><td>Refactor</td><td>clean up the code; re-run; it still passes</td><td>still passing</td></tr>
+  </table>
+  <p>The crucial bit is order. The test comes first, which forces me to state the spec before I write a line of implementation. And a single test is doing three jobs at once: it is the spec (a precise description of intended behavior), the documentation (future-me reads it to remember what the code is for), and the regression net (if anyone breaks this in six months, it screams).</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Vitest, And Watch Mode</div>
+<pre><code>npm install --save-dev vitest
+
+// package.json
+"scripts": {
+  "test": "vitest"      // watch mode -- NOT "vitest run"
+}</code></pre>
+  <p>Test files live next to the code they test: <code>src/utils/getDomain.js</code> gets <code>src/utils/getDomain.test.js</code>. Vitest auto-discovers anything matching <code>*.test.{js,ts,jsx,tsx}</code> -- no central <code>tests/</code> folder. Plain <code>vitest</code> stays running and re-runs on every save, so I literally watch red become green. <code>vitest run</code> runs once and exits, which is for CI, not for sitting next to my editor. The watch UI takes single keystrokes: <code>a</code> all, <code>f</code> failed only, <code>p</code> filter by path, <code>t</code> filter by test title, <code>q</code> quit.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Three TDD-with-AI Patterns</div>
+  <p>All three combine tests and the model. All three end with keep / reject / modify on whatever it produces.</p>
+  <p><b>Pattern 1 -- AI writes the test, I write the code.</b> For when I know the behavior but not the runner's syntax. "Write me 5 Vitest cases for a function that formats a date as X ago." Useful when test syntax is the friction.</p>
+  <p><b>Pattern 2 -- I write the test, AI writes the code.</b> Pure TDD, and the strongest of the three. I hand it the failing tests as the prompt: "here are my failing tests, write the function that makes them pass, no extra features." The tests are the spec; there is nothing to misinterpret. This is the one I will lean on most.</p>
+  <p><b>Pattern 3 -- AI suggests edge cases.</b> I wrote the function and some tests; now I want to know what I missed. "Here is my function and my tests -- what edge cases am I missing, real-world risks first, paranoid last." It is excellent at "have you considered." Some suggestions are real, some are paranoid; keep/reject/modify hard, only add the ones that matter for this app.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Mocking Prisma</div>
+  <p>Tests should be fast and deterministic. A real database is neither -- it is slow and its rows change between runs, so a passing test today flakes tomorrow. The fix is to swap Prisma for a fake during tests.</p>
+<pre><code>import { test, expect, vi } from "vitest";
+
+// hoisted to the very top -- runs before any import below
+vi.mock("@/lib/prisma", () =&gt; ({
+  prisma: { opportunity: { findMany: vi.fn() } },
+}));
+
+import { GET } from "./route.js";
+import { prisma } from "@/lib/prisma";
+
+prisma.opportunity.findMany.mockResolvedValue([ /* fake rows */ ]);</code></pre>
+  <p>The gotcha is the hoist. Vitest lifts every <code>vi.mock()</code> above the imports, so the factory cannot reference an imported variable -- it does not exist yet when the factory runs. Define the fake inline inside the factory (which I do above) and it is fine; if I genuinely need to share data, that is what <code>vi.hoisted()</code> is for. Then in each test I set what the fake returns, call the handler, and assert -- no database touched.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Failure Modes Tests Catch</div>
+  <table>
+    <tr><th>Failure</th><th>Caught by</th></tr>
+    <tr><td>works on the example, dies on the edge (NaN, negative zero, empty string)</td><td>edge-case tests with weird inputs</td></tr>
+    <tr><td>refactor silently changes existing behavior</td><td>old tests still passing -- the regression net</td></tr>
+    <tr><td>off-by-one: returns 11 when I asked for 10</td><td>a test asserting the exact count</td></tr>
+    <tr><td>hallucinated method (<code>array.shuffleInPlace()</code>)</td><td>the test fails in seconds, on the spot</td></tr>
+  </table>
+  <p>Every one of these is invisible without tests and obvious within seconds with them. That is the whole trade.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Vitest Setup + First TDD Cycle</span>
+      <span class="ex-desc">install Vitest in the ReEntry app, write a failing getDomain test, watch RED, write the minimum function, watch GREEN, add a www edge case</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">TDD a Pure Function</span>
+      <span class="ex-desc">formatOpportunityAge(date, now) tests-first off a strict spec table, inject "now" for determinism, then implement to green and handle a future date</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">TDD with an AI Pair + Edge-Case Discovery</span>
+      <span class="ex-desc">filterByType written tests-first, handed to the AI to implement (Pattern 2), then the AI's edge-case review (Pattern 3) with keep/reject/modify</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Test the GET Handler with Mocked Prisma</span>
+      <span class="ex-desc">vi.mock the prisma module, set the fake return per test, assert the response body and that findMany was called with orderBy desc -- no DB hit</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- Walk One Cycle Out Loud</div>
+  <p>
+    Partner had me trace one full cycle pointing at the screen. I picked <code>formatOpportunityAge</code> from Exercise 2. The failing test first: <code>expect(formatOpportunityAge(fiveMinAgo, NOW)).toBe("5 minutes ago")</code> -- read it aloud, it specifies the minutes branch and nothing else. Then RED, because the function did not exist. Then the implementation, a chain of thresholds floor-dividing seconds into the right bucket. Then GREEN in the terminal, watch mode flipping the moment I saved. The thing I had to articulate is why <code>now</code> is a parameter and not <code>new Date()</code> inside the function: because a function that reads the real clock is non-deterministic, and a non-deterministic function cannot be tested -- the same input gives a different answer every second.
+  </p>
+  <p>
+    Their follow-up was the good one: "what would you have done if the AI's first attempt failed two of your tests?" Read which two. A failure is information -- it tells me exactly which branch the model got wrong, in its own words via the diff. Then I decide per failure whether the test is wrong or the code is wrong, and most of the time with a precise spec it is the code, so I hand the two failing cases back and say "these two are red, the rest are green, fix only these." That is the loop, and it is faster than reading a 40-line function line by line trying to spot the bug by eye.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    I came in thinking tests-first would feel slower, and for the first twenty minutes it did -- writing a test for a function that does not exist feels like building scaffolding for a building you have not drawn. Then it flipped, and the place it flipped was Exercise 3. I wrote five tests for <code>filterByType</code>, handed them to the AI, and got back a correct implementation on the first try -- because there was nothing for it to guess. Every prototype I have ever built went wonky exactly at the spots where I had been vague, and the test had quietly removed all the vagueness before the model ever saw the problem. The tests were not overhead on top of the prompt. They were the prompt, in the only language that cannot be misread.
+  </p>
+  <p>
+    The deeper shift is about where my trust lives. For six weeks my trust lived in the model's confidence -- I read the code, it looked right, I moved on, and the bugs I shipped were the ones that looked right. Today my trust moved out of the model and into the suite. I do not have to believe the AI got <code>filterByType</code> right; I can watch four green checks and one red one and know precisely. For ReEntry Tech that is not academic. The data is about people's actual reentry -- jobs and certifications they will act on -- and "it looked right when I read it" is not a standard I want that data held to. The test is the standard. The AI is fast, and the suite is the part that keeps it honest while it goes fast.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

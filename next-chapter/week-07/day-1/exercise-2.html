@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- TDD a Pure Function / NCD W7D1</title>
+<meta name="description" content="Exercise 2: write Vitest tests first for formatOpportunityAge(date, now) off a strict spec table, inject now for determinism, implement to green, then decide and test the future-date case.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2713;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>TDD a Pure Function</h1>
+<div class="subtitle">Exercise 2 / 4 . Level 1 . 30 min</div>
+
+<p>
+  Goal: build <code>formatOpportunityAge(date, now)</code> with zero implementation written until the tests exist. It turns a timestamp into a human string -- "just now", "5 minutes ago", "2 days ago" -- for the byline under each Opportunity card, so a jobseeker can see at a glance how fresh a posting is. A pure function with a fiddly set of branches is the ideal TDD substrate: easy to test, easy to get an off-by-one wrong, and worth pinning down precisely.
+</p>
+
+<h2>The spec, as a table</h2>
+
+<p>A test is only as good as the spec it encodes, so I write the rule down first. Every test maps to exactly one row.</p>
+
+<table>
+  <tr><th>Age of date relative to now</th><th>Output</th></tr>
+  <tr><td>0 -- 59 seconds</td><td><code>just now</code></td></tr>
+  <tr><td>1 -- 59 minutes</td><td><code>X minutes ago</code></td></tr>
+  <tr><td>1 -- 23 hours</td><td><code>X hours ago</code></td></tr>
+  <tr><td>1 -- 29 days</td><td><code>X days ago</code></td></tr>
+  <tr><td>30 days up to (not incl.) 365</td><td><code>X months ago</code>, X = floor(days / 30)</td></tr>
+  <tr><td>365 days or more</td><td><code>X years ago</code>, X = floor(days / 365)</td></tr>
+</table>
+
+<p>
+  Deliberately simple math -- 30-day months, 365-day years, integer floor. Real date libraries are smarter about calendars; today is about TDD discipline, not leap years. The weird-reading "1 months ago" is on purpose: one format string for the whole months row keeps the branch logic clean. Correct pluralization is a refactor-step improvement -- I write a test for it, then change the code -- not something I smuggle in now.
+</p>
+
+<h2>RED -- the tests, all failing, one per row</h2>
+
+<pre><code>// src/utils/formatOpportunityAge.test.js
+import { test, expect } from "vitest";
+import { formatOpportunityAge } from "./formatOpportunityAge.js";
+
+const NOW = new Date("2026-06-08T12:00:00Z");
+const ago = (ms) =&gt; new Date(NOW.getTime() - ms);
+const SEC = 1000, MIN = 60 * SEC, HOUR = 60 * MIN, DAY = 24 * HOUR;
+
+test('"just now" under a minute', () =&gt; {
+  expect(formatOpportunityAge(ago(30 * SEC), NOW)).toBe("just now");
+});
+test('"5 minutes ago"', () =&gt; {
+  expect(formatOpportunityAge(ago(5 * MIN), NOW)).toBe("5 minutes ago");
+});
+test('"3 hours ago"', () =&gt; {
+  expect(formatOpportunityAge(ago(3 * HOUR), NOW)).toBe("3 hours ago");
+});
+test('"2 days ago"', () =&gt; {
+  expect(formatOpportunityAge(ago(2 * DAY), NOW)).toBe("2 days ago");
+});
+test('"1 months ago" at 35 days (floor(35/30))', () =&gt; {
+  expect(formatOpportunityAge(ago(35 * DAY), NOW)).toBe("1 months ago");
+});</code></pre>
+
+<div class="answer">
+  <strong>Why "now" is a parameter</strong>
+  <p>The function never calls <code>new Date()</code> inside itself -- the caller passes <code>now</code>. A function that reads the real clock is non-deterministic: the same <code>date</code> produces a different string every second, so there is no stable value to assert against and the test is impossible to write. By injecting <code>now</code>, the function becomes pure -- same two inputs, same output, forever -- and the test pins an exact answer. In the real card I will call <code>formatOpportunityAge(opp.createdAt, new Date())</code>; the clock-reading stays at the edge, where the impurity belongs, and the core stays testable.</p>
+</div>
+
+<p>Run it: five failures, all on the missing import. RED.</p>
+
+<h2>GREEN -- implement to the spec</h2>
+
+<pre><code>// src/utils/formatOpportunityAge.js
+export function formatOpportunityAge(date, now) {
+  const seconds = Math.floor((now - date) / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds &lt; 60) return "just now";
+  if (minutes &lt; 60) return `${minutes} minutes ago`;
+  if (hours &lt; 24) return `${hours} hours ago`;
+  if (days &lt; 30) return `${days} days ago`;
+  if (days &lt; 365) return `${Math.floor(days / 30)} months ago`;
+  return `${Math.floor(days / 365)} years ago`;
+}</code></pre>
+
+<p>
+  Each <code>if</code> is one row of the table, in order, narrowest first. The ordering is load-bearing: by the time control reaches the months line I already know it is at least 30 days, so I only need the upper bound. Save, and all five flip green as watch mode re-runs.
+</p>
+
+<h2>The edge case: a date in the future</h2>
+
+<p>
+  The spec table starts at zero and goes up. It says nothing about a date <em>after</em> now -- which can happen: a clock skew between the server and the browser, or a scheduled posting dated for tomorrow. Decide first, then test. My decision: a future date reads "just now" rather than a negative-number absurdity like "-5 minutes ago", because the byline is a freshness hint and "this is brand new" is the least wrong thing to say.
+</p>
+
+<pre><code>test("a future date reads 'just now', not a negative", () =&gt; {
+  const future = new Date(NOW.getTime() + 5 * MIN);
+  expect(formatOpportunityAge(future, NOW)).toBe("just now");
+});</code></pre>
+
+<p>
+  RED -- with negative seconds, <code>seconds &lt; 60</code> is true, so it already returns "just now" by accident. It passes. But "passes by accident" is fragile; I make the intent explicit so a future refactor cannot break it silently:
+</p>
+
+<pre><code>const seconds = Math.floor((now - date) / 1000);
+if (seconds &lt; 60) return "just now";   // covers future dates too: negative &lt; 60</code></pre>
+
+<p>It was already correct; the test now documents that it is correct on purpose. Green.</p>
+
+<div class="answer">
+  <strong>Reflection: slower or faster?</strong>
+  <p>Tests-first felt slower for the first two tests and faster by the fifth. Writing assertions for a function that does not exist is friction up front -- but by the time I wrote the implementation I had already made every decision (the boundaries, the floor, the future case), so the code came out in one pass with nothing to debug. The slowness was front-loaded thinking I would have done anyway, just usually after the bug instead of before it.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Six passing tests, written before a line of <code>formatOpportunityAge</code> existed. The spec table became the test suite became the implementation, in that order, and the function dropped out almost mechanically once the spec was pinned. That is the feeling the exercise is selling: when the spec is precise enough, the code is the easy part.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

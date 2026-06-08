@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Test the GET Handler with Mocked Prisma / NCD W7D1</title>
+<meta name="description" content="Exercise 4: test the GET /api/opportunities handler with Prisma mocked via vi.mock, set the fake return per test, assert the response body and that findMany was called with orderBy desc -- no database hit.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2713;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Test the GET Handler with Mocked Prisma</h1>
+<div class="subtitle">Exercise 4 / 4 . Level 2 . 35 min</div>
+
+<p>
+  Goal: write tests for the <code>GET /api/opportunities</code> handler from Week 6 -- the one that powers the board -- without touching the real database. Pure functions were the warm-up; this is the first test against code that talks to Postgres, and the whole technique is replacing Prisma with a fake so the test stays fast and deterministic. A real DB makes tests slow (network, query parsing) and flaky (rows change between runs). A mock makes them instant and identical every time.
+</p>
+
+<h2>The mock, hoisted above the imports</h2>
+
+<pre><code>// app/api/opportunities/route.test.js
+import { test, expect, vi, beforeEach } from "vitest";
+
+// Tell Vitest: when anything imports @/lib/prisma, give it this fake.
+// vi.mock is hoisted to the very top, so it runs before the imports below.
+vi.mock("@/lib/prisma", () =&gt; ({
+  prisma: { opportunity: { findMany: vi.fn() } },
+}));
+
+import { GET } from "./route.js";
+import { prisma } from "@/lib/prisma";
+
+beforeEach(() =&gt; {
+  // wipe call history AND any mockResolvedValue setup between tests.
+  // after this, findMany() returns undefined until a test sets it up.
+  vi.clearAllMocks();
+});</code></pre>
+
+<div class="answer">
+  <strong>The hoist gotcha</strong>
+  <p>Vitest physically lifts every <code>vi.mock()</code> call above all the imports before the file runs. That is why the factory -- the arrow function returning the fake -- cannot reference anything imported below it: at the moment the factory executes, those imports do not exist yet. If I wrote <code>vi.mock("@/lib/prisma", () =&gt; ({ prisma: someImportedHelper }))</code> I would get a confusing "cannot access before initialization." The fix today is to define the fake inline inside the factory, which I do. If I ever truly need to share a value between the factory and the test body, that is the job of <code>vi.hoisted()</code>.</p>
+</div>
+
+<h2>Three tests -- and set the fake return in every one</h2>
+
+<pre><code>test("returns the opportunities the DB has", async () =&gt; {
+  prisma.opportunity.findMany.mockResolvedValue([
+    { id: 1, title: "Line cook", type: "job", createdAt: new Date("2026-06-01") },
+  ]);
+
+  const response = await GET();
+  const data = await response.json();
+
+  expect(data).toHaveLength(1);
+  expect(data[0].title).toBe("Line cook");
+});
+
+test("returns an empty array when the DB is empty", async () =&gt; {
+  prisma.opportunity.findMany.mockResolvedValue([]);
+
+  const response = await GET();
+  const data = await response.json();
+
+  expect(data).toEqual([]);
+});
+
+test("orders opportunities newest first", async () =&gt; {
+  // even though we ignore the return, the handler still calls findMany
+  // and uses the result -- so it must be set or the handler throws.
+  prisma.opportunity.findMany.mockResolvedValue([]);
+
+  await GET();
+
+  expect(prisma.opportunity.findMany).toHaveBeenCalledWith(
+    expect.objectContaining({ orderBy: { createdAt: "desc" } })
+  );
+});</code></pre>
+
+<div class="answer">
+  <strong>Why every test sets mockResolvedValue first</strong>
+  <p><code>beforeEach(vi.clearAllMocks())</code> wipes the previous setup, so at the start of each test <code>findMany</code> returns <code>undefined</code> by default. If the handler runs against an unmocked <code>findMany</code>, the code that does <code>opportunities.map(...)</code> or even just hands the value to <code>NextResponse.json</code> chokes -- typically "cannot read properties of undefined." Even the ordering test, which does not care about the rows, has to set a value, because the handler still executes the whole body and uses the result. The rule is blunt: any test that triggers the handler sets the fake's return first.</p>
+</div>
+
+<div class="answer">
+  <strong>What await response.json() is doing</strong>
+  <p>Each test calls <code>await GET()</code> and gets back a <code>NextResponse</code> (which extends the web <code>Response</code>). To read the body as data I call <code>await response.json()</code>, which re-parses the JSON the handler serialized. So the round-trip is: handler does <code>NextResponse.json(rows)</code>, the test does <code>await response.json()</code>, the test sees <code>rows</code>. If my Week 6 handler had returned a plain <code>new Response(JSON.stringify(...))</code> instead, <code>.json()</code> still works the same way.</p>
+</div>
+
+<h2>The third test is the interesting one</h2>
+
+<p>
+  The first two assert on the body -- what comes out. The third asserts on the <em>call</em> -- that my handler asked Prisma for the rows in descending date order. That is a different kind of check: not "did I get the right answer" but "did I ask the question correctly." If someone later deletes the <code>orderBy</code> while refactoring, the board would silently start showing oldest-first and the body tests would still pass, because the fake returns whatever I tell it regardless of the args. Only the <code>toHaveBeenCalledWith</code> assertion catches that regression. When I first ran it, it was green -- the Week 6 handler does order desc -- so this one is a lock on existing, correct behavior.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Three passing tests for the GET handler, Prisma fully faked, terminal green, and -- the thing I keep checking -- no real database was touched, which I can prove because the tests run in milliseconds with the dev server and the DB both off. I now have the exact pattern tomorrow needs: <code>vi.mock</code> the prisma module, set the fake per test, call the handler, assert on the body and on how Prisma was called. UPDATE and DELETE get tested the same way before I write them.
+</p>
+
+<div class="card" style="margin-top:24px;">
+  <div class="card-label">End of Day 1</div>
+  <p>Four cycles run: a setup-and-first-test, a pure function built entirely test-first, a feature the AI implemented from my tests and then helped me harden, and a handler tested against a faked database. The through-line is that my trust moved from the model's confidence to the suite's verdict -- and the suite is the part that scales when the AI is writing faster than I can read. Tomorrow: UPDATE and DELETE, tests first.</p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="./">Back to menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

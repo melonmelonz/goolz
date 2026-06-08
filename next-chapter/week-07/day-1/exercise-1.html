@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Vitest Setup + First TDD Cycle / NCD W7D1</title>
+<meta name="description" content="Exercise 1: install Vitest in the ReEntry app, write a failing getDomain test, watch RED, write the minimum function, watch GREEN, then add a www edge case.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2713;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Vitest Setup + First TDD Cycle</h1>
+<div class="subtitle">Exercise 1 / 4 . Level 1 . 30 min</div>
+
+<p>
+  Goal: get a test runner into the Week 6 app and run one complete red/green cycle on the smallest real function I can find. The function is <code>getDomain(url)</code> -- give it a URL, get back the host. It earns its place in my app because an Opportunity can carry an optional source link (the original job posting), and the card looks better showing "via indeed.com" than the full URL. Small, pure, perfect first test.
+</p>
+
+<h2>Install and wire the script</h2>
+
+<pre><code>npm install --save-dev vitest</code></pre>
+
+<pre><code>// package.json
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "test": "vitest"
+}</code></pre>
+
+<div class="answer">
+  <strong>"vitest" not "vitest run"</strong>
+  <p>Plain <code>vitest</code> is watch mode: it stays alive and re-runs the moment I save. That is the whole point during development -- I want to see red turn green in real time as I type, not run a command, read output, edit, run again. <code>vitest run</code> runs once and exits; that is for CI, where nothing is sitting at the terminal watching. I will add a separate <code>test:ci</code> for that later in the week.</p>
+</div>
+
+<h2>RED -- write the failing test first</h2>
+
+<pre><code>// src/utils/getDomain.test.js
+import { test, expect } from "vitest";
+import { getDomain } from "./getDomain.js";
+
+test("extracts domain from a URL", () =&gt; {
+  expect(getDomain("https://www.indeed.com/jobs?q=forklift")).toBe("www.indeed.com");
+});</code></pre>
+
+<p>
+  Save, then in a second terminal: <code>npm test</code>. It fails immediately -- and not on the assertion. The <code>import</code> itself throws, because <code>getDomain.js</code> does not exist yet. That is the failure I wanted. RED. The test is making a claim about a function that has no implementation, which is the entire premise of test-first: the spec exists before the code.
+</p>
+
+<h2>GREEN -- the minimum that passes</h2>
+
+<pre><code>// src/utils/getDomain.js
+export function getDomain(url) {
+  return new URL(url).hostname;
+}</code></pre>
+
+<p>
+  Save. Watch mode re-runs on its own and the check goes green. One line. I did not reach for a regex or string-splitting on slashes -- the platform already has a URL parser that knows what a hostname is, and reaching past it would be me reimplementing a solved problem and inventing new bugs. The minimum that passes is the right amount of code.
+</p>
+
+<h2>RED again -- an edge case as a second test</h2>
+
+<pre><code>test("preserves the www subdomain", () =&gt; {
+  expect(getDomain("http://www.linkedin.com/jobs/view/123")).toBe("www.linkedin.com");
+});</code></pre>
+
+<p>
+  Run again -- and it already passes. The <code>URL</code> parser keeps the <code>www</code> as part of the hostname, which is exactly what I want on the card; I am not in the business of stripping subdomains. Sometimes a test you write to drive new behavior turns out to already be green, and that is fine -- it is not wasted. I now own a regression test that locks in "www stays," so if some future-me decides to "clean up" domains and accidentally strips it, this test catches it.
+</p>
+
+<div class="answer">
+  <strong>A test that passes on the first run still earns its keep</strong>
+  <p>The instinct is "if it passed without changing code, the test did nothing." Wrong job. A green-on-arrival test is not driving new behavior, it is pinning existing behavior so it cannot drift. The www case documents a decision -- "we show the subdomain" -- in executable form. Six months from now nobody has to remember that decision; the test remembers it and fails loudly if anyone reverses it by accident.</p>
+</div>
+
+<h2>Refactor step -- ask the AI what I am missing</h2>
+
+<p>
+  The function is green and tiny, which is the right moment to ask the model for the edge cases I have not thought of. Prompt: "Here is my <code>getDomain</code> and its two tests. What edge cases am I missing, real-world first, paranoid last?"
+</p>
+
+<p>
+  It came back with: a bare hostname like <code>"localhost:3000"</code> with no protocol (throws, because <code>new URL</code> needs a scheme); a port that should probably be dropped for display; <code>mailto:</code> and other non-http schemes; and malformed input like an empty string or <code>null</code>. Keep/reject/modify: the empty/null case is real -- the source link is optional, so an absent value will reach this function, and right now <code>getDomain(null)</code> throws. That one becomes a test. The port and the protocol-less host are paranoid for my use -- the links I store come from a controlled create form that requires a full <code>https://</code> URL -- so I reject those for now. I will not add a test for a case that cannot occur in my app.
+</p>
+
+<pre><code>test("returns empty string for a missing source link", () =&gt; {
+  expect(getDomain("")).toBe("");
+  expect(getDomain(null)).toBe("");
+});</code></pre>
+
+<pre><code>// getDomain.js -- guard the real case, nothing more
+export function getDomain(url) {
+  if (!url) return "";
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+}</code></pre>
+
+<p>
+  Back to green, now with the one guard that maps to a real input and not a single line for the paranoid cases. That is the discipline the edge-case review is supposed to teach: the AI is good at generating the whole list, and I am the one who decides which items are load-bearing for this app.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Vitest is installed and watching. Three passing tests, one of which guards a real edge case I would have shipped past. I ran a complete cycle -- red because the function did not exist, green on the minimum, a second red-then-green for an edge case, and a refactor pass guided by the model but gated by me. The terminal is green and I am ready to demo it.
+</p>
+
+<nav class="ex-nav">
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

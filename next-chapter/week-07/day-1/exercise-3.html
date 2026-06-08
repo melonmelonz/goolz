@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- TDD with an AI Pair / NCD W7D1</title>
+<meta name="description" content="Exercise 3: write filterByType tests first, hand them to the AI to implement (Pattern 2), then run the AI's edge-case review (Pattern 3) with keep/reject/modify and add the cases that matter.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2713;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>TDD with an AI Pair + Edge-Case Discovery</h1>
+<div class="subtitle">Exercise 3 / 4 . Level 2 . 55 min</div>
+
+<p>
+  Goal: build one real feature for the Opportunities board by writing the tests first, handing them to the AI to implement, then turning around and asking the AI what I missed. This is Pattern 2 (I write the test, AI writes the code) bolted to Pattern 3 (AI suggests edge cases) -- the combination I expect to actually live in. The feature is <code>filterByType(opportunities, type)</code>: narrow the board to just jobs, just certifications, or just services. It pairs with the type field I added in Week 6 and the type chips on the board.
+</p>
+
+<h2>Step 1 -- the cases as English bullets</h2>
+
+<p>Before any code, the spec as plain bullets so I know what I am asking the AI to satisfy:</p>
+
+<ul>
+  <li>empty input array returns an empty array</li>
+  <li>returns only the items whose <code>type</code> matches</li>
+  <li>returns an empty array when nothing matches</li>
+  <li>matching is case-insensitive ("Job" matches "job")</li>
+  <li>a falsy / "all" type returns everything unfiltered (the board's default)</li>
+</ul>
+
+<h2>Step 2 -- RED, the bullets as failing tests</h2>
+
+<pre><code>// src/utils/filterByType.test.js
+import { test, expect } from "vitest";
+import { filterByType } from "./filterByType.js";
+
+const rows = [
+  { id: 1, title: "Forklift cert", type: "certification" },
+  { id: 2, title: "Line cook",     type: "job" },
+  { id: 3, title: "Resume help",   type: "service" },
+  { id: 4, title: "Warehouse",     type: "job" },
+];
+
+test("empty input returns empty", () =&gt; {
+  expect(filterByType([], "job")).toEqual([]);
+});
+test("returns only matching items", () =&gt; {
+  expect(filterByType(rows, "job").map((r) =&gt; r.id)).toEqual([2, 4]);
+});
+test("returns empty when nothing matches", () =&gt; {
+  expect(filterByType(rows, "internship")).toEqual([]);
+});
+test("matching is case-insensitive", () =&gt; {
+  expect(filterByType(rows, "JOB").map((r) =&gt; r.id)).toEqual([2, 4]);
+});
+test("a falsy type returns everything", () =&gt; {
+  expect(filterByType(rows, "")).toEqual(rows);
+});</code></pre>
+
+<p>Run: five reds on the missing import. Now I have a spec precise enough to hand off.</p>
+
+<h2>Step 3 -- Pattern 2: hand the failing tests to the AI</h2>
+
+<p>The prompt, with the test file pasted under it:</p>
+
+<div class="card">
+  <div class="card-label">Prompt</div>
+  <p>"Here are my failing Vitest tests for <code>filterByType</code>. Write the function that makes them pass. Do not add features beyond what the tests describe."</p>
+</div>
+
+<p>What it returned, essentially first-try:</p>
+
+<pre><code>// src/utils/filterByType.js
+export function filterByType(opportunities, type) {
+  if (!type) return opportunities;
+  const wanted = type.toLowerCase();
+  return opportunities.filter((o) =&gt; o.type.toLowerCase() === wanted);
+}</code></pre>
+
+<p>
+  Saved it, watch mode re-ran, five green. No iteration needed -- and that is the point of Pattern 2, not luck. There was nothing for the model to guess. The empty-input case falls out of <code>filter</code> for free, the case-insensitivity is the two <code>toLowerCase()</code> calls the third and fourth tests demanded, and the "falsy returns all" line is exactly the fifth test made executable. The tests did the specifying; the AI did the typing.
+</p>
+
+<div class="answer">
+  <strong>"Do not add features beyond what the tests describe"</strong>
+  <p>That sentence in the prompt earns its place. Left unconstrained, the model likes to be helpful -- it will add a second parameter for sorting, or a fuzzy match, or a null-guard I did not ask for, and now I am reviewing code that does more than my spec and my tests do not cover the extra. Telling it to satisfy the tests and stop keeps the implementation exactly as wide as the spec. If I want more behavior, I write more tests first. The tests are the contract; the prompt just enforces it.</p>
+</div>
+
+<h2>Step 4 -- Pattern 3: ask what I missed</h2>
+
+<div class="card">
+  <div class="card-label">Prompt</div>
+  <p>"Here is my <code>filterByType</code> and its tests. What edge cases am I missing? List them in priority order -- real-world risks first, paranoid edge cases last."</p>
+</div>
+
+<p>The list it produced, and my keep/reject/modify on each:</p>
+
+<table>
+  <tr><th>Suggestion</th><th>Real or paranoid</th><th>Verdict</th></tr>
+  <tr><td>an item with a missing/undefined <code>type</code> field</td><td>real -- legacy rows predate the type column</td><td>KEEP, write a test</td></tr>
+  <tr><td><code>opportunities</code> itself is null/undefined</td><td>real -- a failed fetch can pass undefined down</td><td>KEEP, write a test</td></tr>
+  <tr><td>whitespace in the type, e.g. <code>" job "</code></td><td>paranoid -- type comes from a fixed select, never typed</td><td>REJECT</td></tr>
+  <tr><td>duplicate items in the array</td><td>paranoid -- not filter's job; it returns what it is given</td><td>REJECT</td></tr>
+  <tr><td>a 100,000-item board</td><td>paranoid -- a personal reentry board, dozens of rows</td><td>REJECT</td></tr>
+</table>
+
+<p>
+  Two reals. Both are about garbage arriving from elsewhere in the system, which is exactly the kind of thing the function should survive without throwing. Back to RED with two new tests, then patch the implementation to pass them -- and nothing more.
+</p>
+
+<pre><code>test("skips items with a missing type", () =&gt; {
+  const mixed = [...rows, { id: 5, title: "Old row" }]; // no type
+  expect(filterByType(mixed, "job").map((r) =&gt; r.id)).toEqual([2, 4]);
+});
+test("a null list returns empty, does not throw", () =&gt; {
+  expect(filterByType(null, "job")).toEqual([]);
+});</code></pre>
+
+<pre><code>export function filterByType(opportunities, type) {
+  if (!opportunities) return [];          // null list -&gt; empty
+  if (!type) return opportunities;
+  const wanted = type.toLowerCase();
+  return opportunities.filter((o) =&gt; o.type?.toLowerCase() === wanted);
+}</code></pre>
+
+<p>
+  The <code>?.</code> on <code>o.type</code> makes a missing type short-circuit to undefined, which never equals <code>wanted</code>, so that row drops out instead of crashing the <code>.toLowerCase()</code>. The leading null-guard handles the failed-fetch case. Seven green. I added exactly the two guards that map to things that happen in my system and not one line for the three that do not.
+</p>
+
+<div class="answer">
+  <strong>Reflection: what the AI surfaced</strong>
+  <p>The two cases I had genuinely missed were both "bad data from upstream" -- the legacy row with no type, and the undefined array from a broken fetch. Left to myself I would have tested the happy paths and shipped, and the undefined-array one would have been a real production crash the first time a fetch failed. The three I rejected were the model being thorough past the point of usefulness -- whitespace, dedup, and scale all matter in some app, just not in a personal board fed by a fixed select. Writing the tests first did change what I built: the case-insensitivity and the "falsy returns all" default were both decisions I made while writing assertions, before the AI ever saw the problem, and they came out clean because the spec was settled first.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  A working filter the AI implemented from my tests on the first pass, plus two edge-case tests I added after its review and kept because they map to real inputs. Seven green, and -- more to the point -- a documented trail of what I kept, what I rejected, and why, which is exactly the "what did the AI write vs. what did I decide" record the Phase 2 gate wants.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
