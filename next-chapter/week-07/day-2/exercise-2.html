@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- UPDATE in the UI / NCD W7D2</title>
+<meta name="description" content="Exercise 2: an edit page at /opportunities/[id]/edit -- server component, Prisma queried inline, defaultValue pre-fill, form action pointed at the Server Action that already has five green tests.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270E;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>UPDATE in the UI</h1>
+<div class="subtitle">Exercise 2 / 6 . Level 1 . 35 min</div>
+
+<p>
+  Goal: a user can edit a listing. The action already exists and has five green tests; this exercise is the UI around it. The lab offered two paths -- wire the Server Action (Path A) or build a parallel PUT-route flow Week 6 style (Path B) -- and I took A, because the lecture's edit-page example for Path B is a client component juggling two useStates and a useEffect fetch just to pre-fill a form, and the Server Action version makes almost all of that evaporate.
+</p>
+
+<h2>First: the action learns the rest of the fields</h2>
+
+<p>
+  Exercise 1's action only updates <code>title</code>; a real edit form needs <code>description</code> and <code>type</code> too. Tests first, still: extended the first test's assertion to expect all three fields in <code>data</code>, watched it go red, then widened the action. Red to green took two minutes, and the suite watched the whole thing.
+</p>
+
+<pre><code>const updated = await prisma.opportunity.update({
+  where: { id },
+  data: {
+    title: formData.get("title").trim(),
+    description: formData.get("description")?.trim() || "",
+    type: formData.get("type") || "job",
+  },
+});</code></pre>
+
+<h2>The edit page -- a server component, start to finish</h2>
+
+<pre><code>// app/opportunities/[id]/edit/page.js
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { updateOpportunity } from "../../actions.js";
+
+export default async function EditOpportunityPage({ params }) {
+  const { id } = await params;           // Next 15+: params is a Promise
+  const opp = await prisma.opportunity.findUnique({
+    where: { id: parseInt(id) },
+  });
+  if (!opp) notFound();
+
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;Edit listing&lt;/h1&gt;
+      &lt;form action={updateOpportunity}&gt;
+        &lt;input type="hidden" name="id" value={opp.id} /&gt;
+
+        &lt;label&gt;Title&lt;/label&gt;
+        &lt;input name="title" defaultValue={opp.title} required /&gt;
+
+        &lt;label&gt;Description&lt;/label&gt;
+        &lt;textarea name="description" defaultValue={opp.description ?? ""} /&gt;
+
+        &lt;label&gt;Type&lt;/label&gt;
+        &lt;select name="type" defaultValue={opp.type}&gt;
+          &lt;option value="job"&gt;Job&lt;/option&gt;
+          &lt;option value="certification"&gt;Certification&lt;/option&gt;
+          &lt;option value="service"&gt;Service&lt;/option&gt;
+        &lt;/select&gt;
+
+        &lt;button type="submit"&gt;Save changes&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/main&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>Where the lecture's useEffect went</strong>
+  <p>The Path B example pre-fills the form by mounting a client component, firing a fetch to <code>GET /api/opportunities/[id]</code>, and copying the response into state -- loading flash included. A server component does not have that problem, because it runs where the database is: query Prisma inline, drop the values into <code>defaultValue</code>, and the HTML arrives at the browser already filled in. No flash, no fetch, no state. <code>defaultValue</code> instead of <code>value</code> is the other half of the trick -- uncontrolled inputs, because nothing on this page needs to react per-keystroke. React renders the starting value and gets out of the way; the form data goes straight to the action on submit.</p>
+</div>
+
+<div class="answer">
+  <strong>The redirect after save</strong>
+  <p>One real addition to the action: after a successful update it now ends with <code>redirect("/opportunities")</code> from <code>next/navigation</code>, so saving lands you back on the board. The gotcha I hit: <code>redirect</code> works by throwing a special control-flow error, so it cannot live inside the action's <code>try</code> block or my own catch eats the navigation. It goes after. The test suite caught nothing here because the tests mock <code>next/navigation</code> too -- noted honestly: this seam is verified by hand, not by Vitest.</p>
+</div>
+
+<h2>The edit link on each card</h2>
+
+<pre><code>// in the board's card render
+&lt;Link href={`/opportunities/${opp.id}/edit`}&gt;Edit&lt;/Link&gt;</code></pre>
+
+<p>
+  A link, not a button with a handler -- the board stays a server component, untouched.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Clicked Edit on the Forklift Certification listing, form arrived pre-filled, changed the description, saved. Landed on the board with the new text showing -- <code>revalidatePath</code> did the refresh, no <code>router.refresh()</code> in sight. Checked Postgres directly out of residual distrust: row updated. The full flow is form to action to Prisma to revalidate to redirect, and the only client-side JavaScript involved is whatever React ships to hydrate a form that would honestly work without it. The suite from Exercise 1 still passes, which after an afternoon of edits to the same file is not nothing.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

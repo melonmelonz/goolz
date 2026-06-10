@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 7 -- Day 2 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 7 Day 2. UPDATE and DELETE, tests first. Server Actions as the Next.js shortcut for mutations, the confirmation dialog, the CRUD checkpoint, and documentation that helps both humans and the AI.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270E;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 2 -- UPDATE + DELETE: CRUD Complete</h1>
+<div class="subtitle">NCD . WK7 . D2 . six exercises loaded . the app learns to change its mind, and to forget</div>
+
+<p>
+  Yesterday was the muscle; today is the application of the muscle. The ReEntry Tech board can create listings and read them, and that has felt like an app for a week, but it is half of one. A board where a listing can never be corrected and never be removed is a board that slowly fills with wrong things. Today I add UPDATE and DELETE -- and per yesterday's discipline, the first thing I write for UPDATE is not the action. It is the four failing tests that describe the action. Red, green, refactor, same cycle, except now the thing under test mutates real rows instead of formatting dates.
+</p>
+
+<p>
+  Today also pays off a debt I deliberately took on. Back on Week 6 Day 4 I named the fork in the road: Next.js has Server Actions, a way to run server code straight off a form with no API route and no fetch, and I skipped them on purpose so I would own the manual mechanism first. That was the right call and today is the payoff -- I know exactly what the shortcut is shortcutting. CREATE stays as it is, fetch and POST, because it works and because that pattern is portable to every backend on earth. UPDATE and DELETE get built the new way, so both patterns live in the same app and I can point at the difference.
+</p>
+
+<p>
+  The second half of the day is documentation, and I am trying not to treat it as the vegetables. The README argument that actually lands for me is the selfish one: next week I will open this project after a weekend away and either a README tells me where I left off or twenty minutes of re-reading my own code does. And the comments argument is the same argument as yesterday's tests -- the AI reads my project to write code for it, and a comment that says <em>why</em> is context the model cannot derive from the code alone. WHAT is in the code. WHY is only in my head until I write it down.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Lab -- CRUD Quick-Check</div>
+  <p><b>What CRUD stands for, and what I have:</b> Create, Read, Update, Delete. The board has the first two.</p>
+  <p><b>Where CREATE happens:</b> the controlled form posts to the <code>POST</code> handler in <code>app/api/opportunities/route.js</code> -- validate, <code>prisma.opportunity.create</code>, return 201.</p>
+  <p><b>Where READ happens:</b> two places. The board at <code>app/opportunities/page.js</code> is a server component querying Prisma inline, and <code>GET</code> on the same API route serves it as JSON -- the handler I put under test yesterday.</p>
+  <p><b>Pre-class question -- which page gets the buttons:</b> the board. Edit and Delete live on each listing card, because that is where the listing is in front of you. Detail page gets them too, eventually. Delete gets a confirmation; edit does not need one, because an edit can be re-edited and a delete cannot be un-deleted.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> bolted Vitest onto the app and ran four TDD cycles -- two pure functions, one feature the AI implemented from my failing tests, and the GET handler tested with Prisma mocked out.</p>
+  <p><b>What I'm doing today:</b> UPDATE and DELETE, tests first. Failing tests for an <code>updateOpportunity</code> Server Action, AI implements against them, then the edit UI, then DELETE built both ways -- API route and Server Action -- then the full CRUD checkpoint, a real README, and WHY-comments.</p>
+  <p><b>Where I'm stuck:</b> not stuck, but a held suspicion to test: I expect Server Actions to feel like magic in the bad way at first -- a form that calls a function with no visible wire -- and I want to find where the wire actually is before I trust it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- UPDATE Has Five Parts, DELETE Has Five Parts</div>
+  <table>
+    <tr><th>UPDATE</th><th>DELETE</th></tr>
+    <tr><td>edit button on the item</td><td>delete button on the item</td></tr>
+    <tr><td>form pre-filled with current data</td><td>confirmation -- "are you sure?"</td></tr>
+    <tr><td>the mutation request</td><td>the delete request</td></tr>
+    <tr><td><code>prisma.update</code></td><td><code>prisma.delete</code></td></tr>
+    <tr><td>the page reflects the change</td><td>the item disappears</td></tr>
+  </table>
+  <p>The shape is identical; the stakes are not. A bad update is recoverable -- edit it again. A bad delete is gone. That asymmetry is why every production app on earth -- Gmail, GitHub, all of them -- puts a dialog in front of delete and nothing in front of edit. The dialog is not politeness, it is the only undo this operation has.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- params Is a Promise Now</div>
+<pre><code>// app/api/opportunities/[id]/route.js -- Next.js 15+
+export async function PUT(request, { params }) {
+  const { id } = await params;   // MUST await -- params is a Promise
+  ...
+}</code></pre>
+  <p>Dynamic-route <code>params</code> stopped being a plain object in Next 15. Every Next 14 example online does <code>params.id</code> directly, and that pattern now warns in dev and breaks production builds. Same rule for page components -- a client component unwraps it with React's <code>use(params)</code>. Worth burning in, because this is exactly the kind of thing an AI trained on a million Next 14 tutorials will confidently get wrong, and yesterday taught me what to do about confident-and-wrong: put a test in front of it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Server Actions, the Four Moving Parts</div>
+<pre><code>// app/opportunities/actions.js
+"use server";                              // part 1 -- the directive
+
+export async function deleteOpportunity(formData) {
+  const id = parseInt(formData.get("id")); // part 3 -- named inputs arrive as FormData
+  await prisma.opportunity.delete({ where: { id } });
+  revalidatePath("/opportunities");        // part 4 -- re-fetch the route's data
+}
+
+// in the page -- part 2: the form points at the function
+&lt;form action={deleteOpportunity}&gt;
+  &lt;input type="hidden" name="id" value={opp.id} /&gt;
+  &lt;button type="submit"&gt;Delete&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+  <p>No fetch, no JSON serialization, no <code>useState</code> plumbing, and -- the part that matters for my board -- no <code>"use client"</code> needed, so the page stays a server component. I went looking for the hidden wire and found it: Next compiles the action into a real POST endpoint behind the scenes and the form submits to it. It is not magic, it is codegen. The HTTP is still there; the framework just writes it for me. Knowing that is what lets me trust it.</p>
+  <p><code>revalidatePath()</code> is the server-side cousin of the <code>router.refresh()</code> I used after CREATE -- it tells Next the data for that route is stale, so the next render re-pulls from the database. That replaces the whole "how does the list update" decision I agonized over on W6D4.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Documentation That Matters</div>
+  <p>A README answers five questions: what is this, what does it do, what is it built with, how do I run it, what is the status. Plus one this course adds that I think is genuinely smart: a Data Model section that mirrors the Prisma schema -- because the Phase 2 gate next week has me walking through my schema out loud, and because it is exactly the context Codex CLI needs to write feature code without guessing my field names.</p>
+<pre><code>// BAD -- says WHAT (the code already says this)
+// Delete the opportunity from the database
+await prisma.opportunity.delete({ where: { id } });
+
+// GOOD -- says WHY (only my head knows this)
+// Hard delete, no deletedAt soft-delete column. Listings are
+// org-posted public postings, not user data -- nothing to audit,
+// and a stale listing is worse than a gone one.
+await prisma.opportunity.delete({ where: { id } });</code></pre>
+  <p>The test for a comment: does it answer "why this way instead of another way." If the answer is already in the code, the comment is noise.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Tests First -- Spec Out UPDATE Before It Exists</span>
+      <span class="ex-desc">four failing Vitest tests for an updateOpportunity Server Action that does not exist yet, the AI implements against them, then a refactor with the suite as the net</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">UPDATE in the UI</span>
+      <span class="ex-desc">an edit page at /opportunities/[id]/edit -- server component, Prisma inline, defaultValue pre-fill, form action pointed at the tested Server Action</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">DELETE, Built Twice</span>
+      <span class="ex-desc">the API-route version with window.confirm and router.refresh, then the Server Action conversion -- same behavior, two patterns side by side, and a decision</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">The CRUD Checkpoint</span>
+      <span class="ex-desc">all four operations run end to end against the checklist -- including the one failure the checklist flushed out: editing a listing that no longer exists</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">The README, With a Data Model</span>
+      <span class="ex-desc">five questions answered plus the schema written out in prose -- the Phase 2 gate script and the AI's context file, same document</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-6.html">
+      <span class="ex-num">Exercise 6</span>
+      <span class="ex-title">Comments That Say WHY</span>
+      <span class="ex-desc">six comments across the schema, the [id] route, the actions file, and the board -- each one answering "why this way instead of another way"</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- UPDATE Out Loud, DELETE Under Attack</div>
+  <p>
+    Walked my partner through the UPDATE flow end to end, pointing at files. Edit link on the card in <code>app/opportunities/page.js</code>, which routes to <code>app/opportunities/[id]/edit/page.js</code> -- a server component, so the pre-fill is not a useEffect fetch, it is Prisma queried inline and the row's values dropped into <code>defaultValue</code> on uncontrolled inputs. Save submits the form whose <code>action</code> is <code>updateOpportunity</code>; Next carries the FormData to the server function, Prisma updates the row, <code>revalidatePath</code> marks the board stale, the redirect lands on a board that re-pulled. The sentence that proved I understood it: at no point did I write a fetch, and yet an HTTP POST absolutely happened -- I just did not have to be the one to write it.
+  </p>
+  <p>
+    Then they tried to break my DELETE, which is the better half of the activity. Delete then Cancel: listing stays, no request fired -- confirmed in the network tab, which is the part that matters, because a cancel that still fires the request is a lie. Delete then OK: row gone, board refreshed. The double-click: second confirm fires, second delete throws P2025 on a row that is already gone -- caught, logged, no crash, though I noted the button should really disable itself after the first click. Their follow-up question: "what if the API call fails entirely?" The catch shows an error state instead of pretending. Partial credit; the disable is now on my list.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    Writing the tests for <code>updateOpportunity</code> before it existed forced a decision I would have skipped: what happens when the id is garbage. Code-first me would have written the happy path, shipped it, and met <code>NaN</code> in production. Test-first me had to decide up front -- because the third test would not let me not decide -- that a missing row throws P2025 and a non-numeric id gets rejected before Prisma ever sees it. Yesterday I said the tests remove the vagueness before the model sees the problem. Today I watched them remove the vagueness before <em>I</em> saw the problem.
+  </p>
+  <p>
+    The other click was quieter. CRUD is done -- the board creates, reads, updates, deletes, and everything after this is a bonus on top of a complete application. Two patterns for mutations now live side by side in the codebase, and I can articulate when each earns its keep: fetch-plus-route when something other than my own Next app needs to talk to the backend, Server Actions when a form inside the app mutates data. And the day ended with a README and six WHY-comments, which felt less like homework than like leaving supplies for the next person to walk into this codebase. The next person is me, Monday, mid-build-sprint. He is going to be grateful.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

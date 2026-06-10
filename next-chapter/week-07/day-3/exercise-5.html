@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- A Small Chat UI / NCD W7D3</title>
+<meta name="description" content="Exercise 5: input, button, response card, a Thinking state -- the blocking pattern, no streaming yet, and the moment the app feels briefly haunted.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2726;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>A Small Chat UI</h1>
+<div class="subtitle">Exercise 5 / 9 . stretch . Level 1 . 25 min</div>
+
+<p>
+  Goal: a page at <code>/ai-chat</code> where typing a question and clicking Ask produces an answer. The shape is the standard controlled-form-plus-fetch from Week 6 -- the AI behind the route changes nothing about the React in front of it, which is itself the lesson.
+</p>
+
+<h2>The page</h2>
+
+<pre><code>// app/ai-chat/page.js
+"use client";
+import { useState } from "react";
+
+export default function AIChatPage() {
+  const [input, setInput] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setLoading(true);
+    setResponse("");
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: input }),
+      });
+      const data = await res.json();
+      setResponse(data.message || data.error);
+    } catch {
+      setResponse("Something went wrong. Try again.");
+    }
+    setLoading(false);
+  }
+
+  return (
+    &lt;main className="chat"&gt;
+      &lt;h1&gt;Assistant&lt;/h1&gt;
+      &lt;form onSubmit={handleSubmit}&gt;
+        &lt;input value={input} onChange={(e) =&gt; setInput(e.target.value)}
+               placeholder="Ask something..." /&gt;
+        &lt;button type="submit" disabled={loading}&gt;
+          {loading ? "Thinking..." : "Ask"}
+        &lt;/button&gt;
+      &lt;/form&gt;
+      {response &amp;&amp; &lt;div className="bubble"&gt;{response}&lt;/div&gt;}
+    &lt;/main&gt;
+  );
+}</code></pre>
+
+<div class="answer">
+  <strong>The blocking pattern, named and accepted</strong>
+  <p>This waits for the whole completion and then shows it -- no word-by-word streaming, which is why my page feels different from ChatGPT even though it is the same engine. Streaming is Week 9; the blocking version is easier to reason about and easier to debug, and for two-to-three-sentence responses the wait is barely two seconds. The <code>disabled={loading}</code> matters more here than on past forms, though: every click costs actual fractions of a cent, so the button locking during flight is cost control wearing a UX costume. Tuesday's double-click delete bug, same species, smaller teeth.</p>
+</div>
+
+<h2>Three questions, asked</h2>
+
+<table>
+  <tr><th>Asked</th><th>Got</th></tr>
+  <tr><td>"What's a good first step to finding work after being away for a few years?"</td><td>reasonable -- update contacts, identify transferable skills, look at staffing agencies. Generic, but not wrong</td></tr>
+  <tr><td>"Explain Prisma in one sentence."</td><td>clean and correct -- the ORM line, basically my README's tech-stack bullet said back to me</td></tr>
+  <tr><td>"What should I make for dinner?"</td><td>pasta, stir-fry, tacos -- cheerful, unmoored from anything. The control group for Exercise 6</td></tr>
+</table>
+
+<p>
+  The first and third answers are the interesting pair: both are competent and neither knows where it is. The reentry question deserved an answer shaped by this app -- what is actually on the board -- and got a horoscope instead. That gap is precisely what the system message (next exercise) and the data connection (the one after) exist to close. The haunted feeling of a text box in my own app talking back lasted about ninety seconds before it was replaced by wanting the ghost to be useful.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Working chat at <code>/ai-chat</code>: type, ask, Thinking, answer in a bubble. Three questions, three reasonable-or-revealing answers, button locked during flight, errors land as a sentence instead of a blank. Deliverable demoed. The page is a test harness more than a feature -- the feature comes in Exercise 8 -- but it is the harness I will poke the next two exercises with.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="exercise-6.html">Exercise 6 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

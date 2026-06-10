@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Tests First: Spec Out UPDATE / NCD W7D2</title>
+<meta name="description" content="Exercise 1: four failing Vitest tests for an updateOpportunity Server Action that does not exist yet, the AI implements against them, then a refactor with the suite as the net.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270E;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Tests First -- Spec Out UPDATE Before It Exists</h1>
+<div class="subtitle">Exercise 1 / 6 . Level 2 . 40 min</div>
+
+<p>
+  Goal: write the failing tests for <code>updateOpportunity</code> before the function -- or even its file -- exists, then have the AI implement against them. This is yesterday's Pattern 2 pointed at a real mutation. The file <code>app/opportunities/actions.js</code> does not exist when the test file imports from it, and that is not a problem, that is the point. The test file is the spec, and the spec comes first.
+</p>
+
+<h2>The setup -- yesterday's mock, two additions</h2>
+
+<pre><code>// app/opportunities/actions.test.js
+import { test, expect, vi, beforeEach } from "vitest";
+
+vi.mock("@/lib/prisma", () =&gt; ({
+  prisma: { opportunity: { findMany: vi.fn(), update: vi.fn() } },
+}));
+
+// Server Actions call revalidatePath; outside Next that import
+// has no request context to work with, so it gets a fake too.
+vi.mock("next/cache", () =&gt; ({ revalidatePath: vi.fn() }));
+
+import { updateOpportunity } from "./actions.js";
+import { prisma } from "@/lib/prisma";
+
+beforeEach(() =&gt; { vi.clearAllMocks(); });</code></pre>
+
+<div class="answer">
+  <strong>Two mocks, two different reasons</strong>
+  <p>The Prisma mock is the same one as yesterday with <code>update</code> added next to <code>findMany</code> -- same hoist rules, fake defined inline in the factory. The <code>next/cache</code> mock is new and exists for a different reason: I am not asserting anything about it, I just need the import to not explode when the action calls <code>revalidatePath</code> outside of a real Next request. One mock is a test double I interrogate; the other is a stub I silence. Worth keeping those two jobs distinct in my head.</p>
+</div>
+
+<h2>Four failing tests</h2>
+
+<pre><code>function form(fields) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+  return fd;
+}
+
+test("updates a listing title for a valid id", async () =&gt; {
+  prisma.opportunity.update.mockResolvedValue(
+    { id: 1, title: "Line cook (2nd shift)", type: "job" });
+
+  await updateOpportunity(form({ id: "1", title: "Line cook (2nd shift)" }));
+
+  expect(prisma.opportunity.update).toHaveBeenCalledWith(
+    expect.objectContaining({
+      where: { id: 1 },
+      data: expect.objectContaining({ title: "Line cook (2nd shift)" }),
+    }));
+});
+
+test("returns the updated row", async () =&gt; {
+  const updated = { id: 1, title: "Line cook", type: "job" };
+  prisma.opportunity.update.mockResolvedValue(updated);
+
+  const result = await updateOpportunity(form({ id: "1", title: "Line cook" }));
+  expect(result).toEqual(updated);
+});
+
+test("rejects when the listing no longer exists", async () =&gt; {
+  prisma.opportunity.update.mockRejectedValue(
+    Object.assign(new Error("Record not found"), { code: "P2025" }));
+
+  await expect(
+    updateOpportunity(form({ id: "9999", title: "whatever" }))
+  ).rejects.toThrow();
+});
+
+test("touches exactly one row, scoped to the right id", async () =&gt; {
+  prisma.opportunity.update.mockResolvedValue({ id: 1, title: "x" });
+
+  await updateOpportunity(form({ id: "1", title: "x" }));
+
+  expect(prisma.opportunity.update).toHaveBeenCalledTimes(1);
+  expect(prisma.opportunity.update).toHaveBeenCalledWith(
+    expect.objectContaining({ where: { id: 1 } }));
+});</code></pre>
+
+<p>
+  Ran the suite. RED across the file -- the import alone fails it, since <code>actions.js</code> does not exist. Four red tests and a missing file is a complete, unambiguous statement of what I want built. Also a small pleasant surprise: <code>FormData</code> just works in Node-run Vitest, no browser, no polyfill -- it has been a global since Node 18. The little <code>form()</code> helper keeps the tests readable, because four copies of set-set-set was noise.
+</p>
+
+<div class="answer">
+  <strong>What the fourth test is really guarding</strong>
+  <p>Tests one and two check outputs. Test four checks the <em>ask</em> -- same species as yesterday's orderBy assertion. An update that hits the wrong <code>where</code> clause is the scariest bug in this file: it does not error, it does not look wrong in the UI you are staring at, it just quietly rewrites somebody else's listing. <code>toHaveBeenCalledTimes(1)</code> plus the exact <code>where</code> is the cheapest insurance available against the worst failure available.</p>
+</div>
+
+<h2>Hand the red to the AI</h2>
+
+<p>
+  The prompt was the tests, nearly verbatim: "Here are my failing Vitest tests for an UPDATE Server Action. Write <code>app/opportunities/actions.js</code> to make them pass. It uses Prisma via <code>@/lib/prisma</code>. Don't add features beyond what the tests describe." What came back:
+</p>
+
+<pre><code>// app/opportunities/actions.js
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+
+export async function updateOpportunity(formData) {
+  const id = parseInt(formData.get("id"));
+  const title = formData.get("title");
+
+  const updated = await prisma.opportunity.update({
+    where: { id },
+    data: { title },
+  });
+
+  revalidatePath("/opportunities");
+  return updated;
+}</code></pre>
+
+<p>
+  GREEN, all four, first try -- second day in a row that a precise spec produced a correct implementation on the first attempt, which is starting to look less like luck and more like a law.
+</p>
+
+<h2>Refactor -- the test the spec forced me to add</h2>
+
+<p>
+  Staring at <code>parseInt(formData.get("id"))</code>: if the hidden input is ever missing, <code>get</code> returns <code>null</code>, <code>parseInt(null)</code> is <code>NaN</code>, and Prisma gets <code>where: { id: NaN }</code>. I wrote the failing test first -- expect a NaN id to reject before Prisma is ever called -- watched it red, then added the guard:
+</p>
+
+<pre><code>const id = parseInt(formData.get("id"));
+if (Number.isNaN(id)) throw new Error("Invalid opportunity id");</code></pre>
+
+<p>
+  Plus one more assertion in that test: <code>expect(prisma.opportunity.update).not.toHaveBeenCalled()</code> -- garbage gets stopped at the door, not in the database. Five green. Suite stayed green through the whole refactor, which is the entire advertised benefit, experienced live.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Five passing tests and a working <code>updateOpportunity</code> that has never once been run against the real database -- and does not need to be, yet. Reflection, three sentences as assigned: writing the tests first absolutely changed what I built, because the P2025 and NaN cases would not have occurred to code-first me until they happened. The tests forced me to decide what failure even means for this function before I wrote a line of it. And the function the AI wrote was boring, which is the highest compliment available -- all the interesting decisions had already been made, by me, in the spec.
+</p>
+
+<nav class="ex-nav">
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

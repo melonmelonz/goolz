@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Break It on Purpose / NCD W7D3</title>
+<meta name="description" content="Exercise 3: wrong URL, missing fields, and a 5-second AbortSignal.timeout -- three failure modes, three different user-facing sentences, zero crashes.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2726;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Break It on Purpose</h1>
+<div class="subtitle">Exercise 3 / 9 . stretch . Level 2 . 25 min</div>
+
+<p>
+  Goal: prove the advice route survives the three classic external-API failures -- their server errors, their format changes, their server hangs -- by inducing each one and watching what my user would see. Same instinct as Tuesday's two-tab race: the checklist tests the happy path, so I test the others.
+</p>
+
+<h2>Failure 1 -- their server errors</h2>
+
+<p>
+  Changed the URL to <code>/advicexxx</code>. Their server returns a 404, my <code>!response.ok</code> branch catches it, my route returns the failure honestly, and the board renders without the advice line -- the silent-decoration decision from Exercise 2 paying off immediately. No crash, no red text, no leaked third-party error JSON into my UI.
+</p>
+
+<h2>Failure 2 -- the shape changes under me</h2>
+
+<p>
+  Simulated by pointing the parse at a field that does not exist. <code>data?.slip?.advicezzz ?? null</code> flows a clean <code>null</code> through the contract, component sees no advice, renders nothing. Without the optional chaining this is <code>TypeError: cannot read properties of undefined</code> -- the classic 2am page -- and with it, it is a non-event. Cheapest insurance in JavaScript.
+</p>
+
+<h2>Failure 3 -- the hang, and the modern timeout</h2>
+
+<pre><code>const response = await fetch("https://api.adviceslip.com/advice", {
+  cache: "no-store",
+  signal: AbortSignal.timeout(5000),   // built into Node 18+; no manual
+});                                     // AbortController + setTimeout dance
+
+// in the catch, narrow before assuming:
+catch (error) {
+  if (error instanceof Error &amp;&amp; error.name === "TimeoutError") {
+    return NextResponse.json(
+      { error: "Advice service took too long" }, { status: 504 });
+  }
+  return NextResponse.json(
+    { error: "Could not reach advice service" }, { status: 503 });
+}</code></pre>
+
+<div class="answer">
+  <strong>Why this beats the pattern most tutorials show</strong>
+  <p>The older recipe is a hand-rolled <code>AbortController</code>, a <code>setTimeout</code> to call <code>abort()</code>, and a <code>clearTimeout</code> you must remember in every exit path or you leak the timer. <code>AbortSignal.timeout(ms)</code> is the same machinery as a one-liner primitive -- no cleanup branch to forget. Worth recognizing the old pattern on sight, though, because the AI was trained on a decade of it; when Codex CLI suggested the manual version first, I asked for the built-in and got it. Knowing the modern primitive is what made that a review instead of an acceptance.</p>
+</div>
+
+<div class="answer">
+  <strong>504 vs 503, the distinction I now actually hold</strong>
+  <p>503: I could not reach them, or they are down -- unavailability. 504: I reached out and they never answered in time -- a timeout at the gateway, which is what my route is in this picture. Nothing in my little advice feature treats them differently today, but the codes are free to get right now and expensive to untangle later, and a future log line that says 504 tells me "slow upstream" without a single extra word.</p>
+</div>
+
+<p>
+  Testing the timeout honestly: Advice Slip is rude enough to be slow sometimes but not reliably, so I pointed the fetch at <code>httpstat.us/200?sleep=8000</code> -- a service that exists to dawdle on command -- and watched the 504 fire at the five-second mark. Then put the real URL back. Break it on purpose, with instruments.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Three failure modes, three induced failures, three distinct honest responses, zero crashes, and the board never looked anything but calm. URL restored, verified green. The pattern I am taking forward to the OpenAI route in the next exercise: <code>ok</code>-check, optional-chain the parse, timeout the hang, and give every failure its own status and sentence.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

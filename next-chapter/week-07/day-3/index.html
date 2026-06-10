@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 7 -- Day 3 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 7 Day 3. Third-party APIs + the OpenAI API. Reading API docs, auth patterns, rate limits, routing through your own server, then the marquee example: first OpenAI call, system messages, tokens, and connecting AI to real data.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2726;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 3 -- Third-Party APIs + the OpenAI API</h1>
+<div class="subtitle">NCD . WK7 . D3 . nine exercises loaded . the app stops talking to itself</div>
+
+<p>
+  Until this morning, ReEntry Tech was a closed loop: my frontend calls my routes, my routes call my database, everything in the conversation is mine. Today the loop opens. The app reaches out to servers I do not own, pulls back data I did not create, and folds it into what it shows. And the skill on offer is deliberately not "how to use the Weather API" -- it is how to open any API's documentation, find the same four things every API doc contains, and make the call. The four things: base URL, endpoints, authentication, response format. That is the whole literacy.
+</p>
+
+<p>
+  The course's framing device is good enough that I want to write it down before the day proves it: the OpenAI API -- the engine under ChatGPT -- is just another third-party API. Base URL, key, route through your own server, handle the errors. The same pattern that fetches a random dog photo fetches a completion from the model I have been pair-programming with for seven weeks. So the day runs generic-skill first, marquee example second, and by afternoon my own code is sending prompts to the same engine that has been on the other side of my terminal all along. There is something pleasingly circular about that.
+</p>
+
+<p>
+  One pattern rules the whole day: frontend to MY route to the external API. Never frontend straight to the external API. Three reasons, and I can now recite them cold -- the key stays on the server where the browser cannot leak it; CORS never enters the conversation because server-to-server requests do not trigger it; and when the external service fails, my route decides what the user sees instead of some other company's error JSON. Every production app does it this way. As of today, so does mine.
+</p>
+
+<div class="card">
+  <div class="card-label">Morning Lab -- API Scavenger Hunt</div>
+  <p><b>The two URLs:</b> <code>api.chucknorris.io/jokes/random</code> and <code>dog.ceo/api/breeds/image/random</code>, both opened raw in the browser. Both return JSON, not HTML -- no markup, no styles, just a data structure with the payload in a field.</p>
+  <p><b>What they have in common vs. a normal URL:</b> a normal URL returns a page for a human; these return data for code. The browser is the wrong audience and renders them as plain text shrugging. The OpenAI API answers the same way -- raw JSON, completion nested inside -- and the whole day is about being the code these responses were designed for.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> completed CRUD -- UPDATE and DELETE tests-first, Server Actions beside the API routes, the checkpoint passed with one race condition found and fixed, README and WHY-comments in.</p>
+  <p><b>What I'm doing today:</b> the core path -- one public API integrated through my own route, then a first OpenAI call and a system message shaped to my app -- and then as much of the stretch as the afternoon holds: timeouts, a chat UI, AI connected to my actual listings, an AI feature on the create form, and a provider swap to see what is OpenAI and what is just LLM.</p>
+  <p><b>Where I'm stuck:</b> not stuck. Standing question for the day: the AI-connected-to-data exercise injects database rows into the system message, and my database rows are written by whoever posts a listing. I want to know exactly how much I should be worried about that before I ship it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Four Things Every API Doc Tells You</div>
+  <table>
+    <tr><th>Thing</th><th>Example</th></tr>
+    <tr><td>base URL</td><td><code>https://api.open-meteo.com/v1</code></td></tr>
+    <tr><td>endpoints</td><td><code>/forecast</code>, <code>/weather</code> -- what you can ask for</td></tr>
+    <tr><td>authentication</td><td>none / key in query param / key in header / bearer token</td></tr>
+    <tr><td>request + response format</td><td>what you send, what JSON comes back</td></tr>
+  </table>
+  <p>Open the docs, find these four, and you can make the call -- that is the skill, transferable to every API including the one with the AI behind it. The three auth patterns ascend in seriousness: key in the URL (hobby tier), key in a header (production), bearer token in the Authorization header (OAuth-land, and what the OpenAI SDK quietly does for you).</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- External APIs Fail in Ways Your Own Code Cannot</div>
+  <p>Down, slow, rate-limited (429), key revoked, or the format changed under you. Always <code>try/catch</code>, always check <code>response.ok</code>, and decide what your user sees for each failure -- because "their server broke" and "my server broke" deserve different status codes (503 vs 500) and different sentences. Rate limits get respected by not calling on every keystroke, caching what does not change, and reading the limit headers. None of this is exotic; it is the same defensive posture as validating form input, pointed outward.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Anatomy of an OpenAI Call</div>
+<pre><code>const response = await openai.chat.completions.create({
+  model: "gpt-5-mini",        // fast + cheap; upgrade only if quality demands
+  messages: [
+    { role: "system", content: "who the AI is and how it behaves" },
+    { role: "user",   content: "the actual question" },
+  ],
+  temperature: 0.7,           // 0 deterministic, 1 creative
+});
+const text = response.choices[0].message.content;</code></pre>
+  <p>Tokens are the meter: roughly 0.75 words each, billed on prompt AND response. gpt-5-mini runs $0.25 per million in, $2 per million out -- a typical call costs two hundredths of a cent, which is nothing until an accidental loop makes it something. Spending limit set at $5 before I wrote a line of code. The system message is the most powerful parameter in the call -- same user question, different system message, unrecognizably different answer -- and it is where today's app-shaping actually happens.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Key Is a Credit Card</div>
+  <p>The OpenAI key bills my account directly, which makes it the same hygiene as every key only with sharper teeth: lives in <code>.env</code>, which is in <code>.gitignore</code>; read only in server-side code; never, ever prefixed <code>NEXT_PUBLIC_</code>, which would helpfully ship it to every browser. <code>.env.example</code> carries placeholders so the repo documents what keys exist without containing any. And the one operational gotcha that cost me ten minutes today: Next reads <code>.env</code> at startup, so a key added to a running dev server does not exist until the restart.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1 . core</span>
+      <span class="ex-title">Read a Stranger's Docs</span>
+      <span class="ex-desc">Advice Slip API: find the four things, make the call raw in the browser, and meet the undocumented fifth thing -- a cache the docs only half admit to</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2 . core</span>
+      <span class="ex-title">Integrate Through My Own Route</span>
+      <span class="ex-desc">/api/advice server-side, a borrowed-wisdom line on the board with loading and error states, and .env.example committed before any key exists to need it</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3 . stretch</span>
+      <span class="ex-title">Break It on Purpose</span>
+      <span class="ex-desc">wrong URL, missing fields, and a 5-second AbortSignal.timeout -- three failure modes, three different user-facing sentences, zero crashes</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4 . core</span>
+      <span class="ex-title">First OpenAI Call</span>
+      <span class="ex-desc">key, .env, SDK, a POST route at /api/ai, and a test page whose button returns a real completion -- the engine answers my code instead of my chat window</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5 . stretch</span>
+      <span class="ex-title">A Small Chat UI</span>
+      <span class="ex-desc">input, button, response card, a Thinking state -- the blocking pattern, no streaming yet, and the moment the app feels briefly haunted</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-6.html">
+      <span class="ex-num">Exercise 6 . core</span>
+      <span class="ex-title">The System Message Is the Product</span>
+      <span class="ex-desc">a reentry navigator persona with constraints and a refusal lane, tested same-question three ways -- none, mine, and over-constrained</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-7.html">
+      <span class="ex-num">Exercise 7 . stretch</span>
+      <span class="ex-title">AI Meets My Data -- and My Data Bites Back</span>
+      <span class="ex-desc">ten real listings injected as context so the model answers from MY board -- then the prompt-injection experiment, run against myself, with results I did not love</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-8.html">
+      <span class="ex-num">Exercise 8 . stretch</span>
+      <span class="ex-title">A Real Feature: AI-Drafted Descriptions</span>
+      <span class="ex-desc">the create form grows a Draft-with-AI button for the field W6D4 made optional -- generated text lands editable, never auto-saved, suggestion not verdict</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-9.html">
+      <span class="ex-num">Exercise 9 . stretch</span>
+      <span class="ex-title">The Provider Swap</span>
+      <span class="ex-desc">the same route rewritten against Anthropic's SDK -- what changed, what stayed identical, and which differences are API trivia versus actual design opinions</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- The Data-Flow Pattern, Out Loud</div>
+  <p>
+    Took Option 1. Pointed at <code>app/api/advice/route.js</code> on screen and walked it: the board never talks to adviceslip.com -- it fetches my route, my route runs on the server, makes the outbound call, reshapes the response, and hands back only what my UI needs. The three problems this solves, recited with the why: key security, because anything a browser can read a user can read, and my OpenAI key bills my card; CORS, because the browser's cross-origin rules apply to browsers and my server is not one; error handling, because when their API dies my route returns my 503 with my sentence instead of letting their failure format leak into my UI. What would break going direct from a client component: the key ships in the bundle, CORS blocks half the calls anyway, and every error page belongs to someone else.
+  </p>
+  <p>
+    Partner's follow-up: "what status do you return if the external key is invalid?" Good one -- the external API says 401, but parroting 401 to my frontend implies <em>my user</em> is unauthenticated, which is false and would trip auth handling that has nothing to do with this. My route logs the real 401 for me and returns a 502-flavored "external service misconfigured" to the page. The status code is part of the reshaping, not something you pass through raw. I had to think for a second on that one, which is how I know the question was worth asking.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    The demystification was the headline. Seven weeks of treating the AI as the thing on the other side of the terminal, and today it became a POST request I wrote myself: a URL, a key, a JSON body, a response with the text nested in <code>choices[0].message.content</code>. Every AI feature in every product I use -- the autocomplete, the summarizers, the chat bubbles -- collapsed into the same shape as the dog-photo API the moment my own route returned a completion. The engine did not get smaller, but the mystery did, and those turn out to be different things.
+  </p>
+  <p>
+    The second click had teeth. Exercise 7 put my own database rows into the system message, and because my rows are written by whoever posts a listing, I got to run a prompt injection against myself and watch it land. The fix-shaped lessons -- user input stays in the user role, database text is untrusted the moment anyone else can write it -- matter less than the posture change: the model reads <em>everything</em> in the context window with the same credulity, and "data" versus "instructions" is a distinction I care about that the model does not. I have been on the trusting side of that window for seven weeks. Today I saw what it looks like from the other side, on a board meant for people who can least afford to be lied to by it.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 9 -- The Provider Swap / NCD W7D3</title>
+<meta name="description" content="Exercise 9: the same route rewritten against Anthropic's SDK -- what changed, what stayed identical, and which differences are API trivia versus actual design opinions.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2726;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The Provider Swap</h1>
+<div class="subtitle">Exercise 9 / 9 . stretch . Level 3 . 30 min</div>
+
+<p>
+  Goal: option B -- swap the assistant route from OpenAI to Anthropic and feel what is OpenAI-specific versus what is just how LLM APIs work. There is also an obvious joke in pointing my hand-rolled route at the company whose model has been pair-programming this entire course with me, and I am not above it.
+</p>
+
+<h2>The diff, in its entirety</h2>
+
+<pre><code>npm install @anthropic-ai/sdk
+# .env gains ANTHROPIC_API_KEY
+
+// the import and client
+- import OpenAI from "openai";
+- const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
++ import Anthropic from "@anthropic-ai/sdk";
++ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// the call
+- const response = await openai.chat.completions.create({
+-   model: "gpt-5-mini",
+-   messages: [
+-     { role: "system", content: SYSTEM },
+-     { role: "user", content: prompt },
+-   ],
+-   temperature: 0.7,
+- });
+- const text = response.choices[0].message.content;
++ const response = await anthropic.messages.create({
++   model: "claude-haiku-4-5",
++   max_tokens: 400,                      // REQUIRED -- no default ceiling
++   system: SYSTEM,                       // top-level param, not a message
++   messages: [{ role: "user", content: prompt }],
++   temperature: 0.7,
++ });
++ const text = response.content[0].text;</code></pre>
+
+<p>
+  Everything else -- the route shape, the try/catch, the key hygiene, the frontend, the injected listings -- did not change by one character. That is the substrate the lecture promised: system instruction, user message, completion. Two SDK lines, three call-shape lines, one response-parsing line. Twenty minutes including reading docs, and most of that was the four-things scan of a second provider's documentation, which after this morning felt routine -- which I suppose was the day working as designed.
+</p>
+
+<div class="answer">
+  <strong>Trivia versus opinions</strong>
+  <p>Response parsing (<code>choices[0].message.content</code> vs <code>content[0].text</code>) is trivia -- arbitrary shapes, memorize and move on. Two differences are actual design opinions. <code>system</code> as a top-level parameter rather than a message in the array makes the instruction/conversation boundary structural instead of conventional -- after Exercise 7, where my whole problem was things in the message pile claiming authority they should not have, an API that fences the system instruction off in its own field reads less like style and more like a stance. And mandatory <code>max_tokens</code> is the provider refusing to default my spending ceiling -- mildly annoying to type, hard to argue with, very Exercise-4-spending-limit in spirit.</p>
+</div>
+
+<h2>Same questions, other engine</h2>
+
+<table>
+  <tr><th>Probe</th><th>Result</th></tr>
+  <tr><td>work-with-my-hands question, listings injected</td><td>same two listings surfaced, slightly more cautious framing, one fewer flourish -- equivalent quality, different accent</td></tr>
+  <tr><td>off-topic dinner question</td><td>redirected per the system message, arguably more cleanly</td></tr>
+  <tr><td>the pirate listing, restored for one run out of scientific duty</td><td>no pirate, no Arr, but one wobble in five runs paraphrasing the poisoned text -- the fence helps, the disease is the substrate's, nobody's API shape cures it</td></tr>
+</table>
+
+<h2>The comparison paragraph, as assigned</h2>
+
+<p>
+  The swap cost six lines and twenty minutes, which is the headline: the integration pattern is fully portable, and provider choice is a product decision -- pricing, model fit, rate limits -- not an architecture decision, provided the route boundary from Exercise 2 exists to contain the blast radius. Answer quality on my tiny board-assistant workload was equivalent with a different accent; the differences that will actually steer a future choice are the design opinions (structural system param, mandatory output ceiling) and the meta-observation that prompt injection wobbled both engines, because it is a property of the substrate, not the vendor. Kept OpenAI on main for course consistency; the Anthropic version lives on a branch, six lines away, which is exactly as far away as a fallback provider should be.
+</p>
+
+<h2>Checkpoint, and end of week 7's solo days</h2>
+
+<p>
+  Nine of nine, core and stretch. The app entered today a closed loop and ends it talking to two external services and one AI engine -- advice on the board, an assistant that knows the actual listings and redirects what it should not touch, a draft button orgs would genuinely use, an injection writeup with failure rates, and a provider swap proving the pattern owns the provider rather than the reverse. Tomorrow the Team Build starts, and I am walking in with a complete CRUD app, a test suite, a README, and a healthy new suspicion of everything inside a context window.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-8.html">&#9664; Exercise 8</a>
+  <span class="spacer"></span>
+  <a href="./">Back to menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

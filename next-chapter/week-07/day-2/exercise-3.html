@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- DELETE, Built Twice / NCD W7D2</title>
+<meta name="description" content="Exercise 3: DELETE built as an API route with window.confirm and router.refresh, then converted to a Server Action -- same behavior, two patterns side by side, and a decision about which to keep.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270E;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>DELETE, Built Twice</h1>
+<div class="subtitle">Exercise 3 / 6 . Level 1 + the optional Level 2 conversion . 45 min</div>
+
+<p>
+  Goal: a user can delete a listing, with a confirmation in front of it -- and since the lab offers an optional conversion to a Server Action afterward, I built it both ways on purpose. Same move as W6D4's two refresh strategies: do both, feel the difference, then decide with evidence instead of vibes.
+</p>
+
+<h2>Version 1 -- the API route and the button</h2>
+
+<pre><code>// app/api/opportunities/[id]/route.js
+export async function DELETE(request, { params }) {
+  const { id } = await params;
+  try {
+    await prisma.opportunity.delete({ where: { id: parseInt(id) } });
+    return NextResponse.json({ message: "Deleted" });
+  } catch (error) {
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Already gone" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  }
+}</code></pre>
+
+<pre><code>// app/opportunities/DeleteButton.js
+"use client";
+import { useRouter } from "next/navigation";
+
+export default function DeleteButton({ id }) {
+  const router = useRouter();
+
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      "Delete this listing? This cannot be undone.");
+    if (!confirmed) return;
+
+    const res = await fetch(`/api/opportunities/${id}`, { method: "DELETE" });
+    if (res.ok) router.refresh();
+  }
+
+  return &lt;button onClick={handleDelete} className="danger"&gt;Delete&lt;/button&gt;;
+}</code></pre>
+
+<div class="answer">
+  <strong>The review checklist, honestly run</strong>
+  <p>Does the handler actually delete from the database -- yes, verified in psql, the row count drops. Does the dialog fire BEFORE the request -- yes, and the early <code>return</code> on cancel means no request at all, which I confirmed in the network tab because a cancel that still fires is the bug this pattern exists to prevent. Does the list refresh -- yes, <code>router.refresh()</code> re-pulls the server component's data without a full reload, the same move as after CREATE. Cancel path: listing stays. Confirm path: listing gone from the page and from Postgres.</p>
+</div>
+
+<div class="answer">
+  <strong>Why P2025 gets its own branch</strong>
+  <p>Deleting a row that is already gone is not a server error, it is a stale page -- somebody else (or another tab) got there first. Prisma surfaces it as P2025, and mapping that to a 404 instead of a 500 means the client can tell "the thing you wanted is already done, refresh" apart from "something actually broke." Yesterday's test for the UPDATE action taught me this error code exists; today it earned a branch in production code.</p>
+</div>
+
+<h2>Version 2 -- the conversion</h2>
+
+<pre><code>// app/opportunities/actions.js -- second export
+export async function deleteOpportunity(formData) {
+  const id = parseInt(formData.get("id"));
+  if (Number.isNaN(id)) throw new Error("Invalid opportunity id");
+
+  await prisma.opportunity.delete({ where: { id } });
+  revalidatePath("/opportunities");
+}</code></pre>
+
+<pre><code>// app/opportunities/DeleteForm.js -- small client island for the confirm
+"use client";
+import { deleteOpportunity } from "./actions.js";
+
+export default function DeleteForm({ id }) {
+  return (
+    &lt;form
+      action={deleteOpportunity}
+      onSubmit={(e) =&gt; {
+        if (!confirm("Delete this listing? This cannot be undone."))
+          e.preventDefault();
+      }}
+    &gt;
+      &lt;input type="hidden" name="id" value={id} /&gt;
+      &lt;button type="submit" className="danger"&gt;Delete&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+
+<p>
+  Tests came first here too -- two more in the suite, mirroring Exercise 1's shape: called once with the right <code>where</code>, and the NaN guard stops it at the door. The action itself is four lines of logic; the tests took longer than the implementation, and that ratio is fine, because the tests are the part that stays true while the implementation changes.
+</p>
+
+<div class="answer">
+  <strong>The confirm needed a client island anyway</strong>
+  <p>The honest wrinkle in the "Server Actions need no client code" pitch: <code>window.confirm</code> is a browser API, so the confirm-then-maybe-preventDefault wrapper has to be a client component. The board stays a server component and renders this little island per card. So the real count: version 1 is a route file plus a client button with a fetch; version 2 is a server function plus a client form with no fetch. The conversion did not eliminate the client code -- the dialog is irreducibly client-side -- it eliminated the HTTP plumbing.</p>
+</div>
+
+<h2>The comparison, and the decision</h2>
+
+<table>
+  <tr><th></th><th>API route + button</th><th>Server Action + form</th></tr>
+  <tr><td>pieces</td><td>route handler, fetch, router.refresh</td><td>action, form (refresh is revalidatePath, already inside)</td></tr>
+  <tr><td>serialization</td><td>mine to write, both directions</td><td>FormData in, framework handles the rest</td></tr>
+  <tr><td>testable with yesterday's pattern</td><td>yes -- handler takes request/params</td><td>yes -- action takes FormData, arguably simpler</td></tr>
+  <tr><td>callable from outside a Next app</td><td>yes, it is just HTTP</td><td>no -- forms in this app only</td></tr>
+  <tr><td>works before JS hydrates</td><td>no -- onClick needs JS</td><td>mostly -- the form posts natively, but so would the confirm-less delete</td></tr>
+</table>
+
+<p>
+  Kept: the Server Action, and the comment at the top of <code>actions.js</code> says why -- "Mutations from this app's own forms go through Server Actions; the API routes stay for anything that is not this app's forms." The DELETE route handler stays in the file too, deliberately, because Day 3 involves outside services and a plain HTTP surface has a way of becoming useful the moment something that is not a React form needs to talk to you.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Both versions demoed against the full flow: cancel keeps, confirm deletes, board refreshes, Postgres agrees. Suite at nine green. One known wart carried forward to the checkpoint exercise: the delete button can be double-clicked, and the second confirm races the first delete. It loses politely thanks to the P2025 handling, but politely losing is not the same as not racing.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

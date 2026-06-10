@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- The README, With a Data Model / NCD W7D2</title>
+<meta name="description" content="Exercise 5: a README that answers the five questions plus a Data Model section that mirrors the Prisma schema -- the Phase 2 gate script and the AI's context file in one document.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270E;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The README, With a Data Model</h1>
+<div class="subtitle">Exercise 5 / 6 . Level 2 . 30 min</div>
+
+<p>
+  Goal: a README that a stranger could run the project from, that next-Monday-me can resume from, and that Codex CLI can take context from -- with a Data Model section that doubles as my Phase 2 gate script. I had the AI draft it from my description, then rewrote about half of it, because the draft described a very impressive app that was not quite mine. Template-sounding lines went first.
+</p>
+
+<h2>What landed in README.md</h2>
+
+<pre><code># ReEntry Tech
+
+A board where partner organizations post jobs, certifications, and
+services for people coming home from incarceration -- and where the
+people looking can actually find them.
+
+## Features
+- Post a listing (title, description, type) via a validated form
+- Browse all listings, newest first, with client-side search
+- Listing detail pages, with other listings from the same org
+- Edit listings -- pre-filled form, Server Action mutation
+- Delete listings, with a confirmation dialog in front
+
+## Tech Stack
+- Next.js (App Router) -- JavaScript, server components by default
+- PostgreSQL via Prisma ORM
+- Vitest for tests (mocked Prisma -- no test DB needed)
+- Plain CSS. No framework. It is a board, not a spaceship.
+
+## Data Model
+Opportunity
+- id           Int, primary key, autoincrement
+- title        String, required
+- description  String, optional -- quick posts may lack a writeup
+- type         String, default "job" -- job | certification | service
+- location     String, optional
+- remote       Boolean, default false
+- active       Boolean, default true
+- createdAt    DateTime, set on insert
+
+Organization (one-to-many: one org posts many opportunities)
+- id, name, email, verified, createdAt
+- Opportunity.orgId -&gt; Organization.id
+
+## Getting Started
+1. npm install
+2. Copy .env.example to .env, set DATABASE_URL
+3. npx prisma migrate dev
+4. npm run dev, open http://localhost:3000
+
+## Project Structure
+- app/                 pages and layouts (server components)
+- app/api/             HTTP routes -- GET/POST collection, GET/PUT/DELETE [id]
+- app/opportunities/   the board, edit page, actions.js (Server Actions)
+- prisma/              schema + migrations
+- lib/                 prisma client singleton
+
+## Status
+Works: full CRUD, search, detail pages, 12 passing tests.
+In progress: nothing mid-flight -- clean checkpoint as of W7D2.
+Planned: third-party API integration (W7D3), auth eventually.
+Known wart: delete button can be double-clicked; second click
+loses politely (P2025 -&gt; 404) but should be disabled.</code></pre>
+
+<div class="answer">
+  <strong>What I rewrote out of the AI draft</strong>
+  <p>The draft opened with "A modern, full-stack web application leveraging Next.js" -- which describes ten million repos and therefore none. The one-sentence test for a README opener is whether it could be pasted onto a different project without anyone noticing; mine now cannot. I also added the Known wart line myself. The AI does not volunteer flaws, and a Status section that only lists triumphs is marketing, not status. The honest wart line is the part next-Monday-me will be most grateful for.</p>
+</div>
+
+<div class="answer">
+  <strong>Why the Data Model section earns its place</strong>
+  <p>Two consumers. The Phase 2 gate next week has a verbal walkthrough of my schema, and this section is the rehearsal script -- I read it aloud twice and the "one org, many opportunities" sentence already comes out smoother. And every Codex CLI session from now on gets this file as context, which means no more guessing whether the field is <code>type</code> or <code>category</code>, no more inventing a <code>userId</code> that does not exist. The schema has not changed since Week 6; writing it out in prose was the refresh the course said it would be -- I had honestly forgotten <code>active</code> was in there.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  README committed. The test I ran on it: scrolled to the top and read it as someone who has never seen the project. What is it -- clear in one sentence. How do I run it -- four steps, and I actually ran them in a scratch clone to verify, because a setup section nobody has executed is a rumor. Status -- honest, warts included. It is the first README I have written that I expect to read again.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="exercise-6.html">Exercise 6 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

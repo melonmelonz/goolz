@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 8 -- AI-Drafted Descriptions / NCD W7D3</title>
+<meta name="description" content="Exercise 8: the create form grows a Draft-with-AI button for the field W6D4 made optional -- generated text lands editable, never auto-saved, suggestion not verdict.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2726;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>A Real Feature: AI-Drafted Descriptions</h1>
+<div class="subtitle">Exercise 8 / 9 . stretch . Level 3 . 45 min</div>
+
+<p>
+  Goal: an AI feature a user would actually want, integrated where the app already lives -- not a chat page nobody visits. The candidate picked itself: back on W6D4 I made <code>description</code> optional because "a quick post might not have a writeup yet." That design shrug is now a product gap the model can fill. Orgs post fast, listings land blank, and a blank description helps nobody searching the board. So the create form grows a button: Draft with AI.
+</p>
+
+<h2>The route -- its own endpoint, its own persona</h2>
+
+<pre><code>// app/api/ai/draft-description/route.js
+export async function POST(request) {
+  try {
+    const { title, type, location } = await request.json();
+    if (!title?.trim()) {
+      return NextResponse.json(
+        { error: "Title is required to draft" }, { status: 400 });
+    }
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        { role: "system",
+          content: `You draft listing descriptions for a reentry
+opportunity board. 2-3 sentences, plain language. Say what the
+opportunity is and what a person would actually do. No corporate
+buzzwords, no "exciting opportunity," no exclamation points.
+NEVER invent specifics that were not provided -- no pay rates,
+no schedules, no requirements you were not told about.` },
+        { role: "user",
+          content: `Draft a description.\nTitle: ${title}\nType: ${type}\nLocation: ${location || "not specified"}` },
+      ],
+      temperature: 0.8,
+    });
+
+    return NextResponse.json(
+      { description: response.choices[0].message.content });
+  } catch (error) {
+    console.error("Draft error:", error);
+    return NextResponse.json(
+      { error: "Could not draft a description" }, { status: 500 });
+  }
+}</code></pre>
+
+<div class="answer">
+  <strong>The NEVER-invent line is the feature's whole ethics</strong>
+  <p>First draft of this system message lacked it, and the model immediately decorated a forklift-cert test with "$18-22/hr" and "flexible scheduling" -- fabricated, fluent, and exactly the kind of detail someone would plan around. That is Exercise 6's never-speculate principle resurfacing with stakes: on this board a hallucinated wage is not filler, it is a broken promise the org never made. Constraint added, re-tested five titles, zero invented specifics. The drafts got blander, and blander is correct -- the org adds the real specifics by editing, which is the next design decision down.</p>
+</div>
+
+<h2>The form side -- suggestion, never verdict</h2>
+
+<pre><code>// in the create form, next to the description textarea
+&lt;button type="button" onClick={draftDescription}
+        disabled={drafting || !title.trim()}&gt;
+  {drafting ? "Drafting..." : "Draft with AI"}
+&lt;/button&gt;
+
+// draftDescription POSTs title/type/location, then:
+setDescription(data.description);   // lands IN the textarea, editable</code></pre>
+
+<p>
+  Three deliberate choices. The button disables until a title exists, because the route requires the one fact everything hangs on. The draft lands in the controlled textarea, not the database -- the org reads it, edits it, owns it, and only submit persists anything; nothing AI-written enters Postgres unread by a human. And <code>type="button"</code>, learned the annoying way: the first version submitted the whole form on click because a button inside a form defaults to <code>type="submit"</code> -- a 2014-vintage HTML footgun firing in an AI feature, which felt about right for this course.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  End to end: typed "Peer Support Specialist," type certification, clicked Draft -- two seconds, then a plain, accurate, unhyped description appeared in the textarea, which I trimmed by a sentence and submitted. Row in Postgres carries the human-edited version. Loading and error states wired; the failure path drops a quiet "could not draft -- write it manually" note under the field and leaves the form fully usable, because the AI is an accelerant here, never a dependency. This is the first thing I have built this week that I would show an actual partner org without preamble.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-7.html">&#9664; Exercise 7</a>
+  <span class="spacer"></span>
+  <a href="exercise-9.html">Exercise 9 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

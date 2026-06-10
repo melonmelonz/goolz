@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- The CRUD Checkpoint / NCD W7D2</title>
+<meta name="description" content="Exercise 4: all four CRUD operations run end to end against the checklist -- including the one failure the checklist flushed out, editing a listing that no longer exists.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270E;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The CRUD Checkpoint</h1>
+<div class="subtitle">Exercise 4 / 6 . Level 2 . 25 min</div>
+
+<p>
+  Goal: run all four operations end to end against the checklist and earn the sentence "this is a complete application." Also, secretly, the goal is to find the thing that does not survive contact with a checklist, because something never does.
+</p>
+
+<h2>The run</h2>
+
+<table>
+  <tr><th>Op</th><th>Steps</th><th>Result</th></tr>
+  <tr><td>CREATE</td><td>form, all fields, submit; new listing on the board; row in Postgres</td><td>pass -- "Peer Support Specialist (Cert)" created, id 14</td></tr>
+  <tr><td>READ</td><td>board lists all; titles + type badges render; card click opens the detail page</td><td>pass -- detail page still shows the related-from-this-org section from W6D3</td></tr>
+  <tr><td>UPDATE</td><td>Edit on id 14; form pre-filled; change description; save; board and detail reflect it</td><td>pass -- revalidatePath caught both routes because the action revalidates the detail path too</td></tr>
+  <tr><td>DELETE</td><td>Delete on id 14; dialog; cancel keeps; confirm removes; gone from board and DB</td><td>pass -- psql confirms zero rows for id 14</td></tr>
+</table>
+
+<h2>The thing the checklist flushed out</h2>
+
+<p>
+  Between UPDATE and DELETE I did something the checklist did not ask for: opened the edit page for a listing in one tab, deleted that listing in another, then hit save in the first tab. The action threw P2025 -- correctly, my Exercise 1 test promised exactly that -- but "correctly threw" rendered as Next's unhandled-error screen, which is the right behavior wearing the wrong face. A user who lost a race should get a sentence, not a stack trace.
+</p>
+
+<pre><code>// the fix: catch the stale case at the action's edge
+try {
+  updated = await prisma.opportunity.update({ where: { id }, data });
+} catch (error) {
+  if (error.code === "P2025") {
+    redirect("/opportunities?gone=1");   // listing vanished; back to the board
+  }
+  throw error;
+}</code></pre>
+
+<p>
+  The board reads the query param and shows a one-line notice: "That listing was removed while you were editing." The redirect-throws gotcha from Exercise 2 bit me again here -- <code>redirect</code> inside a <code>catch</code> is fine, but it cannot be inside a <code>try</code> that I also catch. Rearranged, retested, suite still green plus one new test pinning the P2025-redirects behavior.
+</p>
+
+<div class="answer">
+  <strong>Why I tested a race the checklist did not mention</strong>
+  <p>Because the checklist tests the app as one careful user, and no app has one careful user. Two tabs is the cheapest possible simulation of two people, and a board whose whole purpose is multiple orgs posting listings is going to have writes crossing in the mail. Yesterday's exercise: the failing test forced me to decide what a missing row means. Today's checkpoint: the running app forced me to decide what it means <em>to a person looking at a screen</em>. Both decisions existed whether or not I made them -- making them is the job.</p>
+</div>
+
+<h2>Checkpoint, certified</h2>
+
+<p>
+  Create, read, update, delete -- all four, end to end, against a real Postgres, with eleven green tests underneath and one race condition now handled like a sentence instead of a crash. Screen recording captured for the deliverable: one item taken through its full life, creation to deletion, forty seconds. The app is complete in the load-bearing sense: everything from here is addition, not foundation.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

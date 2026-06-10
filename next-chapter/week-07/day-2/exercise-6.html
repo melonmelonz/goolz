@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 6 -- Comments That Say WHY / NCD W7D2</title>
+<meta name="description" content="Exercise 6: six WHY-comments across the Prisma schema, the [id] route, the actions file, and the board -- each one answering why this way instead of another way.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x270E;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Comments That Say WHY</h1>
+<div class="subtitle">Exercise 6 / 6 . Level 3 . 25 min</div>
+
+<p>
+  Goal: at least five comments that answer "why this way instead of another way" -- the question the code itself cannot answer. I asked Codex CLI to suggest candidates and it came back with eleven, of which about half were WHAT-comments wearing a WHY costume ("// Uses Prisma to update the record" -- thank you). Keep, reject, modify. Six survived, each one a decision I actually made and could have made differently.
+</p>
+
+<h2>The six</h2>
+
+<pre><code>// prisma/schema.prisma
+// No User model yet, on purpose. Listings are org-posted and public;
+// the people browsing should never need an account to look. Auth, when
+// it comes, gates posting -- not reading. Decided W6D2, still holds.
+model Opportunity { ... }
+
+// "active" exists so orgs can pause a filled listing without deleting
+// it -- deletion loses the org's posting history, pausing does not.
+// The board only shows active rows; nothing in the UI unpauses yet.
+active  Boolean  @default(true)</code></pre>
+
+<pre><code>// app/api/opportunities/[id]/route.js
+// PUT not PATCH: the edit form always submits every field, so full
+// replacement is what actually happens. If optional fields ever get
+// added to the form, revisit -- PATCH would stop a half-filled form
+// from blanking the fields it omitted.
+
+// This route survives the Server Action migration on purpose.
+// Anything that is not this app's own forms -- a partner org's
+// script, a future mobile client, tomorrow's API exercises --
+// talks HTTP, and this is where it knocks.</code></pre>
+
+<pre><code>// app/opportunities/actions.js
+// Mutations from this app's own forms go through Server Actions;
+// the API routes stay for everything else. Two patterns on purpose:
+// this one is less plumbing, that one is portable.
+
+// Hard delete, no deletedAt soft-delete column. Listings are public
+// postings, not user data -- no audit trail required, and a stale
+// listing on a reentry board does real harm: someone plans around
+// a job that is not there. Gone should mean gone.</code></pre>
+
+<div class="answer">
+  <strong>The favorite, and why</strong>
+  <p>The hard-delete comment, shared in class chat. It is the only one where the WHY is about the people the app serves rather than the code -- the cost of a stale listing on this particular board is somebody's plan falling through, which is a heavier thing than a dangling row. That reasoning lives nowhere in the code. <code>prisma.opportunity.delete</code> looks identical whether the decision behind it was careful or careless; the comment is the only place the difference shows.</p>
+</div>
+
+<div class="answer">
+  <strong>The test, applied to the AI</strong>
+  <p>The course's test is whether a human or an AI could read the comments and understand the choices. I ran the actual experiment: fresh Codex CLI session, asked it to add an "archive listing" feature, once against the commented code. It proposed setting <code>active = false</code> instead of deleting -- citing the <code>active</code> comment -- and routed the mutation through a Server Action, citing the actions.js comment. The comments steered the model exactly the way they would steer a person. WHY-comments are system prompts that live in the repo; that is the cleanest way I can say what today taught me.</p>
+</div>
+
+<h2>Checkpoint, and end of day</h2>
+
+<p>
+  Six WHY-comments in, zero WHAT-comments added, one deleted on sight ("// import the prisma client" -- gone). Day 2 closes with the app complete: full CRUD with twelve green tests under it, two mutation patterns living side by side with the boundary between them written down, a README I verified by running it, and comments that demonstrably steer the AI. Tomorrow the app stops talking to itself -- third-party APIs, and the first OpenAI call.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-5.html">&#9664; Exercise 5</a>
+  <span class="spacer"></span>
+  <a href="./">Back to menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

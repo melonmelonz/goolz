@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Read a Stranger's Docs / NCD W7D3</title>
+<meta name="description" content="Exercise 1: the Advice Slip API -- find the four things in the docs, make the call raw in the browser, and meet the undocumented fifth thing: a cache the docs only half admit to.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2726;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Read a Stranger's Docs</h1>
+<div class="subtitle">Exercise 1 / 9 . core . Level 1 . 20 min</div>
+
+<p>
+  Goal: pick an API, find the four things in its docs, make one successful call. I picked Advice Slip -- random one-line life advice -- partly because it needs no key and no signup, and partly because a board built for people restarting their lives can absorb a line of borrowed wisdom without it being a gimmick. Open-Meteo was the responsible choice; this one fit the app.
+</p>
+
+<h2>The four things, found</h2>
+
+<table>
+  <tr><th>Thing</th><th>Found</th></tr>
+  <tr><td>base URL</td><td><code>https://api.adviceslip.com</code></td></tr>
+  <tr><td>endpoints</td><td><code>/advice</code> random, <code>/advice/{id}</code> by id, <code>/advice/search/{query}</code></td></tr>
+  <tr><td>auth</td><td>none -- no key, no header, nothing</td></tr>
+  <tr><td>response</td><td><code>{ "slip": { "id": 117, "advice": "It is easy to sit up and take notice..." } }</code></td></tr>
+</table>
+
+<p>
+  The whole doc is one short page, which turned out to be its own lesson: a small API documents like a small API, and the four things were all present anyway. Pasted the URL into the browser, got raw JSON, payload nested under <code>slip</code> -- not at the top level, which is exactly the kind of detail you only get by looking at a real response instead of assuming.
+</p>
+
+<div class="answer">
+  <strong>The undocumented fifth thing</strong>
+  <p>Refreshed the browser tab to see a new slip and got the same advice. Refreshed again -- same advice. The docs mention, in one quiet line, that results are cached for two seconds; in practice browser-side caching stretched it much further until I added a junk cache-busting param (<code>?t=Date.now()</code>) like it is 2009. So the real four-things list has a shadow fifth entry: <em>the behaviors the docs undersell</em>. You find those by calling the API, not by reading about it. Logged for Exercise 2: my route sets <code>cache: "no-store"</code> on the outbound fetch, because Next loves to cache fetches too, and stale randomness is just a constant.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Findings written down in the assigned format: API, base URL, endpoint, auth (none), response fields (<code>slip.id</code>, <code>slip.advice</code>). One successful raw call screenshot for the deliverable. Total docs-to-working-call time: about four minutes, of which three were the cache investigation -- a ratio I am told to expect from APIs for the rest of my life.
+</p>
+
+<nav class="ex-nav">
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

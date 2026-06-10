@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 6 -- The System Message Is the Product / NCD W7D3</title>
+<meta name="description" content="Exercise 6: a reentry navigator persona with constraints and a refusal lane, tested same-question three ways -- no system message, mine, and over-constrained.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2726;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The System Message Is the Product</h1>
+<div class="subtitle">Exercise 6 / 9 . core . Level 2 . 35 min</div>
+
+<p>
+  Goal: replace the generic "helpful assistant" line with a system message shaped to this app's domain, then prove it changed something by asking the same question across configurations. The lecture's claim is that the system message is the most powerful tool in the call. The claim survives testing, with a caveat I found by over-steering.
+</p>
+
+<h2>What went in the route</h2>
+
+<pre><code>{ role: "system",
+  content: `You are a navigator for ReEntry Tech, a board where partner
+organizations post jobs, certifications, and services for people coming
+home from incarceration.
+
+How you answer:
+- Plain language. No jargon, no corporate cheer, no lectures.
+- Practical and specific. Next steps a person can take this week.
+- 2-4 sentences unless asked for more.
+- Never speculate about anyone's record, charges, or past. Not your
+  business, not your job.
+- If asked something outside jobs, certifications, services, or the
+  reentry process, say briefly that it is outside what you can help
+  with here, and point back to what you can do.` }</code></pre>
+
+<div class="answer">
+  <strong>The line that took the longest</strong>
+  <p>The never-speculate line. The other constraints are formatting; that one is posture. A model asked "can I get hired with my record" will happily generate confident paragraphs about legal questions that vary by state, by conviction, by employer -- and a wrong confident answer on this board does not cost a user a bad dinner recipe, it costs them a plan. The system message cannot make the model a lawyer, but it can make it stop impersonating one. Tone rules are product decisions here, more than anywhere else I have built.</p>
+</div>
+
+<h2>Same question, three ways</h2>
+
+<p>Question, all three runs: <em>"What should I do this weekend?"</em> -- chosen because it is off-domain enough to expose where the answer comes from.</p>
+
+<table>
+  <tr><th>Config</th><th>Answer (condensed)</th></tr>
+  <tr><td>no system message</td><td>hiking, a museum, brunch, "recharge!" -- a lifestyle blog with no idea where it is standing</td></tr>
+  <tr><td>my system message</td><td>that is mostly outside what I can help with here -- but if you want to use the weekend on the search: pick two listings to apply to Monday, and the forklift cert posting has a Saturday session. Want details?</td></tr>
+  <tr><td>over-constrained (added: bullet points only, max 3, always include a time estimate, never exceed 20 words)</td><td>three bullets so clipped they read like error codes; the warmth went, and with it the usefulness</td></tr>
+</table>
+
+<p>
+  The middle row is the win, and it is worth noticing <em>what kind</em> of win: the redirect did not refuse the question, it bent the question toward the board. That came from the "point back to what you can do" clause -- a refusal lane with an exit ramp, not a wall. The third row is the caveat: constraints compound, and past some density the model spends its whole budget obeying format and has nothing left for judgment. Steering is real; over-steering is also real.
+</p>
+
+<div class="answer">
+  <strong>Where this system message stops</strong>
+  <p>It steers the model when the model is following instructions in good faith -- and that is all it does. It is a tone-and-scope contract, not a security boundary: nothing in it survives a user (or, foreshadowing Exercise 7, a database row) that tells the model to ignore it. Knowing what layer a control lives at, and what it cannot do, is the part of today that maps directly onto the warnings in the next exercise.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Route updated, persona in place, three-way comparison run and screenshotted, off-topic redirect verified on dinner plans (politely declined, offered the board instead). Temperature experiment as a bonus: the same reentry question at 0 gave the same answer twice verbatim; at 1.0 it got chattier and slightly less precise. Staying at 0.7 -- and the verbal demo prep writes itself, because explaining <em>why</em> each line of this message exists turns out to be the entire content of Exercise 6.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-5.html">&#9664; Exercise 5</a>
+  <span class="spacer"></span>
+  <a href="exercise-7.html">Exercise 7 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

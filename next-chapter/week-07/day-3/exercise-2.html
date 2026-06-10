@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Integrate Through My Own Route / NCD W7D3</title>
+<meta name="description" content="Exercise 2: /api/advice server-side, a borrowed-wisdom line on the board with loading and error states, and .env.example committed before any key exists to need it.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2726;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Integrate Through My Own Route</h1>
+<div class="subtitle">Exercise 2 / 9 . core . Level 1 . 30 min</div>
+
+<p>
+  Goal: the full pattern, end to end -- a Next route that calls the external API server-side, and a piece of UI that consumes my route, with loading and error states. The board gets one quiet line of borrowed wisdom under its header. Small by design: the pattern is the deliverable, the advice is the excuse.
+</p>
+
+<h2>The route</h2>
+
+<pre><code>// app/api/advice/route.js
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  try {
+    const response = await fetch("https://api.adviceslip.com/advice", {
+      cache: "no-store",   // Next caches fetches by default; randomness
+                           // that never changes is just a constant
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: "Advice service unavailable" },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json({ advice: data?.slip?.advice ?? null });
+
+  } catch {
+    return NextResponse.json(
+      { error: "Could not reach advice service" },
+      { status: 503 }
+    );
+  }
+}</code></pre>
+
+<div class="answer">
+  <strong>The reshaping is the point</strong>
+  <p>The external response is <code>{ slip: { id, advice } }</code>; my route returns <code>{ advice }</code>. That flattening is not cosmetic -- it is the boundary doing its job. My UI depends on <em>my</em> contract, so if Advice Slip ever renames <code>slip</code> to <code>quote</code>, the blast radius is one line in one route file instead of every component that ever touched the data. The optional chaining with a null fallback handles the "format changed under you" failure mode the lecture warned about: missing field becomes <code>null</code>, not a crash at midnight.</p>
+</div>
+
+<h2>The UI -- a client island on a server board</h2>
+
+<pre><code>// app/opportunities/AdviceLine.js
+"use client";
+import { useState, useEffect } from "react";
+
+export default function AdviceLine() {
+  const [advice, setAdvice] = useState(null);
+  const [state, setState] = useState("loading");
+
+  useEffect(() =&gt; {
+    fetch("/api/advice")
+      .then((r) =&gt; r.json())
+      .then((d) =&gt; {
+        if (d.advice) { setAdvice(d.advice); setState("ok"); }
+        else setState("error");
+      })
+      .catch(() =&gt; setState("error"));
+  }, []);
+
+  if (state === "loading") return &lt;p className="advice"&gt;...&lt;/p&gt;;
+  if (state === "error") return null;   // decoration fails silent
+  return &lt;p className="advice"&gt;&amp;ldquo;{advice}&amp;rdquo;&lt;/p&gt;;
+}</code></pre>
+
+<div class="answer">
+  <strong>Why the error state is invisible</strong>
+  <p>The lab checklist wants an error message shown, and for a feature the user came for -- the listings -- it would get one. But the advice line is decoration, and decoration that apologizes for itself is worse than decoration that is absent. A red "Error: could not load advice" above a job board is noise pretending to matter. So: loading shows a quiet ellipsis, failure shows nothing, success shows the line. The route still returns proper errors -- the <em>contract</em> is honest -- the component just chooses not to perform its grief. Deviating from the checklist on purpose and writing down why feels like the actual lesson.</p>
+</div>
+
+<h2>.env.example, before there is anything to hide</h2>
+
+<pre><code># .env.example -- committed. The real .env is not.
+DATABASE_URL="postgresql://user:password@localhost:5432/reentry"
+# no key needed for adviceslip; OPENAI_API_KEY arrives in exercise 4</code></pre>
+
+<p>
+  Advice Slip needs no key, so the hygiene here is anticipatory: the example file now exists, the pattern is set, and when the OpenAI key lands in two exercises it has a documented slot waiting. Checked <code>git status</code> to confirm <code>.env</code> stays untracked -- it does, has since Week 6.
+</p>
+
+<h2>Checkpoint</h2>
+
+<p>
+  Board loads, ellipsis flickers, a line of advice settles in under the header -- today's first: "Be kind to your knees, you'll miss them when they're gone," which on this particular board reads as either absurd or weirdly apt. Hard-killed my wifi mid-load to verify the failure path: the line simply does not appear, board unaffected. Frontend to my route to their API, reshaped at the boundary, failing without drama. Pattern installed.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
