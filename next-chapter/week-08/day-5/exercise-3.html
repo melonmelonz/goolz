@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Present At The Gate / NCD W8D5</title>
+<meta name="description" content="Exercise 3: deliver the presentation -- schema walkthrough, CRUD demo, AI story, CLI session -- then an honest reflection on how it actually went, what landed, what I fumbled, and the question I didn't fully nail.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Present At The Gate</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 1 . 30 min</div>
+
+<p>
+  Goal: deliver the presentation I rehearsed on Day 4, then write down honestly how it actually went -- not the version where it was flawless, the real one. The script is the Day 4 script and I am not improvising: schema walkthrough, CRUD demo, the AI-touch story, the CLI session, in that order, timed. The rehearsal was the whole point of yesterday, so today is execution. Then the part that is actually for me -- the reflection, while it is fresh, on what landed and what I fumbled, because the gap between how I rehearsed and how it went is the most useful thing I can capture today.
+</p>
+
+<h2>The script, as delivered</h2>
+
+<table>
+  <tr><th>Beat</th><th>What I said / did</th><th>Time</th></tr>
+  <tr><td>Pitch</td><td>one sentence -- a board for someone in their first ninety days home, jobs and certs and appointments in one place, plus a wall-of-text job posting turned into bullets</td><td>~30s</td></tr>
+  <tr><td>Schema walkthrough</td><td>open <code>schema.prisma</code>, point at <code>Opportunity</code> belongs-to <code>Category</code>, name the two lines that make the relationship</td><td>~2m</td></tr>
+  <tr><td>CRUD demo</td><td>type a real opportunity into the create form, submit, watch it render on the board; mention edit and delete</td><td>~2m</td></tr>
+  <tr><td>AI story</td><td>paste a real job-posting link, narrate the cold start, three bullets come back; tell the why -- my user, the bus ride, what to bring</td><td>~2m</td></tr>
+  <tr><td>CLI session</td><td>a quick terminal query against the live DB, showing the data is real and the relationship joins</td><td>~1.5m</td></tr>
+  <tr><td>Close</td><td>the live URL on my phone, the three users, the one cut feature named as a deliberate decision</td><td>~1m</td></tr>
+</table>
+
+<h2>How it actually went</h2>
+
+<p>
+  The schema walkthrough and the CRUD demo went exactly as rehearsed, which was a quiet kind of satisfying -- I pointed at the two relationship lines without hunting for them, typed the opportunity, and the card landed on the board on the first try with the room watching. The AI story landed best of all, and I think it is because I narrated the cold start instead of standing in the four-second silence sweating. "First one's a little slow, it's waking up" turned a dead pause into a beat I controlled. The thing I rehearsed most is the thing that went best, which is not a coincidence.
+</p>
+
+<p>
+  What I fumbled: the CLI session. I had the query ready but I stumbled getting the terminal to the right state under the lights, mistyped the command once, and had a couple of seconds of awkward backspacing before it ran. It worked, the join showed, the data was real -- but it was the least smooth ninety seconds of the demo, and it was the part I rehearsed the least because on Day 4 it felt like the easy bit. The easy bit is exactly where I got loose.
+</p>
+
+<div class="card">
+  <div class="card-label">The Question I Didn't Fully Nail</div>
+  <p>A panelist asked whether the <code>Category</code> relationship was actually pulling its weight -- there is no categories-CRUD UI, so categories are seeded, not user-managed, and they wanted to know if the relationship was real or decorative. I answered that it is real (the board joins on it, the read uses <code>include</code>) but I hedged on the why, because the honest answer is that the user-facing category management is a Won't-Do I cut and the relationship is currently doing more for the data model than for the user. I should have just said that cleanly: the relationship is genuine, the UI for managing it was a deliberate cut, and it is first on the roadmap. Instead I half-defended it. The cut was the right call; I just did not own it crisply in the moment.</p>
+</div>
+
+<h2>Reflection</h2>
+
+<p>
+  The pattern is clean enough that I want to remember it: the rehearsal paid off in exactly the place I rehearsed, and the gap showed exactly where I did not. The schema and CRUD and AI beats -- drilled on Day 4 -- were smooth. The CLI session -- the part I waved off as easy -- was the fumble. And the one question I hedged was about a feature I had cut, which means the gap was not in my build, it was in my readiness to defend a decision out loud. Next time I rehearse the cut features as hard as the built ones, because the panel asks about what is missing at least as much as what is there.
+</p>
+
+<div class="answer">
+  <strong>The rehearsal paid off where I rehearsed, the gap showed where I didn't</strong>
+  <p>This is the line I am taking from today. Preparation is not general confidence -- it is specific. The beats I ran end to end on Day 4 came out polished; the beat I skimmed came out shaky; the question I had not practiced answering out loud came out hedged. Rehearsal does not make you good at presenting, it makes you good at the exact thing you rehearsed. So next time, the prep list includes the easy parts and the cut decisions, not just the showpiece features.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  The presentation delivered end to end at the gate -- all five beats, in order, under time -- and an honest after-action: schema and CRUD and AI landed, the CLI session fumbled, one cut-feature question hedged that I should have owned. Passed the gate. Next exercise turns this same honesty on the whole sprint in a blameless retro.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

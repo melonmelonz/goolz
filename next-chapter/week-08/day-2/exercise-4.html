@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- AI Summary Loading State / NCD W8D2</title>
+<meta name="description" content="Exercise 4: add a loading state to the AI summary -- a spinner and a disabled button while the 2-4s OpenAI call runs, so nobody double-clicks a frozen-looking screen. The cheapest fix with the biggest perceived-quality payoff.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>AI Summary Loading State</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 1 . 25 min</div>
+
+<p>
+  Goal: while the AI summary is thinking, the UI should say so. The OpenAI call takes two to four seconds, and right now the screen just freezes -- the button stays clickable, nothing moves, and people assume it did not register and click again, firing a second call. The fix is tiny: track a loading flag, disable the button while the call is in flight, and show a spinner with a word. This is the smallest thing on the whole board and it changes the perceived quality more than anything else I will touch today.
+</p>
+
+<h2>The problem is silence, not slowness</h2>
+
+<p>
+  Two to four seconds is not actually that long. The problem is that the app says nothing during it, and silence reads as broken. A user pastes a link, taps Summarize, and the screen sits there looking exactly like it did before the tap -- so a reasonable person concludes the tap missed and taps again. Now I have two OpenAI calls running, two charges, and a race over which response renders. The fix is not to make the call faster; it is to make the wait legible.
+</p>
+
+<h2>The loading-state code</h2>
+
+<pre><code>// app/Summarize.jsx -- a flag, a disabled button, a spinner
+import { useState } from "react";
+
+function Summarize() {
+  const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState(null);
+
+  async function onSummarize(url) {
+    setLoading(true);              // button disables, spinner shows
+    try {
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      setSummary(data.summary ?? data.error);
+    } finally {
+      setLoading(false);           // always re-enable, even if it threw
+    }
+  }
+
+  return (
+    &lt;button onClick={() =&gt; onSummarize(url)} disabled={loading}&gt;
+      {loading ? "Reading the posting..." : "Summarize"}
+    &lt;/button&gt;
+  );
+}</code></pre>
+
+<p>
+  The <code>disabled={loading}</code> is the whole double-click fix -- a disabled button cannot be clicked, so the second call can never fire. The <code>finally</code> is the part I would have forgotten a few weeks ago: the button has to re-enable whether the call succeeds or throws, or one failed summary leaves the button dead forever. And the label change from "Summarize" to "Reading the posting..." does double duty as the spinner's words, because a verb is more reassuring than a bare spinning circle.
+</p>
+
+<div class="answer">
+  <strong>The cheapest fix with the biggest perceived-quality payoff</strong>
+  <p>This took twenty minutes and it is the single largest jump in how finished the app feels. That is the lesson worth keeping: perceived quality and engineering effort are not the same axis. The AI route itself -- the part that survives production, guards bad input, degrades instead of crashing -- was hours of careful work. The loading state is a boolean and a disabled attribute, and to the person using it, it is the difference between "this app is thinking for me" and "this app is frozen." When time is short, the highest-leverage fixes are often the ones that change what the user feels, not what the code does.</p>
+</div>
+
+<p>
+  Verified by clicking it on the live URL: pasted a real posting, tapped Summarize, watched the button gray out and the label switch to "Reading the posting..." for about three seconds, then the bullets came back and the button re-enabled. Tried to double-tap during the wait and could not -- the button was dead, exactly as intended. Then forced an error and confirmed the button came back to life afterward instead of staying stuck.
+</p>
+
+<h2>Deliverable</h2>
+
+<p>
+  A loading state on the AI summary: a flag that disables the button and swaps in a working-verb label while the call runs, with a <code>finally</code> that always re-enables. No more double-clicks, no more frozen-looking screen, no more silent two-to-four-second void. The smallest commit of the day and one of the most noticeable. One Should-have left on my list after this, and the afternoon still has room. Commit.
+</p>
+
+<pre><code>git add .
+git commit -m "feat: AI summary loading state -- disable button + working label while the call runs"</code></pre>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Fix The Bugs Testing Found / NCD W8D3</title>
+<meta name="description" content="Exercise 1: triage and fix the three bugs the Day 2 click-through surfaced -- a long AI summary overflowing the card, a deadline rendering as a raw ISO string on mobile, and a flash of the old list after an optimistic delete.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Fix The Bugs Testing Found</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 2 . 35 min</div>
+
+<p>
+  Goal: clear the three bugs that yesterday's "test like a stranger" click-through surfaced. None of them crash the app. All three of them I found by clicking, not by reading -- which is the whole reason they survived this long. I sorted them first: two P2s and a P3, fix in that order, verify each one on the live preview the same way I found it. The morning rule still holds -- a satisfying CSS fix does not jump the queue ahead of a broken-looking field my user actually reads.
+</p>
+
+<h2>P2 -- the AI summary overflows its card</h2>
+
+<p>
+  I pasted a long warehouse posting and the summary the model returned was four solid paragraphs. It rendered straight past the bottom edge of the card and bled over the opportunity below it. The card has a fixed-ish height in the grid, and nothing was telling the long text what to do when it did not fit. Two honest options: clamp it to a few lines with a "show more," or let it scroll inside the card. I went with a line clamp plus an expand, because the summary is a glance-tool -- "what this is / what they want / what to bring" -- and most of the time the first few lines are the whole point.
+</p>
+
+<pre><code>/* card-summary: clamp to 4 lines, expand on demand */
+.card-summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-summary.is-open {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}</code></pre>
+
+<pre><code>// the toggle -- defaults closed, no layout blowout on a long summary
+&lt;p className={`card-summary ${open ? "is-open" : ""}`}&gt;{summary}&lt;/p&gt;
+{summary.length &gt; 240 &amp;&amp; (
+  &lt;button className="link" onClick={() =&gt; setOpen(!open)}&gt;
+    {open ? "show less" : "show more"}
+  &lt;/button&gt;
+)}</code></pre>
+
+<div class="answer">
+  <strong>The bugs you only find by clicking</strong>
+  <p>I read this AI route a dozen times and never saw the overflow, because the model returns a short summary on most postings and the bug only fires on a long one. No amount of reading the handler would have shown it -- it lives in the gap between the data I tested with and the data a real posting produces. You find it by pasting an actual four-paragraph job ad and watching it bleed over the next card.</p>
+</div>
+
+<h2>P2 -- the deadline renders as a raw ISO string</h2>
+
+<p>
+  This is the one that stung. On the live URL, on a phone, the forklift cert deadline showed up as <code>2026-07-14T00:00:00.000Z</code>. The <code>deadline</code> field is a Prisma <code>DateTime</code>, and I was dropping it straight into the JSX, so the browser serialized the Date to an ISO string. My user does not read ISO 8601. He reads "Jul 14." This is exactly the kind of thing Week 7's TDD habit is for -- a pure formatting function with a deadline field is a textbook unit test, so I wrote the test first and then the util.
+</p>
+
+<pre><code>// test/formatDate.test.js -- write the test first, like Week 7 taught me
+import { describe, it, expect } from "vitest";
+import { formatDate } from "../lib/formatDate";
+
+describe("formatDate", () =&gt; {
+  it("formats an ISO date to a human month + day", () =&gt; {
+    expect(formatDate("2026-07-14T00:00:00.000Z")).toBe("Jul 14, 2026");
+  });
+  it("returns an em-free placeholder when there is no deadline", () =&gt; {
+    expect(formatDate(null)).toBe("no deadline");
+  });
+});</code></pre>
+
+<pre><code>// lib/formatDate.js -- the smallest thing that makes the test green
+export function formatDate(value) {
+  if (!value) return "no deadline";
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}</code></pre>
+
+<p>
+  Then swap the raw field in the card for the formatted one -- <code>{formatDate(op.deadline)}</code> -- and the cert deadline reads "Jul 14, 2026" on the phone. Tests green, then verify by eye on the live preview.
+</p>
+
+<div class="answer">
+  <strong>Tie back to the TDD habit</strong>
+  <p>A pure function with a clear input and output is the easiest thing in the world to test first, and the test doubles as the spec -- it pins down the null case (no deadline) that I would otherwise have forgotten until my user added an opportunity without one and saw "Invalid Date." The Week 7 reflex paid off: one tiny test file caught a second bug before it shipped.</p>
+</div>
+
+<h2>P3 -- the flash of the old list after delete</h2>
+
+<p>
+  Lowest priority, last. I built optimistic delete on Day 2 -- the card disappears the instant you confirm, before the server answers. But for a blink after the server responded, the old list re-painted and the deleted card flickered back into view, then vanished again. The optimistic update and the revalidated server data were fighting. The fix is to reconcile them: keep the optimistic state authoritative until the server data actually reflects the deletion, instead of letting the refetched list overwrite the screen mid-flight.
+</p>
+
+<pre><code>// reconcile optimistic delete with the refetched list -- no flash-back
+const visible = opportunities.filter(
+  (op) =&gt; !pendingDeletes.has(op.id)
+);
+// pendingDeletes holds ids we've optimistically removed; we only drop an
+// id from the set once the server list no longer contains it, so the row
+// never re-appears between the optimistic remove and the revalidation.</code></pre>
+
+<p>
+  Verified by deleting the same card ten times in a row on the preview -- no flicker, no flash-back, the card leaves once and stays gone. A P3, but it is the kind of jank that makes a person quietly distrust the whole app.
+</p>
+
+<h2>Checkpoint</h2>
+<p>
+  Three bugs dead and verified on the live preview the same way they were found -- by clicking, not by reading. The deadline now renders as a date my user can act on, the long summary clamps instead of bleeding, and the delete is clean. One new test file in the Vitest suite, still green. Commit each fix on its own so the history says what happened.
+</p>
+
+<pre><code>git commit -m "fix: clamp long AI summary, format deadline (tested), reconcile optimistic delete"</code></pre>
+
+<nav class="ex-nav">
+  <a href="./">&#9664; Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

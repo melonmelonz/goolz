@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Sprint Retrospective / NCD W8D5</title>
+<meta name="description" content="Exercise 4: a blameless three-column sprint retro tied to the real week's numbers -- what went well, what didn't, what I'd do differently -- landing on the one estimate I got wrong, because that's the line that improves the next sprint.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Sprint Retrospective</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 35 min</div>
+
+<p>
+  Goal: a blameless, specific retrospective of the whole sprint that produces at least one real change for next time -- not a feelings session, a calibration. Three columns: what went well, what went badly, what I would do differently. The rule is blameless, which is easy when the team is one person and also easy to fake by being soft on myself, so the discipline here is to be as specific about my own mistakes as I would be about a teammate's. The most useful output is not the win list. It is the estimate I got wrong, written down with the real number.
+</p>
+
+<h2>What went well</h2>
+
+<table>
+  <tr><th>What</th><th>The evidence</th></tr>
+  <tr><td>P1s killed first, Day 1</td><td>both AI-summary P1s dead on the first afternoon, plus a P2 -- the scariest items handled exactly where the plan put them</td></tr>
+  <tr><td>The MoSCoW cut held all week</td><td>the second AI feature stayed cut from Monday to Friday; I refused it every time and a must-have got finished instead</td></tr>
+  <tr><td>Deploy and harden, not deploy and pray</td><td>Day 2 deploy, Day 3 hardening -- the env var that broke prod on Day 1 never broke it again</td></tr>
+  <tr><td>Real users, real data</td><td>3 people on the live URL by Day 3, my one user with his actual parole/job/cert data on the board</td></tr>
+  <tr><td>The rehearsal</td><td>Day 4 dry run came in under time; the rehearsed beats were the smooth ones at the gate</td></tr>
+</table>
+
+<h2>What went badly</h2>
+
+<table>
+  <tr><th>What</th><th>The honest detail</th></tr>
+  <tr><td>The empty-state estimate ran 2x</td><td>called it "small" on Day 1; it ate most of a Day 2 afternoon once loading and error cases were handled honestly</td></tr>
+  <tr><td>A should-have I never reached</td><td>"edit reachable on mobile" stayed in the Should column and never got done -- the edit button is still awkward on a narrow card</td></tr>
+  <tr><td>The CLI demo went unrehearsed</td><td>waved it off as the easy beat on Day 4; it was the fumble at the gate</td></tr>
+  <tr><td>Late commits one evening</td><td>one night I let changes pile up and committed in a lump -- against my own "commit each green step" rule</td></tr>
+</table>
+
+<h2>What I'd do differently</h2>
+
+<table>
+  <tr><th>Change</th><th>Why</th></tr>
+  <tr><td>Size estimates up, especially "small"</td><td>my "small" was a feature; the small things have hidden loading/error/empty cases that are the actual work</td></tr>
+  <tr><td>Build the empty state on Day 1, not Day 2</td><td>it was the first screen my user would see and I scheduled it second -- the first impression should be the first build</td></tr>
+  <tr><td>Rehearse the easy beats and the cut decisions</td><td>the gate fumble and the hedged question were both in the parts I skipped rehearsing</td></tr>
+  <tr><td>Hold the commit rhythm even when tired</td><td>the lump commit was the one night a clean history nearly became a mess</td></tr>
+</table>
+
+<div class="card">
+  <div class="card-label">The Retro, In Numbers</div>
+  <p>Tied to the real week so it is not vibes: 5 things worked, 4 things hurt, 4 changes for next time. Two P1s dead on Day 1, one feature cut and held for five days, one estimate off by roughly 2x, one should-have left undone, three real users by Day 3, one dry run under time. The shape of the week is a strong plan executed with a couple of honest misses -- which is about the best a first real sprint can look.</p>
+</div>
+
+<div class="answer">
+  <strong>The most useful line is the estimate I got wrong</strong>
+  <p>Everything else in this retro is nice to know. The win list tells me what to keep doing, which I would mostly have kept doing anyway. The one line that actually changes the next sprint is "empty state, called small, ran 2x," because the next time I write "small" next to a feature with an empty and a loading and an error state, I will remember this one and write "medium." That is the whole point of a retro -- not to feel anything about the week, but to make the next estimate less wrong. The bad estimate is the only line I can spend, so it is the one I underline.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A completed blameless retro: three columns tied to the real numbers, five wins, four misses named specifically, four concrete changes for next time -- with the 2x empty-state estimate underlined as the one line that calibrates the next sprint. Next exercise turns the cut list into a roadmap and points the phase forward.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Map Every Gate Requirement To Evidence / NCD W8D5</title>
+<meta name="description" content="Exercise 2: go through the Phase 2 gate's five requirements and point at the exact proof for each -- the Prisma Opportunity/Category schema, the create-to-board flow, the OpenAI summary, the Vercel URL, and the documented user activity.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Map Every Gate Requirement To Evidence</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: for each of the gate's five requirements, point at the one artifact that proves it -- a file, a flow, a URL, a screenshot -- so that when the panel says "show me," I show, I do not explain. There is a real difference between "I built CRUD" and opening the create form, typing a title, hitting save, and watching the row appear on the board while they watch. The gate is a checklist and I built to it from the kickoff, so this exercise is mostly the satisfying work of confirming that the thing I planned for and the thing I made line up, requirement by requirement.
+</p>
+
+<h2>1. One entity with relationships</h2>
+
+<p>
+  The <code>Opportunity</code> belongs to a <code>Category</code> -- one Category has many Opportunities. That is the relationship the gate wants, and it is right there in the schema. I show this one in the file, not the UI, because the relationship is a modeling decision and the schema is where modeling decisions live.
+</p>
+
+<pre><code>// schema.prisma
+model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  opportunities Opportunity[]
+}
+
+model Opportunity {
+  id         String   @id @default(cuid())
+  title      String
+  type       String   // job | cert | appointment | resource
+  org        String?
+  sourceUrl  String?
+  location   String?
+  deadline   DateTime?
+  notes      String?
+  createdAt  DateTime @default(now())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+}</code></pre>
+
+<div class="answer">
+  <strong>Where the relationship actually is</strong>
+  <p>Two lines do the work: <code>opportunities Opportunity[]</code> on Category is the "has many," and the <code>@relation(fields: [categoryId], references: [id])</code> on Opportunity is the "belongs to." If they ask me to point at the relationship, those are the two lines. The foreign key is <code>categoryId</code>; the join is one Prisma <code>include</code> away.</p>
+</div>
+
+<h2>2. CRUD create + read, end to end</h2>
+
+<p>
+  This one I demonstrate live, because end-to-end is a thing you watch, not a thing you assert. Create: the controlled form posts, the handler validates a trimmed title, inserts, and redirects to the board. Read: the board server-renders from Postgres, newest first. The proof is the new card appearing on the board the instant after I submit -- the create and the read closing the loop in one motion in front of them.
+</p>
+
+<pre><code>// the read -- server component, board renders from the DB
+const opportunities = await prisma.opportunity.findMany({
+  orderBy: { createdAt: "desc" },
+  include: { category: true },   // the relationship, used
+});
+
+// the create -- after a valid insert, send the user back to the board
+await prisma.opportunity.create({ data });
+revalidatePath("/");   // the board re-reads so the new row shows immediately</code></pre>
+
+<div class="answer">
+  <strong>Show the loop, don't list the verbs</strong>
+  <p>The temptation is to say "I have create, read, update, and delete." The gate asks specifically for create-and-read end to end, so I do exactly that motion -- type a real title, submit, watch it render -- because the loop closing on screen is worth more than four verbs in a sentence. Update and delete I mention; create-read I perform.</p>
+</div>
+
+<h2>3. One AI-touch feature</h2>
+
+<p>
+  Paste a job-posting URL, and an OpenAI call returns it as "what this is / what they want / what to bring." This is the headline feature and the thing the gate means by an AI touch -- a real model call doing real work in the product, not a chatbot bolted on the side. The proof is pasting a link in the demo and watching three plain-language bullets come back where a wall of job-posting text used to be.
+</p>
+
+<div class="answer">
+  <strong>The AI does product work, not decoration</strong>
+  <p>The feature earns its place because it solves my user's actual problem -- a job posting is a wall of text and he needs to know fast whether it is worth the bus ride and what to bring. The summary is the touch the gate is checking for: an OpenAI call wired into the flow, degrading to a calm message on failure instead of crashing, doing a job a person would otherwise do by squinting at a phone.</p>
+</div>
+
+<h2>4. Deployed live URL</h2>
+
+<p>
+  The Vercel production URL, working end to end for someone who is not me. I do not just name it -- I load it, on my phone, in front of them, which doubles as the proof for the next requirement. Deployed is the criterion I spent Day 2 earning and Day 3 hardening, and the env var that broke it on Day 1 is long fixed.
+</p>
+
+<h2>5. Documented user activity</h2>
+
+<p>
+  Three real users on the live URL, with screenshots and written feedback captured on Day 3. The gate asks for documented activity from people who are not me, and I have it labeled and ready -- including my one user, the guy who came home in March, with his actual data on the board. The screenshots are the proof; the feedback notes are the texture.
+</p>
+
+<div class="answer">
+  <strong>The gate isn't a trap, it's a checklist</strong>
+  <p>I keep coming back to this because it changes how the morning feels. The five requirements are not surprises sprung on me at the door -- they are the exact spec I wrote my must-have list against on Day 1. Every must-have was a gate requirement in disguise, on purpose. So this mapping is not me reverse-engineering proof for a test I didn't study for. It is me confirming that the thing I aimed at and the thing I built are the same thing. I built to the checklist since the kickoff, and now I get to point at it line by line.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A five-row evidence map: each gate requirement matched to the exact artifact -- schema lines for the relationship, the live create-read loop for CRUD, the OpenAI summary for the AI touch, the Vercel URL for deployment, the three screenshots for user activity. Every "show me" is now a one-second answer. Next exercise is the presentation itself, and an honest read on how it went.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

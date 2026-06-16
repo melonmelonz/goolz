@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- The Last-Mile Cleanup / NCD W8D3</title>
+<meta name="description" content="Exercise 2: strip the leftover console.logs from the AI route, replace the Week 4 placeholder tagline with the real pitch, and fix the filter-chip wrap at 360px -- the small invisible work that separates a student project from a thing.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The Last-Mile Cleanup</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 25 min</div>
+
+<p>
+  Goal: the unglamorous pass nobody sees and everybody feels. Three small things -- pull the debug logs out of the AI route, finally replace the Week 4 placeholder tagline with the real pitch, and check the layout at 360px where my user's actual phone lives. None of it is hard. All of it is the difference between handing someone a thing that feels finished and handing them a thing that feels like homework with the price tag still on.
+</p>
+
+<h2>Strip the leftover console.logs</h2>
+
+<p>
+  The AI route still has the debug logs I left in while chasing the production 500 on Day 1 -- a <code>console.log(summary)</code> and a "got here" log. They do no harm and they do not crash anything, which is exactly why they survive: nothing ever forces you to remove them. But a log dumping the summary into the production console is a tell. It announces that nobody did a final read of this file before it went out the door.
+</p>
+
+<pre><code>// app/api/summarize/route.js -- before
+const summary = await summarizeWithOpenAI(posting);
+console.log("got here, summary:", summary);   // debug from the D1 500 hunt
+console.log(posting.slice(0, 200));
+return Response.json({ summary });
+
+// after -- the logs are gone, the route says only what it does
+const summary = await summarizeWithOpenAI(posting);
+return Response.json({ summary });</code></pre>
+
+<p>
+  I grepped the whole <code>app/</code> tree for <code>console.log</code> to be sure I got all of them, not just the two I remembered. Three total. Gone.
+</p>
+
+<h2>Replace the Week 4 placeholder tagline</h2>
+
+<p>
+  The header still reads "your next chapter starts here." I wrote that in Week 4 as a placeholder and it has been quietly sitting at the top of every page for a month, generic enough that I stopped seeing it. It is not the pitch. The pitch is the one I rehearsed in the Day 1 kickoff, the one that names what the app actually does for the actual person.
+</p>
+
+<pre><code>// app/components/Header.jsx -- before
+&lt;p className="tagline"&gt;your next chapter starts here&lt;/p&gt;
+
+// after -- the real pitch, the one I can defend at the gate
+&lt;p className="tagline"&gt;
+  jobs, certs, and appointments in one place -- your first 90 days, organized
+&lt;/p&gt;</code></pre>
+
+<div class="answer">
+  <strong>Cleanup is a feature the user feels without seeing</strong>
+  <p>Nobody opens the app and thinks "ah, no stray console.logs, no placeholder copy." But they feel it. A generic month-old tagline reads as "the maker stopped paying attention," and a real one-line pitch reads as "this was made on purpose, for me." The user never sees the diff. They feel the difference between a draft and a finished thing, and that feeling is doing real work the first time my user lands on the page.</p>
+</div>
+
+<h2>Check the layout at 360px</h2>
+
+<p>
+  Day 1's audit logged the filter chips wrapping into a ragged stack below 380px, and I left it as a P3. Today I open the live URL in devtools at 360px wide -- the width of the cheap Android my user actually has, not the 390px iPhone I keep testing on -- and confirm it. The chips wrap, but raggedly, because they were laid out with right margins instead of a flex gap, so the last row sits misaligned. Small fix.
+</p>
+
+<pre><code>/* filter chips -- wrap cleanly at 360px instead of a ragged stack */
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;            /* even spacing on every row, including the wrapped one */
+}
+.filter-chips .chip {
+  margin: 0;           /* the gap does the spacing now, no stray right margin */
+  white-space: nowrap; /* "appointment" never breaks mid-word */
+}</code></pre>
+
+<p>
+  At 360px the chips now wrap into two tidy rows, the cards stack instead of overlapping, and the edit affordance is reachable. I scrolled the whole board on the narrow viewport and clicked through create, filter, and delete to be sure nothing else broke at that width.
+</p>
+
+<h2>Checkpoint</h2>
+<p>
+  Three small things done: zero stray console.logs in the app tree, the real pitch in the header, and a clean layout at 360px. None of it shows up in a feature list. All of it is what separates a student project from a thing a person trusts. Commit it as the cleanup pass it is.
+</p>
+
+<pre><code>git commit -m "chore: strip debug logs, real tagline, fix filter-chip wrap at 360px"</code></pre>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

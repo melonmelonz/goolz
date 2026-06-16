@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 8 -- Day 4 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 8 Day 4. Demo Prep: Presenting The Build. Write and rehearse the schema walkthrough, script a clean CRUD demo, tell the AI-touch story, narrate a CLI session, and do a timed dry run that defends the prioritization. The gate is not whether the app is good -- it is whether you can explain the choices you made.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 4 -- Demo Prep: Presenting The Build</h1>
+<div class="subtitle">NCD . WK8 . D4 . five exercises loaded . the day I find out whether I can explain my own app</div>
+
+<p>
+  The app is done. It is on the internet, three real people have used it, and there are screenshots to prove it. For four days the question has been "does the thing work," and as of last night the answer is yes. So today is a strange pivot, because the work is no longer building -- it is explaining. The Phase 2 gate tomorrow does not re-test whether ReEntry Tech runs. It tests whether I can stand up and articulate the choices I made: walk the schema out loud, demo the CRUD without fumbling, tell the AI-touch story, narrate the build process, and defend a feature I cut. The app being good is the price of admission. The gate is whether I can defend it.
+</p>
+
+<p>
+  I went into today thinking this would be the easy day. I built the thing -- of course I can explain it. Then I tried, out loud, to say why Category is its own table instead of just a string column on Opportunity, and I stalled. I knew the answer was right, I had modeled it that way on instinct back in Week 4, but I could not cleanly say the why. That stall was the whole lesson of the morning. Explaining is not a recap of building. It is a second, separate skill, and it surfaces the gaps in your own understanding that building let you paper over.
+</p>
+
+<p>
+  So the day is five rehearsals, each one a piece of the gate. I write the words down, I say them out loud, I time them, and I cut. The thing I keep relearning all week applies here too: a thing you have decided in advance, calmly, beats a thing you improvise under pressure. A scripted demo is not dishonest -- it is respecting the audience's time and protecting myself from the live-typing fumble that derails a presentation. By the end of today I want a five-minute run I can deliver without flinching, with an honest answer ready for the hardest question they can ask.
+</p>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>Where I left off:</b> end of Day 3. ReEntry Tech is live on a real Vercel URL, the three testing bugs are fixed (the overflowing AI summary line-clamped, a TDD'd <code>formatDate</code> util for the raw-ISO deadline, the optimistic-delete flash reconciled), production is hardened (favicon, OG tags, cookieless analytics), and I got three real users on it with screenshots and a feedback sentence each. By every one of the four "done" criteria, it is done.</p>
+  <p><b>What I'm doing today:</b> building and rehearsing the gate presentation -- the schema verbal walkthrough, a scripted CRUD demo, the 90-second AI-touch story, a narrated CLI session (git log + tests + deploy), and a full timed dry run that ends in defending a feature I cut.</p>
+  <p><b>How I'm feeling about it:</b> a little exposed, honestly. There is a specific discomfort in having to explain a thing you made, because explaining is where you find out what you only half-understand. I am more nervous about the schema "why" than about any line of code in the app.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- What The Gate Actually Tests</div>
+  <p>The Phase 2 gate is not a code review. Nobody is going to read my route handlers line by line. It is an articulation test -- can I stand up and account for the decisions inside the build. Three things specifically: a <b>schema walkthrough</b> (explain the data model and why it is shaped that way), a <b>CLI session demo</b> (show the process, not just the product), and <b>defending my prioritization</b> out loud (why this got built and that got cut). The trap is preparing the wrong thing -- polishing the app another notch when the app is already done, instead of rehearsing the words. The app is the noun. The gate grades the verb.</p>
+  <table>
+    <tr><th>What they ask</th><th>How I answer</th></tr>
+    <tr><td>"Walk me through your schema."</td><td>One Opportunity belongs to one Category; a Category has many Opportunities. Here are the fields and why Category is its own table.</td></tr>
+    <tr><td>"Show me it working."</td><td>A rehearsed click-path -- create, then read on the board -- on a pre-seeded record so it never depends on live-typing luck.</td></tr>
+    <tr><td>"How does the AI feature work?"</td><td>The prompt I send, the shape I ask for, what I kept vs rejected, and how the Vitest suite let me trust it.</td></tr>
+    <tr><td>"Show me how you built it."</td><td>A clean <code>git log --oneline</code> that reads like a story, the test suite green in the terminal, a deploy.</td></tr>
+    <tr><td>"Defend a feature you cut."</td><td>The second AI feature -- "help me phrase a request to a parole officer" -- moved to Won't Do, because a user can use the app without it.</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Schema Walkthrough</div>
+  <p>The gate wants me to explain my "one entity with relationships," and mine is the <b>Opportunity</b> -- the thing my user actually tracks -- which <b>belongs to a Category</b>. One Category has many Opportunities; one Opportunity has exactly one Category. That is a one-to-many, the most common relationship there is, and the walkthrough is half naming the fields and half justifying the shape. The part I kept stalling on was the why: why is Category a separate table with its own row and its own <code>id</code>, instead of just a <code>category</code> string column on Opportunity? Three reasons, and I have to be able to say them cleanly -- integrity (a typo can't invent a "Jobss" category), filtering (the board groups and filters on a stable id, not on whatever someone typed), and future-proofing (a Category can grow a color or a description later without touching every Opportunity row).</p>
+  <pre><code>// schema.prisma -- the one entity and its relationship
+model Opportunity {
+  id         String   @id @default(cuid())
+  title      String
+  type       String   // job | cert | appointment | resource
+  org        String?
+  sourceUrl  String?
+  location   String?
+  deadline   DateTime?
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  opportunities Opportunity[]   // one category, many opportunities
+}</code></pre>
+  <p>The honest footnote, which I am going to say out loud rather than hide: for a four-day app with one user, a string column would have worked. The separate table is the textbook-correct call and it is the call I would defend in a bigger system, but I should be able to weigh that tradeoff instead of pretending it was obviously necessary. The gate respects "here is the tradeoff and here is why I chose this side" more than it respects a confident answer to a question I never actually thought through.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Demoing Without Fumbling</div>
+  <p>A live demo is a performance, and the worst way to give one is to improvise it. I have watched good projects die because the presenter tried to type a fresh record on stage, fat-fingered the form, and spent ninety seconds recovering while the room watched. The fix is a rehearsed click-path: a known sequence, on known data, that I have walked enough times that my hands do it while my mouth talks. A pre-seeded sensible record means the read step shows something real instead of an empty board, and the create step adds one more I have practiced typing. It is not cheating to know what you are going to click. It is respecting the audience's time.</p>
+  <p>The other half is a plan for when something breaks anyway, because sometimes it does. The rule is a single calm recovery line, decided in advance, so I am not inventing composure in the moment -- something like "that's the network being slow, here's the same flow on a record I added earlier" -- and then I move on. A demo that hiccups and recovers smoothly reads as more confident than one that never hiccups, because it shows I know the app well enough to route around it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The CLI Session Demo</div>
+  <p>This is the part that shows process instead of product. Anyone can show a finished app. The CLI session shows <i>how</i> it got finished -- and the strongest evidence is a <code>git log --oneline</code> that reads like a story. Conventional commit prefixes do real work here: <code>fix:</code> when I killed a bug, <code>add:</code> when a feature landed, <code>update:</code> when I refined one. Read top to bottom, the log is a narrative of a person making decisions, not a wall of "wip" and "stuff." Then the test suite running green in the terminal, live, and a deploy command. Three artifacts, all showing that there was a method here.</p>
+  <pre><code>$ git log --oneline -8
+a1f4c0e update: line-clamp long AI summaries so they stop overflowing the card
+7b9e2d1 add: formatDate util for deadlines (TDD, raw ISO -&gt; Jul 14 2026)
+3c81a6f fix: reconcile optimistic delete so the old list stops flashing back
+e44d7b2 add: empty state on the board (zero-data + filtered-to-zero copy)
+9a2f5c8 fix: AI summary degrades instead of 500ing in prod (env + guard + catch)
+2d6b0a3 add: client-side type filter and search over the board
+5f1c9e7 add: AI summary route -- paste a job URL, get plain-language bullets
+0b3a8d4 add: Opportunity + Category schema and CRUD against Postgres</code></pre>
+  <p>I am going to narrate that log, not just show it. Point at the bottom -- "this is the schema and CRUD going in" -- and walk up to the top, because reading it out loud is the proof that I know what each commit was for. A log I can narrate is a log I lived. A log I can only display is one I could have copied from anywhere.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Telling The AI-Touch Story</div>
+  <p>The AI feature is the headline, so the story has to be tight. Ninety seconds: the user pastes a job-posting URL, I fetch the posting text, and I send it to OpenAI with a prompt that asks for a specific shape -- three plain-language sections, "what this is / what they want / what to bring." Then the part that actually matters, which is what I kept versus rejected. The model loves to editorialize and pad; I keep the three sections and throw away the rest. And the spine of the whole story is the Vitest suite from Week 7 -- the tests are the reason I can trust an output I do not control, because they pin the shape and catch it when the model drifts.</p>
+  <p>The strongest version of this story is not "the AI is amazing." It is the moment I did <i>not</i> trust it and a test caught the drift before my user ever saw it. That is the honest, gate-winning version -- I tied a non-deterministic thing into an app a person leans on, and the way I made it safe was the tests. The real user pasting a wall-of-text posting and getting three readable bullets back is the payoff, but the trust underneath it is the engineering.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">The Schema Verbal Walkthrough</span>
+      <span class="ex-desc">write and rehearse the out-loud explanation of the data model -- the Opportunity entity, its fields, the one-to-many Category relationship, and WHY Category is its own table not a string column (integrity, filtering, future-proofing) -- and honestly weigh whether that was right for a four-day app</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">The CRUD Demo Script</span>
+      <span class="ex-desc">a rehearsed click-path that shows Create + Read end-to-end cleanly, on a pre-seeded sensible record so the demo never depends on live-typing luck, with a line to say at each click and a recovery line ready for when something breaks on stage</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Telling The AI-Touch Story</span>
+      <span class="ex-desc">the 90-second explanation of the OpenAI summary -- the prompt, the shape I ask for, what I kept vs rejected, and crucially how the Vitest tests let me trust it -- tied to the real user pasting a wall-of-text job posting</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">The CLI Session Demo</span>
+      <span class="ex-desc">show the build process, not just the product -- a clean git log --oneline that reads like a story, the Vitest suite running green in the terminal, and a deploy command, all narrated out loud so the artifacts prove method, not luck</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Dry Run + Defending Prioritization</span>
+      <span class="ex-desc">a full timed run-through targeting ~5 minutes, cut the parts that drag, and prepare the hardest gate question -- "defend a feature you cut" -- rehearsing the answer for the second AI feature moved to Won't Do because a user can use the app without it</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- The Schema, Out Loud, In Sixty Seconds</div>
+  <p>
+    Sixty seconds to my partner, no slides, just talking through the data model the way I will at the gate. One Opportunity -- a job, a cert, an appointment, a resource -- belongs to one Category, and a Category has many Opportunities. I named the fields, I drew the one-to-many in the air with my hands, and then I got to the why and I felt myself reach for it instead of just having it: Category is a separate table so a typo can't invent a phantom category, so the board filters on a stable id instead of a freeform string, and so a category can grow a color or a description later without a migration touching every Opportunity. Saying it out loud the third time was the first time it came out clean.
+  </p>
+  <p>
+    <b>Partner challenge:</b> "would you make the same call again for a four-day app with one user, or is the separate table over-engineering?" That is the exact question I had been dodging, and the honest answer is that a string column would have worked fine here -- the separate table is the right call in a system that grows and a defensible-but-optional one in this one. The thing I am taking to the gate is that "here is the tradeoff and here is the side I picked and why" beats a confident answer to a question I never actually examined. He pushed on the why and the why got sharper. That is what the rehearsal is for.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    I walked into today assuming explaining the app would be trivial, because I built it -- and that assumption fell apart the second I tried to say, out loud, why Category is its own table. I knew it was right. I could not say why it was right, not cleanly, not without circling. That gap was uncomfortable in a familiar way: it was the same feeling as the Day 1 audit, where writing a bug into a column titled Broken made real a thing I had been half-knowing. Today the column was my own mouth. Trying to articulate a decision dragged out into the open the fact that I had made it on instinct and never paid the price of understanding it. Building let me skip that. Explaining would not.
+  </p>
+  <p>
+    So the real lesson of demo prep is that it is not packaging -- it is a second pass of understanding. Every rehearsal today surfaced a soft spot: the schema why, the AI story where my best material turned out to be the moment I distrusted the model, the cut feature I had to actually justify instead of just wave away. The gate is not asking "is your app good," because plenty of bad apps demo well and plenty of good ones get built by people who can't account for a single choice. It is asking "do you understand what you did." And the surprising, slightly exposing thing is that I did not fully -- until I had to say it to a person who was going to push back. The dry run is mercy: it shows me the gaps today, while there is still a night to close them, instead of tomorrow in the room.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Test Like A Stranger / NCD W8D2</title>
+<meta name="description" content="Exercise 5: the end-of-day click-through on the live URL -- go through every feature trying to break it, and write every new bug into the backlog with a priority so Day 3 morning has a list instead of a surprise.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Test Like A Stranger</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: end the build day by trying to break my own app on the live URL, and write down every new bug with a priority. This is the opposite of everything I did earlier today. All day I built, and building makes me confident, and confidence is exactly what hides bugs. So now I switch hats and become the annoyed stranger again -- the one from the Day 1 audit -- except this time the target is the deployed production site, not my localhost. I am not fixing anything tonight. I am making the list that Day 3 morning works from, because I would much rather find these now than discover them mid-demo at the Phase 2 gate.
+</p>
+
+<h2>The method: go feature by feature, try to break each one</h2>
+
+<p>
+  I went through every feature on the live URL with the goal of making it misbehave, not making it work. Paste a garbage link. Submit an empty form. Add an opportunity with a wildly long title. Delete a card and immediately hit the browser back button. Shrink the window to a narrow phone width. View a deadline on mobile. Each thing that broke or looked wrong went straight into the backlog with a P1/P2/P3, same triage scale as Day 1.
+</p>
+
+<h2>New bugs found</h2>
+
+<table>
+  <tr><th>Feature</th><th>Bug</th><th>Priority</th></tr>
+  <tr><td>AI summary display</td><td>a long summary overflows the card -- the bullets spill past the card border and overlap the card below instead of wrapping or scrolling inside</td><td>P2</td></tr>
+  <tr><td>Deadline on mobile</td><td>the deadline renders as a raw ISO string (<code>2026-06-26T00:00:00.000Z</code>) on the mobile card instead of a friendly date -- the desktop formatter is not being applied on the narrow layout</td><td>P2</td></tr>
+  <tr><td>Delete + back button</td><td>after an optimistic delete, hitting the browser back button shows a one-frame flash of the old list with the deleted card still present before it reconciles</td><td>P3</td></tr>
+  <tr><td>Long title</td><td>a 120-character title does not truncate -- it pushes the card taller than its neighbors and breaks the grid alignment on the row</td><td>P3</td></tr>
+  <tr><td>Filter chips on narrow screens</td><td>below ~360px the chips wrap to a third line and crowd the board header (related to the known sub-380px layout issue, but worse than the audit noted)</td><td>P3</td></tr>
+</table>
+
+<div class="answer">
+  <strong>Testing finds the bugs your code-confidence hid</strong>
+  <p>Every one of these was sitting in the app while I felt great about the day. I knew the AI route worked because I wrote it; I never pasted a posting long enough to overflow the card. I knew the deadline displayed because I saw it on my laptop; I never checked the mobile layout pulled a different code path that skipped the formatter. Confidence is a feeling about code I wrote, and it is blind exactly where I did not look. The annoyed stranger looks where I would not, on purpose, and that is the only reliable way I have found to surface the bugs my own certainty was covering for. The forklift cert deadline showing as a raw ISO string is the kind of thing that makes my user distrust the whole app -- and I would never have caught it loving my own work.</p>
+</div>
+
+<h2>Triage, not repair</h2>
+
+<p>
+  The hard discipline here is to stop after writing the list. It is late, the bugs are fresh, and the pull to "just quickly fix the ISO string one" is strong -- it would take ten minutes. But a tired ten-minute fix at the end of a six-hour build day is how I introduce the bug that ruins the demo, and an untriaged repair skips the step where I decide whether it even matters tonight. So they go in the backlog with priorities and I close the laptop. None of these is a P1 -- the app does not crash, the headline feature works -- so none of them is allowed to steal the night. Day 3 morning starts here.
+</p>
+
+<h2>Deliverable</h2>
+
+<p>
+  Five new bugs found by hostile click-through on the live URL, each triaged: two P2s (the AI summary overflowing the card, the deadline rendering as a raw ISO string on mobile) and three P3s (the back-button flash, the long-title grid break, the narrow-screen chip crowding). Written into the backlog, not fixed, so Day 3 morning has a prioritized list instead of a nasty surprise. The build day ends with both Musts done, three Should-haves swept, and a clear-eyed account of what is still broken -- which is a much better place to stand than the false calm of "I think it all works."
+</p>
+
+<pre><code>git add .
+git commit -m "docs: end-of-day test pass on live URL -- 5 new bugs triaged into backlog for Day 3"</code></pre>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

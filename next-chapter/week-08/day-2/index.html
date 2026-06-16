@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 8 -- Day 2 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 8 Day 2. Build Day: Execute the Sprint. Production deploy to Vercel, an empty state on the board, a should-have sweep of small wins, and an end-of-day click-through that finds the next round of bugs. The discipline today is crossing must-haves off and not adding new features.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 2 -- Build Day: Execute the Sprint</h1>
+<div class="subtitle">NCD . WK8 . D2 . five exercises loaded . the day the list gets shorter instead of longer</div>
+
+<p>
+  Yesterday was paperwork. Today is the build. The whole arc of Day 1 -- the kickoff, the honest audit, the MoSCoW sort, the day-by-day plan -- existed so that this morning I could sit down already knowing exactly what to touch and, more importantly, what to leave alone. The two P1s are already dead; I killed them in the Day 1 afternoon and verified them on a preview URL. So the scary part is behind me, and what is left is the satisfying part: working a list I trust, crossing things off in the order I promised myself I would, and resisting the constant pull to wander off into something new.
+</p>
+
+<p>
+  The shape of the day is two halves. Morning is the two remaining Must-Haves: the production deploy to a real Vercel URL my user can open from his phone, and the empty state on the board so a fresh app does not read as a broken one. Those are the items that turn "works on localhost" into "works for him." Afternoon is the Should-Have sweep -- the small wins I am only allowed to start once the Musts are checked -- and then, before I close the laptop, a deliberate click-through of the live site where I try to break my own app like a stranger who is annoyed at me.
+</p>
+
+<p>
+  The discipline today is a single sentence taped to the monitor: <b>if it is not on the Must-Have list, it does not exist this week.</b> I will feel the pull all day -- a nicer card layout here, a second AI feature there, the parole-officer-letter idea I genuinely love and already moved to Won't Do. The whole game today is to keep my hands on the four things that matter and off the dozen that would feel productive. Six hours. A list that ends the day shorter than it started. That is the win.
+</p>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did Day 1:</b> ran the kickoff and confirmed ReEntry Tech in one sentence, audited the app brutally (five works, eight bugs, four missing pieces), sorted the backlog with MoSCoW, built a three-half-day plan, and then cleared both P1s -- the AI summary that 500'd in production (env var in Vercel + an input guard + a try/catch that degrades instead of crashing) and the unguarded AI input -- plus one P2, the stale board after an edit, fixed with <code>revalidatePath</code>.</p>
+  <p><b>What I'm doing today:</b> the two remaining Must-Haves first -- production deploy to a live URL and the empty state -- then the Should-Have sweep (trim-and-presence validation on create, optimistic delete, an AI loading spinner), and an end-of-day test pass against the live site.</p>
+  <p><b>Where I'm stuck / what I'm watching for:</b> nothing is stuck yet, which is exactly when I get nervous. The thing I am watching for is the production deploy behaving differently than the preview did -- the migration not having run against the prod database, an env var set on Preview but not Production, the build compiling green while the running app quietly fails on first click. The gap between a build that compiles and an app that works is where I expect today's surprises.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Working The Must-Have List</div>
+  <p>The Must-Have list is five items and it does not grow today. Two are already crossed off from Day 1. The rule is simple and it is the whole job: you work the list top to top, you do not skip ahead to the fun item, and you do not add a sixth thing because it occurred to you in the shower. The P1s being done first was the point -- they were the ship-blockers, so with them dead the rest of the list is allowed to be calm work instead of panic work.</p>
+  <table>
+    <tr><th>#</th><th>Must-Have</th><th>Status</th></tr>
+    <tr><td>1</td><td>AI summary survives production</td><td>done Day 1</td></tr>
+    <tr><td>2</td><td>guard the AI input</td><td>done Day 1</td></tr>
+    <tr><td>3</td><td>deploy to a working live URL</td><td>today, first</td></tr>
+    <tr><td>4</td><td>empty state on the board</td><td>today, second</td></tr>
+    <tr><td>5</td><td>documented user activity (2-3 real users + screenshots)</td><td>started today, lands across Day 2-3</td></tr>
+  </table>
+  <p>Crossing an item off is not "I wrote the code." It is "I clicked it on the thing my user will open and watched it work." A checkmark earned by reading the diff is a checkmark I will regret on Day 4.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Deploying to Vercel</div>
+  <p>The single biggest deploy trap is the environment. On my laptop, secrets live in <code>.env.local</code>, which Git ignores and Vercel never sees. In production those same variables have to be set in the Vercel dashboard, per environment -- Production, Preview, Development are three separate buckets, and a key set on Preview is not magically present on Production. This is exactly how the AI summary 500'd in the first place.</p>
+  <table>
+    <tr><th>Concept</th><th>What it means</th></tr>
+    <tr><td>build time vs runtime</td><td>the build compiles your code; runtime is when a real request runs it -- a green build can still crash on the first click if a runtime env var or the prod DB is wrong</td></tr>
+    <tr><td>preview vs production</td><td>every push gets a throwaway preview URL; production is the one real URL my user opens -- env vars must be set on Production, not just Preview</td></tr>
+    <tr><td>migrations</td><td>code deploy does not change the database -- the prod schema only updates when <code>prisma migrate deploy</code> runs against the prod connection string</td></tr>
+  </table>
+  <pre><code># env vars live in the Vercel dashboard, per environment, NOT in the repo
+# Settings -&gt; Environment Variables (check Production)
+OPENAI_API_KEY = sk-...
+DATABASE_URL   = postgres://...@prod-host/reentry
+
+# the schema is not deployed by the code push -- run it against prod:
+npx prisma migrate deploy</code></pre>
+  <p>The mental model I keep messing up: deploying the code and deploying the database are two different actions. The build can be perfectly green and the app still throws on its first real query because the prod database never got the migration. Build success is necessary, not sufficient.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- What An Empty State Is For</div>
+  <p>An empty state is the screen a feature shows when it has nothing to show yet -- zero rows, no results, a fresh account. It is easy to dismiss as polish, and for most apps with a seeded demo database it sort of is. For mine it is not, because my one user is, by definition, opening an app with nothing in it. The very first thing he ever sees is the empty state. A blank grey rectangle is indistinguishable from a broken page; a friendly line plus an obvious "Add your first one" button is the difference between "this works, I get it" and "is this thing on?"</p>
+  <p>There are two empty states, not one, and they need different copy. The <b>zero-data</b> state is the brand-new board -- nothing has ever been added, so the message is a welcome and a call to action. The <b>filtered-to-zero</b> state is when there is data but the current filter matches none of it -- "no jobs yet" is true and reassuring, whereas the welcome copy would be a lie. Same empty grid, two very different sentences.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Should-Have Sweep, Only After The Musts</div>
+  <p>Should-haves are real improvements the app survives without. They are allowed this afternoon only because the Musts are done -- not before. The trap is the satisfying Should that feels like progress while a Must sits unfinished; the order protects me from myself. Three small wins are queued: trim-and-presence validation so an all-spaces title cannot insert a blank card, an optimistic delete so the card vanishes on click instead of lingering until a refresh, and a loading state on the AI button so the 2-4 second OpenAI call does not look frozen. Small, each one. None of them is a feature -- they are the difference between the app feeling broken and the app feeling finished.</p>
+  <pre><code>// optimistic delete -- the card leaves on click, reconciles on the server
+import { useOptimistic } from "react";
+
+const [shown, removeOptimistic] = useOptimistic(
+  opportunities,
+  (state, removedId) =&gt; state.filter((o) =&gt; o.id !== removedId)
+);
+
+async function onDelete(id) {
+  removeOptimistic(id);              // card vanishes immediately
+  await deleteOpportunity(id);       // server catches up; revalidate reconciles
+}</code></pre>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Test Like A Stranger</div>
+  <p>The last thing I do today is the opposite of building. I open the live URL, not localhost, and I go through every feature trying to break it -- paste a garbage link, submit an empty form, delete a card and slam the back button, view it on a narrow phone. Building makes me confident, and confidence hides bugs; testing like a hostile stranger surfaces them. Every new bug goes straight into the backlog with a P1/P2/P3 next to it. I do not fix them tonight. That list is exactly what Day 3 morning is for -- I want to walk into tomorrow knowing what is broken, not discover it during the gate demo on Day 4.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Deploy to Production (Vercel)</span>
+      <span class="ex-desc">set OPENAI_API_KEY and DATABASE_URL in the Vercel Production env, get a green build, run prisma migrate deploy against the prod database, then smoke-test the live URL from a phone -- board reads, create works, AI summary works</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Empty State On The Board</span>
+      <span class="ex-desc">build the zero-rows screen -- a friendly line plus an "Add your first one" CTA -- and handle filtered-to-zero with its own copy ("no jobs yet" vs "nothing here yet"), so a fresh app never reads as a broken one</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Should-Have Sweep: Validation + Optimistic Delete</span>
+      <span class="ex-desc">trim-and-presence validation so an all-spaces title is rejected, and optimistic delete so the card vanishes on click and reconciles on the server -- two small wins, only now that the Musts are crossed off</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">AI Summary Loading State</span>
+      <span class="ex-desc">a spinner and a disabled button while the 2-4s OpenAI call runs, so nobody double-clicks a frozen-looking screen -- the cheapest fix on the board with the biggest jump in perceived quality</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Test Like A Stranger</span>
+      <span class="ex-desc">an end-of-day click-through on the live URL -- go through every feature trying to break it, write every new bug into the backlog with a priority, and hand the list to Day 3 morning instead of discovering it during the gate</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- The Live URL On A Phone</div>
+  <p>
+    Two minutes to my partner, and this time it was not a slide -- I pulled out my phone, opened the production URL cold, and walked the loop in front of him: the board reads, I add a forklift-cert opportunity, it shows up newest-first, I paste a real job posting and watch the AI summary come back as bullets. No localhost, no "imagine this works." The point I was making out loud is that the demo is no longer a description of something on my laptop; it is a thing on the internet that a person who is not me can open. That is the Must-Have I cared most about, and saying it while it actually worked on a 5-inch screen felt different than promising it would.
+  </p>
+  <p>
+    His challenge question landed where I was soft: "what happens on the production database if you push code with a schema change but forget the migrate?" I had to be honest -- the build goes green, the deploy succeeds, and the first query against the missing column throws at runtime, in front of whoever opened the page. The code deploy and the database deploy are two separate acts, and Vercel cheerfully lets you do one without the other. That is the exact trap I am most likely to fall into tomorrow when I am tired and pushing fast, so naming it out loud was less a demo answer and more a note to my future self.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    The thing that clicked is that a build compiling is not the same as an app working, and I had been quietly conflating the two for weeks. Vercel says "Build Completed" in cheerful green and some part of my brain reads that as "done." But the build only proves my code is syntactically willing to run -- it says nothing about whether the prod database has the right columns, whether the env var is set on Production and not just Preview, whether the first real click returns data or a 500. The deploy today was green on the first try and broken on the first click, because the migration had not run against prod. The green checkmark was lying to me, and learning to distrust it on purpose is the whole lesson.
+  </p>
+  <p>
+    The other thing, quieter, is how good it feels to work a list I already decided on. All the agony of Day 1 -- what is a Must, what is a Should, what do I cut -- bought me a morning where I did not have to decide anything, only execute. There is a real pull all day toward the new shiny idea, and the only thing that held was that I had written the list yesterday, when I was calm, and today I just trusted yesterday-me. By lunch the production URL worked on my user's phone -- the actual guy, the forklift cert, the folded-up piece of paper -- and the empty state meant the first thing he saw was a welcome and not a blank rectangle. Crossing those two off felt like the opposite of the growing untouched list that haunted Week 5. Shorter, not longer. That is the day.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

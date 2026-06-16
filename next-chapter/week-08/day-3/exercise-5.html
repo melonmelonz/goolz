@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Is It Actually Done? / NCD W8D3</title>
+<meta name="description" content="Exercise 5: verify ReEntry Tech against the four criteria with evidence, not vibes -- it works, it's deployed, a real person used it, I can explain it. A checklist with a proof next to each line.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Is It Actually Done?</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 1 . 25 min</div>
+
+<p>
+  Goal: answer the question the whole build week was building toward, and answer it with evidence instead of a feeling. Four criteria -- it works, it's deployed, a real person used it, I can explain it -- and next to each one a proof I can point at. No line gets a checkmark on the strength of "I'm pretty sure." A check is a fact I observed, not a hope I have at the end of a long day.
+</p>
+
+<h2>The four criteria, each with a proof</h2>
+
+<table>
+  <tr><th>Criterion</th><th>Proof (observed, not assumed)</th><th>Done?</th></tr>
+  <tr><td>It works</td><td>clicked every feature on the live URL -- create, edit, delete, type filter, search, AI summary -- and watched each one behave. Vitest suite green, including the new formatDate test.</td><td>yes</td></tr>
+  <tr><td>It's deployed</td><td>the real Vercel URL loads over HTTPS on a phone that is not mine, end to end, including the AI feature that used to 500.</td><td>yes</td></tr>
+  <tr><td>A real person used it</td><td>three screenshots of three people using it on the live URL, with a feedback sentence each -- captured in Exercise 4.</td><td>yes</td></tr>
+  <tr><td>I can explain it</td><td>one-paragraph walkthrough drafted below: what it does, how I built it, what AI I used.</td><td>yes</td></tr>
+</table>
+
+<h2>It works -- the click-through, not the assumption</h2>
+
+<p>
+  I did the full pass on the live URL, not localhost, clicking each feature like I was seeing it for the first time. Create an opportunity -- added, lands on the board. Edit -- saves and the board updates without a refresh. Delete -- gone, no flash-back. Type filter and search -- both narrow the list. AI summary -- pasted a real posting, got bullets; pasted garbage, got the friendly 400 instead of a crash. Every path observed. The Vitest suite is green, including the formatDate test I wrote in Exercise 1.
+</p>
+
+<h2>I can explain it -- the one-paragraph walkthrough</h2>
+
+<p>
+  Drafted and rehearsed, because "I can explain it" at the gate means saying it out loud without reading:
+</p>
+
+<div class="card">
+  <div class="card-label">Walkthrough -- what / how / which AI</div>
+  <p>ReEntry Tech is an opportunities board for someone in their first ninety days home from incarceration -- it tracks jobs, certifications, and appointments in one place, and it turns a wall-of-text job posting into plain-language bullets. I built it with Next.js on the App Router, Prisma over a Postgres database, and deployed it to Vercel. The data model is an Opportunity -- title, type, org, source link, location, deadline, notes -- that belongs to a Category. The AI touch is an OpenAI call behind a guarded, try/catch'd API route that summarizes a pasted posting into "what this is / what they want / what to bring." I used an AI pair through the build for scaffolding and debugging, and I wrote a Vitest suite on the pure utils and the GET handler with the database mocked. Three real people have used it on the live URL.</p>
+</div>
+
+<div class="answer">
+  <strong>"Done" is a claim you back with evidence, not a feeling at 11pm</strong>
+  <p>For the whole week I was waiting for "done" to feel like something -- some late-night moment where I would just know. It never came, and the four-criteria checklist is why I stopped waiting for it. Done is not a feeling, it is a claim, and every line of the claim has a proof next to it or it does not get checked. "I think a real person can use it" is the 11pm feeling. "Here are three screenshots" is the fact. The checklist is what kept me from walking into the gate with the feeling and finding out it was not enough.</p>
+</div>
+
+<h2>What is honestly not done (and that's fine)</h2>
+
+<p>
+  The card-tap finding from watching my user -- make the whole card open the opportunity -- is real and it is not shipped yet. The second AI feature I cut on Day 1 is still Won't Do. The design does not look like a funded startup. None of that moves the four criteria, because Day 1 already taught me that done is the app working and a person using it, not every feature I imagined or zero rough edges. The card-tap fix goes at the top of the post-gate list. It is a Should, not a ship-blocker, and knowing the difference is the whole skill.
+</p>
+
+<h2>Deliverable</h2>
+<p>
+  Four criteria, four proofs, four checkmarks -- each one a thing I observed on the live URL, not a thing I hoped. The app works, it is deployed over HTTPS, three real people used it with screenshots to show it, and I can explain it in a paragraph without reading. ReEntry Tech is done in the only sense of done that survives someone asking me to prove it. Tomorrow is the gate, and for once I am walking in with evidence instead of a feeling.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

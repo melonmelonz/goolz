@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Deploy to Production / NCD W8D2</title>
+<meta name="description" content="Exercise 1: deploy ReEntry Tech to a live Vercel URL -- set OPENAI_API_KEY and DATABASE_URL on Production, get a green build, run prisma migrate deploy against the prod database, and smoke-test the live site from a phone.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Deploy to Production (Vercel)</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 2 . 40 min</div>
+
+<p>
+  Goal: a real URL that my user can open on his phone, cold, with the board reading, create working, and the AI summary returning bullets -- all against the production database, not my laptop. This is Must-Have number three and it anchors the whole day, so it goes first. The two P1s I cleared yesterday were about the AI route surviving; this one is about the app existing somewhere other than localhost. I had been treating "I have a Vercel project" as if it meant "I am deployed," and the gap between those two is exactly what this exercise closes.
+</p>
+
+<h2>The environment is the whole battle</h2>
+
+<p>
+  Everything that bites me on deploy lives in the environment. On my laptop the secrets sit in <code>.env.local</code>, which Git ignores and Vercel has never seen. In production those same two variables -- the OpenAI key and the database connection string -- have to be set explicitly in the dashboard, on the Production environment specifically. Production, Preview, and Development are three separate buckets; setting a key on Preview and assuming Production inherits it is how the AI summary 500'd in the first place.
+</p>
+
+<pre><code># Vercel dashboard -&gt; Settings -&gt; Environment Variables
+# set BOTH of these, and make sure Production is checked (not just Preview)
+OPENAI_API_KEY = sk-...
+DATABASE_URL   = postgres://user:pass@prod-host:5432/reentry?sslmode=require
+
+# a key set on Preview but not Production = a green build that 500s on the
+# first real click. ask me how I know.</code></pre>
+
+<div class="answer">
+  <strong>A build that compiles is not an app that works</strong>
+  <p>Vercel printed "Build Completed" in green and I almost called it done. But the build only proves my code compiles -- it runs no real requests, touches no real database. The first time I opened the live URL the board threw, because the production database had never had a migration run against it. The green checkmark was telling the truth about my syntax and nothing about my app. Build success is necessary, not sufficient, and I now read that cheerful green with suspicion on purpose.</p>
+</div>
+
+<h2>The database deploy is a separate act</h2>
+
+<p>
+  The code push does not change the database. My schema lives in Prisma and the production database only learns about it when I run the migration against the prod connection string. This is the trap my partner caught in the mini-demo: push code with a schema change, skip the migrate, and the build goes green while the first query against the missing column throws at runtime. So before I trust the live URL, I run the migration explicitly against prod.
+</p>
+
+<pre><code># run the committed migrations against the PRODUCTION database
+# (deploy, not dev -- this does not generate new migrations, it applies them)
+DATABASE_URL="postgres://...@prod-host/reentry" npx prisma migrate deploy
+
+# sanity check that the prod schema now has the Opportunity + Category tables
+npx prisma migrate status</code></pre>
+
+<p>
+  This is the part I have been mentally skipping, because on localhost <code>prisma migrate dev</code> does both steps at once and I forgot they were ever two things. In production they are firmly two things: deploy the code, then deploy the schema. Either one alone is a broken app that looks deployed.
+</p>
+
+<h2>Smoke-test the live URL like it is the real thing -- because it is</h2>
+
+<p>
+  Once the build is green and the migration has run, I open the production URL on my phone, on cellular, not on my laptop on my own wifi. I want it as close to my user's actual conditions as I can get. Three things have to work, in order: the board reads, a create sticks, the AI summary returns. If any of them throws, deploy is not done and nothing else on today's list starts.
+</p>
+
+<table>
+  <tr><th>Smoke test</th><th>What I check</th><th>Result</th></tr>
+  <tr><td>board reads</td><td>open the live URL cold -- rows render newest-first from the prod database</td><td>pass</td></tr>
+  <tr><td>create works</td><td>add a real opportunity (forklift cert, deadline next Friday) -- it inserts and shows on the board</td><td>pass</td></tr>
+  <tr><td>AI summary works</td><td>paste a real Indeed posting -- bullets come back, no 500, no freeze longer than ~4s</td><td>pass</td></tr>
+  <tr><td>degrade path</td><td>paste "asdf" -- I get the friendly 400 message, not a crash (the Day 1 guard holding in prod)</td><td>pass</td></tr>
+</table>
+
+<div class="answer">
+  <strong>Done means a stranger can use it, not that it compiled</strong>
+  <p>The whole reason this is a Must-Have and not a checkbox is the definition of done from Day 1: it works, it is deployed, a real person can use it. My user cannot open localhost from a county-issued phone on cellular. Until the production URL reads, creates, and summarizes for someone who is not me, deploy is unfinished -- no matter how green the build log is. The forklift cert deadline he is racing is real, and the URL has to be real too.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A live production URL that passes all four smoke tests from a phone on cellular: board reads, create sticks, AI summary returns bullets, bad input degrades to a sentence instead of a crash. Both env vars set on Production, the migration applied against the prod database, the build green and -- this is the part I no longer take for granted -- the app actually working on the first real click. Must-Have three, crossed off by clicking it, not by reading it. Commit, then on to the empty state.
+</p>
+
+<pre><code>git add .
+git commit -m "chore: production deploy verified live -- env vars set, prod migration applied, smoke tests pass"</code></pre>
+
+<nav class="ex-nav">
+  <a href="./">&#9664; Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Audit My App / NCD W8D1</title>
+<meta name="description" content="Exercise 1: click through every page and feature of ReEntry Tech and write an honest Works / Broken / Missing audit, assigning P1/P2/P3 to every bug.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Audit My App</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 30 min</div>
+
+<p>
+  Goal: a complete, honest picture of where ReEntry Tech actually stands. Not where I remember it standing, not where the demo-day version in my head stands -- where the real thing stands when I click every button. I opened the app in one window and the code in the other and I went through it like a stranger who is annoyed at me, writing down everything. Three columns: Works, Broken, Missing. The instruction was to be brutal, and the instruction was right -- better I find these now than my user finds them on a live URL, or worse, than I find them mid-presentation on Day 4.
+</p>
+
+<h2>Works</h2>
+
+<table>
+  <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+  <tr><td>Board reads from Postgres</td><td>works</td><td>server-rendered, newest first, Prisma <code>findMany</code> with <code>orderBy: createdAt desc</code></td></tr>
+  <tr><td>Create an opportunity</td><td>works</td><td>controlled form, POST validates title length, inserts, redirects to the board</td></tr>
+  <tr><td>Delete an opportunity</td><td>works</td><td>confirm dialog, DELETE handler, row gone after refresh</td></tr>
+  <tr><td>Filter by type</td><td>works</td><td>client-side chips: job / cert / appointment / resource</td></tr>
+  <tr><td>Vitest suite</td><td>works</td><td><code>getDomain</code>, <code>formatOpportunityAge</code>, GET handler with Prisma mocked -- all green</td></tr>
+</table>
+
+<h2>Broken</h2>
+
+<table>
+  <tr><th>Feature</th><th>Bug</th><th>Priority</th></tr>
+  <tr><td>AI summary (paste a posting URL)</td><td>500 on the deployed app -- <code>OPENAI_API_KEY</code> only exists in <code>.env.local</code>, never set in Vercel, and the route doesn't catch the failure so the whole page errors</td><td>P1</td></tr>
+  <tr><td>AI summary on bad input</td><td>paste a non-URL or an empty box and the OpenAI call still fires, then throws -- no guard before the fetch</td><td>P1</td></tr>
+  <tr><td>Edit an opportunity</td><td>PUT saves to the DB, but the board shows the old row until a hard refresh -- no revalidation after the mutation</td><td>P2</td></tr>
+  <tr><td>Delete UX</td><td>delete works but the card lingers until a refresh -- no optimistic update, looks like the click did nothing</td><td>P2</td></tr>
+  <tr><td>Create validation</td><td>a title of all spaces passes -- the check is on length, not on a trimmed presence, so " " inserts a blank-looking card</td><td>P2</td></tr>
+  <tr><td>Mobile layout</td><td>below ~380px the cards overlap and the filter chips wrap into a ragged stack</td><td>P3</td></tr>
+  <tr><td>Header tagline</td><td>still says the Week 4 placeholder "your next chapter starts here" -- generic, not the real pitch</td><td>P3</td></tr>
+  <tr><td>Leftover logs</td><td><code>console.log(summary)</code> and a debug log sit in the AI route</td><td>P3</td></tr>
+</table>
+
+<div class="answer">
+  <strong>The bug my head was protecting</strong>
+  <p>I knew the AI summary was shaky on deploy. I had known it for days, the way you know a noise in your car. Writing "500 on the deployed app" into a column literally titled Broken is what made it real -- and made it a P1 instead of a someday. The audit's whole job is to drag the thing you have been not-looking-at into a row with a priority next to it.</p>
+</div>
+
+<h2>Missing</h2>
+
+<table>
+  <tr><th>Feature</th><th>How important</th><th>Effort</th></tr>
+  <tr><td>Empty state on the board</td><td>high -- my one user opens an app with zero rows; a blank grey rectangle reads as "broken," not "empty"</td><td>small</td></tr>
+  <tr><td>Loading state while the AI thinks</td><td>medium -- the summary takes 2-4s and the UI just freezes; people click twice</td><td>small</td></tr>
+  <tr><td>Documented user activity</td><td>high -- gate requires 2-3 real users plus screenshots/feedback; I have zero captured so far</td><td>medium</td></tr>
+  <tr><td>Edit reachable on mobile</td><td>medium -- the edit button is off-screen on a narrow card</td><td>small</td></tr>
+</table>
+
+<div class="answer">
+  <strong>Why "deployed" is in Missing even though it half-exists</strong>
+  <p>I have a Vercel project and a build that succeeds, so it is tempting to call deploy "done." But the deployed thing crashes on its headline feature, so functionally a real person cannot use the real app. Until the live URL works end-to-end for someone who is not me, deploy stays unfinished -- and it is going to anchor the must-have list, not the works column.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A complete audit: five things that work, eight bugs each with a priority, four missing pieces each with an effort estimate. Two P1s, both clustered on the AI feature and both about the gap between localhost and a live URL -- which is exactly the gap I said in standup I was anxious about, now written down as rows instead of a feeling. Next exercise folds all of this into one backlog and sorts it.
+</p>
+
+<nav class="ex-nav">
+  <a href="./">&#9664; Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

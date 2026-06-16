@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Empty State On The Board / NCD W8D2</title>
+<meta name="description" content="Exercise 2: build the empty state for ReEntry Tech -- a friendly zero-rows screen with an Add-your-first-one CTA, plus a separate filtered-to-zero message, so a fresh app never reads as a broken one.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Empty State On The Board</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 30 min</div>
+
+<p>
+  Goal: make the board say something useful when it has nothing to show. Right now a board with zero rows renders an empty grey area, which to a first-time user is indistinguishable from a page that failed to load. This is Must-Have number four, and the reason it earned a Must rather than a Should is the same answer I defended at the Day 1 gate -- my one user opens an app with zero rows in it, so for him the empty state is not an edge case, it is the entire first screen. I deployed it this morning; now I make sure the first thing he sees on it is a welcome and not a void.
+</p>
+
+<h2>There are two empty states, not one</h2>
+
+<p>
+  This is the part I almost got wrong. "Empty" is not a single situation. There is the <b>brand-new board</b> -- nothing has ever been added -- and there is the <b>filtered-to-zero board</b> -- there is data, but the current type filter matches none of it. The same blank grid, two completely different truths, and the welcome copy that is perfect for the first case is an actual lie in the second. If he has three jobs saved, taps the "cert" chip, and sees "Welcome! Add your first one," the app just told him something false.
+</p>
+
+<table>
+  <tr><th>State</th><th>When</th><th>Copy</th></tr>
+  <tr><td>zero-data</td><td>the board has never had a row</td><td>welcome + "Add your first one" CTA -- this is an invitation</td></tr>
+  <tr><td>filtered-to-zero</td><td>rows exist but the active filter matches none</td><td>"No jobs yet" -- reassuring, names the filter, no false welcome</td></tr>
+</table>
+
+<h2>The JSX</h2>
+
+<p>
+  The board already knows two numbers: how many opportunities exist at all, and how many survive the current filter. That is enough to branch cleanly. If nothing exists, show the welcome. If things exist but the filter emptied the view, show the reassuring filter message with the active type named. Otherwise, render the grid.
+</p>
+
+<pre><code>// app/Board.jsx -- branch on total vs filtered counts
+function Board({ opportunities, activeType }) {
+  const filtered = activeType === "all"
+    ? opportunities
+    : opportunities.filter((o) =&gt; o.type === activeType);
+
+  // zero-data: the board has never had a row
+  if (opportunities.length === 0) {
+    return (
+      &lt;div className="empty"&gt;
+        &lt;p&gt;Nothing here yet -- this is where your jobs, certs,
+           and appointments will live.&lt;/p&gt;
+        &lt;a className="cta" href="/new"&gt;Add your first one&lt;/a&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  // filtered-to-zero: data exists, but this filter matches none of it
+  if (filtered.length === 0) {
+    return (
+      &lt;div className="empty"&gt;
+        &lt;p&gt;No {activeType}s yet. Try another filter, or add one.&lt;/p&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  return &lt;div className="grid"&gt;{filtered.map(renderCard)}&lt;/div&gt;;
+}</code></pre>
+
+<div class="answer">
+  <strong>For this user, the empty state IS the app's first screen</strong>
+  <p>For most apps with a seeded demo database, an empty state is polish you do if there is time. Mine is the exact opposite, and that inversion is the whole argument. My user is, definitionally, someone opening a fresh board with nothing on it -- the parole appointment, the two job leads, and the forklift cert are still in screenshots and a folded-up piece of paper, not in the app yet. The first pixel he ever sees is the empty state. If it is a blank grey rectangle he closes the tab thinking it is broken; if it is a warm line and an obvious button he taps the button. That is not polish, that is whether the app gets used at all.</p>
+</div>
+
+<h2>A note on copy</h2>
+
+<p>
+  I spent more time on the sentences than on the code, which felt right. "Nothing here yet" is honest and calm; it does not pretend, it does not apologize, it just says what is true and points at the next step. I cut my first draft, which was a chirpy "No opportunities found!" -- "found" implies a search failed, which reads as an error, which is the exact wrong feeling. The empty state's job is to make absence feel like a beginning, not a bug. For someone in their first ninety days out, the app trying too hard to be cheerful would land worse than a plain, steady sentence.
+</p>
+
+<h2>Deliverable</h2>
+
+<p>
+  Two empty states wired off the total and filtered counts: a welcome-plus-CTA for the brand-new board, and a quieter named-filter message for filtered-to-zero. Verified by clicking it on the live URL -- opened the production board with the test rows deleted and saw the welcome, then added one back, tapped the "cert" chip, and saw "No certs yet" instead of a lie. Must-Have four, crossed off. Both Musts for today are done before lunch, which means the Should sweep is unlocked. Commit.
+</p>
+
+<pre><code>git add .
+git commit -m "feat: empty state on the board -- welcome+CTA for zero-data, named message for filtered-to-zero"</code></pre>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

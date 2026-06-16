@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Validation + Optimistic Delete / NCD W8D2</title>
+<meta name="description" content="Exercise 3: the should-have sweep -- trim-and-presence validation so an all-spaces title is rejected, and optimistic delete so the card vanishes on click and reconciles on the server. Two small wins, only after the Musts are done.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Should-Have Sweep: Validation + Optimistic Delete</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 40 min</div>
+
+<p>
+  Goal: two small Should-haves off the backlog, now that both of today's Musts are done. Trim-and-presence validation so a title of all spaces cannot insert a blank-looking card, and optimistic delete so a deleted card disappears the instant it is clicked instead of lingering until a refresh. Neither is a feature; both are the difference between the app feeling broken and the app feeling finished. The discipline note here is the ordering: I am only allowed to touch these because the deploy and the empty state are crossed off. If a Must were still open, this whole exercise would have to wait.
+</p>
+
+<h2>Should-have one: trim-and-presence validation</h2>
+
+<p>
+  The audit caught it on Day 1 -- the create check was on length, not on a trimmed presence, so a title of <code>"   "</code> passed and inserted a card that looked blank. Three spaces have a length greater than zero, so the old guard waved them through. The fix is to trim first, then check presence, on the server where it actually protects the database -- client validation is a courtesy, server validation is the rule.
+</p>
+
+<pre><code>// app/actions.js -- validate on the server, trim before presence
+export async function createOpportunity(form) {
+  const title = (form.get("title") ?? "").trim();
+
+  // presence after trim -- "   " is now correctly empty
+  if (!title) {
+    return { error: "Give it a title -- even a couple of words." };
+  }
+
+  await prisma.opportunity.create({
+    data: { title, type: form.get("type"), /* ...rest */ },
+  });
+  revalidatePath("/");
+}</code></pre>
+
+<p>
+  I store the trimmed value, not the raw one, so no leading or trailing whitespace sneaks into the database either. Verified by clicking it: typed three spaces into the title field on the live URL, hit save, got the message instead of a blank card. Then typed a real title with stray spaces on the ends and watched it save clean.
+</p>
+
+<h2>Should-have two: optimistic delete</h2>
+
+<p>
+  Right now delete works but the card lingers until the board re-reads, so the click looks like it did nothing and people click again. Optimistic UI fixes the feel: remove the card from the rendered list immediately, fire the server delete in the background, and let the revalidation reconcile. React's <code>useOptimistic</code> is built for exactly this -- it gives me a temporary view that shows the change before the server confirms it.
+</p>
+
+<pre><code>// app/Board.jsx -- the card leaves on click, server catches up
+import { useOptimistic } from "react";
+
+const [shown, removeOptimistic] = useOptimistic(
+  opportunities,
+  (state, removedId) =&gt; state.filter((o) =&gt; o.id !== removedId)
+);
+
+async function onDelete(id) {
+  removeOptimistic(id);            // gone from the UI right now
+  await deleteOpportunity(id);     // server delete + revalidatePath reconciles
+}
+
+// render `shown`, not the raw prop -- so the optimistic removal is visible</code></pre>
+
+<div class="answer">
+  <strong>Optimistic UI is a lie you tell honestly</strong>
+  <p>The card vanishes before the server has confirmed anything -- that is a small lie, and it is a good one, because nine times out of ten the delete succeeds and the user got an instant, honest-feeling result. The honesty is in the reconciliation: if the server <i>rejects</i> the delete, <code>useOptimistic</code> automatically discards my temporary view and re-renders from the real server state, so the card reappears. I am not faking the outcome and walking away -- I am showing the likely result early and committing to snap back to the truth if I was wrong. The lie is provisional and self-correcting, which is the only kind of UI lie that is allowed.</p>
+</div>
+
+<p>
+  I tested the unhappy path on purpose, because the happy path is easy to believe and the failure path is where optimistic UI either earns its keep or burns the user. I forced a server delete to fail (killed the connection mid-action) and watched the card pop back into the grid instead of staying gone -- which is exactly right, because a card that silently vanished but was never actually deleted would be worse than no optimism at all. For an app tracking a parole appointment, a delete that lies about succeeding is not a small bug.
+</p>
+
+<h2>Deliverable</h2>
+
+<p>
+  Two Should-haves crossed off and both verified by clicking, not reading: an all-spaces title now gets a clear message instead of inserting a ghost card, and deleting a card removes it instantly with a clean reconcile if the server disagrees. Small wins, taken only after the Musts were done, in the order the plan promised. The afternoon is moving. Commit each one separately so the history says what happened.
+</p>
+
+<pre><code>git add .
+git commit -m "fix: trim-and-presence validation on create -- reject all-spaces title"
+git commit -m "feat: optimistic delete -- card vanishes on click, reconciles on server"</code></pre>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

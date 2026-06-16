@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Start Building, P1s First / NCD W8D1</title>
+<meta name="description" content="Exercise 5: execute the Day 1 block -- kill the AI-summary 500 in production with a wrapped route and a Vercel env var, guard the input, fix the stale board after an edit, and commit each green step.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Start Building -- P1s First</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 2 . ~2 hours</div>
+
+<p>
+  Heads-down execution of the Day 1 block. The plan says P1s first, so I am not allowed to start with the satisfying mobile-CSS fix -- the AI summary crashing in production is the thing that kills the demo, so it goes first and everything else waits. I commit every time something works, because "commit at the end of the day" is how a good morning turns into an un-bisectable mess by evening.
+</p>
+
+<h2>P1 -- the AI summary survives production</h2>
+
+<p>
+  The bug has two halves. Half one: the key. <code>OPENAI_API_KEY</code> lives in <code>.env.local</code>, which Vercel never sees, so the deployed route calls the API with no key and the SDK throws. Half two: the route does not catch the throw, so a failed call takes the whole page down with a 500 instead of degrading to a message. I fix the key in the dashboard and the catch in the code.
+</p>
+
+<pre><code>// the key, set once in the Vercel project (Settings -> Environment Variables)
+// OPENAI_API_KEY = sk-...   (Production + Preview)
+// then redeploy so the running build actually has it</code></pre>
+
+<pre><code>// app/api/summarize/route.js -- guard the input, catch the failure
+export async function POST(req) {
+  const { url } = await req.json();
+
+  // P1 input guard: nothing reaches OpenAI unless it's a real http(s) URL
+  if (!url || !/^https?:\/\//i.test(url)) {
+    return Response.json(
+      { error: "Paste a full job-posting link starting with http." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const posting = await fetchPostingText(url);
+    const summary = await summarizeWithOpenAI(posting);
+    return Response.json({ summary });
+  } catch (err) {
+    // degrade, don't crash -- the page stays up, the user gets a sentence
+    return Response.json(
+      { error: "Couldn't summarize that one -- try the link again or add it by hand." },
+      { status: 502 }
+    );
+  }
+}</code></pre>
+
+<div class="answer">
+  <strong>Degrade, don't crash</strong>
+  <p>The whole P1 is a missing <code>try/catch</code> and a missing env var. The fix is not clever and that is the point -- the AI feature can fail (bad link, OpenAI hiccup, rate limit) and the right behavior is a calm sentence telling my user to try again or add the opportunity by hand, never a stack trace and a dead page. A reentry app a guy is leaning on for a job lead does not get to white-screen because an upstream API blinked.</p>
+</div>
+
+<p><b>Verify, don't assume.</b> I tested the fix instead of trusting it -- pasted a real Indeed link on the preview deploy and got bullets back (200); pasted "asdf" and got the 400 message with no API call fired; pulled the env var and redeployed to force the catch, got the friendly 502 message and a page that stayed up. Three paths, three observed outcomes. Commit.</p>
+
+<pre><code>git add .
+git commit -m "fix: AI summary degrades instead of 500ing in prod (env var + guard + catch)"</code></pre>
+
+<h2>P2 -- the board stops showing stale data after an edit</h2>
+
+<p>
+  The PUT was saving fine; the board just was not being told to re-read. In Next.js the fix is to revalidate the path after the mutation so the server component re-fetches and the edited row shows without a hard refresh.
+</p>
+
+<pre><code>// app/actions.js -- after a successful update
+import { revalidatePath } from "next/cache";
+
+export async function updateOpportunity(id, data) {
+  await prisma.opportunity.update({ where: { id }, data });
+  revalidatePath("/");   // board re-reads -- the edit shows immediately
+}</code></pre>
+
+<p>
+  Verified the same way: edited a card's title from "Warehouse" to "Warehouse -- 2nd shift," hit save, watched the board show the new title with no refresh. Commit.
+</p>
+
+<pre><code>git add .
+git commit -m "fix: revalidate board after edit so updated row shows without refresh"</code></pre>
+
+<div class="card">
+  <div class="card-label">If I'm Stuck More Than 20 Minutes</div>
+  <p>The rule for the week: do not burn two hours on a thing a five-minute conversation solves. If a fix stalls past twenty minutes I ask -- a classmate, the TA, or the AI with real context: the app stack, the exact action, the exact error text, and the relevant route pasted in. A vague "it's broken" gets a vague answer; the error message and the code get a fix.</p>
+</div>
+
+<h2>Day 1 checkpoint</h2>
+<p>
+  Both P1s dead and verified on a preview URL, the worst P2 fixed, three commits with messages that say what they did. The headline AI feature no longer crashes the deployed app -- the single scariest item in the audit, handled on the first afternoon, which is exactly where the plan put it. Tomorrow is the production deploy and the empty state, with the Should list waiting if I move fast. The plan has three checkmarks on it and that feels good in a way the growing untouched list never did.
+</p>
+
+<div class="answer">
+  <strong>Deliverable</strong>
+  <p>At least one P1 fixed -- I cleared both, plus a P2. Sprint plan updated with checkmarks against Day 1 Block 1 and the front of Block 2. Every fix tested by clicking it, not by reading it.</p>
+</div>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Prioritize The Backlog / NCD W8D1</title>
+<meta name="description" content="Exercise 2: fold the audit into one backlog and sort it with MoSCoW -- Must / Should / Could / Won't -- running the 'can someone still use it' test on every Must and estimating S/M/L.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Prioritize The Backlog</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 1 . 30 min</div>
+
+<p>
+  Goal: take the messy audit and turn it into a plan with MoSCoW. I dumped everything from Exercise 1 into one list -- the two P1s, the P2s, the P3s, the four missing pieces -- and went item by item. The rule I held the whole time was the must-have test: <b>if this isn't done, can someone still open ReEntry Tech and use it?</b> If yes, it is not a Must. That one sentence did most of the sorting for me, and it disagreed with my gut more than once.
+</p>
+
+<h2>Must Have</h2>
+<p>Three to five, max. Every one earns its place by failing the "can someone still use it" test -- if it is not done, the app is broken or unusable or unshippable for my one user.</p>
+
+<table>
+  <tr><th>Item</th><th>Why it's a Must</th><th>Effort</th></tr>
+  <tr><td>P1 -- AI summary must not 500 in prod</td><td>set <code>OPENAI_API_KEY</code> in Vercel and wrap the route so a key/API failure returns a graceful message, not a 500. Without it the headline AI feature crashes on the live URL.</td><td>M</td></tr>
+  <tr><td>P1 -- guard the AI route's input</td><td>reject empty / non-URL input before the OpenAI call. Without it any fat-fingered paste takes the page down.</td><td>S</td></tr>
+  <tr><td>Deploy to a working live URL</td><td>"done" requires a real URL, and my user opens it from his phone. Localhost is not shippable.</td><td>M</td></tr>
+  <tr><td>Empty state on the board</td><td>my one user opens an app with zero rows; a blank rectangle reads as broken. For <i>him</i> the empty state is the first screen, so it is the app.</td><td>S</td></tr>
+  <tr><td>Documented user activity (2-3 real users + screenshots)</td><td>gate requirement, and the only proof the thing works for someone who is not me. Straddles Day 2/3.</td><td>M</td></tr>
+</table>
+
+<p><b>Five Musts, totalling roughly M+S+M+S+M &asymp; 2 + 0.75 + 2 + 0.75 + 2 = ~7.5 hours.</b> That fits inside the ~12-14 hours of sprint time with real buffer, which is the point -- if my Musts had come out at 13 hours I would have had to cut one, because the first task always runs long.</p>
+
+<div class="answer">
+  <strong>The two Musts that argued with my gut</strong>
+  <p>The empty state felt like polish -- my instinct filed it under Should. But the test asks about <i>my user</i>, and my user opens a board with nothing in it, so the empty state is literally his first impression of whether the app is alive. It stays. Going the other way: the stale-board-after-edit bug <i>felt</i> like a Must because editing is "core CRUD." But someone can absolutely use ReEntry Tech without editing -- they add, they read, they delete. So it drops to Should. The gate only asks for Create + Read end-to-end; edit is not load-bearing for "usable."</p>
+</div>
+
+<h2>Should Have</h2>
+<p>Important, but the app still functions without them. These are the first things I pull up if I blow through the Musts -- not before.</p>
+<ul>
+  <li>P2 -- revalidate the board after an edit so the updated row shows without a manual refresh</li>
+  <li>P2 -- optimistic delete so the card disappears on click instead of lingering until refresh</li>
+  <li>P2 -- trim-and-presence validation on the create form (reject an all-spaces title)</li>
+  <li>Loading state / spinner while the AI summary is fetching</li>
+  <li>P3 -- mobile card overlap and ragged filter chips below 380px</li>
+</ul>
+
+<h2>Nice To Have</h2>
+<ul>
+  <li>Second AI feature: "help me phrase a request to a parole officer / employer"</li>
+  <li>Save / favorite an opportunity</li>
+  <li>P3 -- real header tagline replacing the Week 4 placeholder (will sneak this into final cleanup)</li>
+</ul>
+
+<h2>Won't Do (This Sprint)</h2>
+<ul>
+  <li>User accounts / auth / multi-user</li>
+  <li>Calendar view of appointments</li>
+  <li>Categories as their own CRUD UI</li>
+  <li>Reminders / notifications</li>
+  <li>Dark-mode polish beyond what the stylesheet already does for free</li>
+</ul>
+
+<div class="answer">
+  <strong>The one that hurt to cut</strong>
+  <p>The "phrase a request" AI feature is genuinely the most <i>me</i> idea in the whole app, and it is a clean second AI-touch. It is also a feature someone can use the app without -- so it failed the test, and it went to Won't Do without a real argument. That is the discipline: the test does not care which feature I am proudest of. It only asks whether my user can get value without it. He can. Gone.</p>
+</div>
+
+<h2>Deliverable</h2>
+<p>
+  A prioritized backlog: five Musts under ~8 hours with S/M/L estimates, a Should list waiting in the wings, and an explicit Won't Do so the cut decisions are written down and cannot quietly creep back in at 11pm on Day 2. Next exercise spreads the Musts across the three half-days as dated, testable tasks.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

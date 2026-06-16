@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Telling The AI-Touch Story / NCD W8D4</title>
+<meta name="description" content="Exercise 3: the 90-second explanation of the OpenAI summary feature -- the prompt, the shape asked for, what was kept vs rejected, and how the Vitest tests made the AI output trustworthy.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Telling The AI-Touch Story</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: a tight 90-second account of the AI feature -- what it does, the prompt I send, the shape I ask back, what I keep versus throw away, and the thing that actually makes it work, which is the tests. The AI-touch is the headline of the whole project, so this story has to be the most rehearsed ninety seconds I have. The trap is to spend it gushing about how clever the AI is. The gate does not care that the AI is clever. It cares whether I understood what I was doing when I wired a non-deterministic thing into an app a person depends on.
+</p>
+
+<h2>What it does, in one breath</h2>
+
+<p>
+  My user gets a job posting as a wall of text -- requirements, benefits boilerplate, equal-opportunity legalese, all of it -- and reading it is work. He pastes the URL. The app fetches the posting text and sends it to OpenAI with a prompt that asks for a specific shape: three plain-language sections, "what this is / what they want / what to bring." Out comes three short readable blocks instead of eight hundred words. That is the entire feature, and it is aimed squarely at the real moment: a guy who came home in March, looking at a forklift-adjacent warehouse posting, who needs to know in ten seconds whether it is worth his afternoon.
+</p>
+
+<h2>The prompt and the shape</h2>
+
+<p>
+  The prompt does two jobs: it sets the audience and it pins the output shape. Plain language, no jargon, three labeled sections, short. Asking for a fixed shape is what makes the output testable later -- if I let the model freeform, there is nothing to assert against.
+</p>
+
+<pre><code>// app/api/summarize/route.js -- the prompt asks for a fixed shape
+const prompt = `Summarize this job posting for someone re-entering the
+workforce. Plain language, no HR jargon. Return exactly three short
+sections, labeled:
+
+WHAT THIS IS:
+WHAT THEY WANT:
+WHAT TO BRING:
+
+Posting:
+${postingText}`;</code></pre>
+
+<h2>What I kept vs what I rejected</h2>
+
+<p>
+  The model does not just hand back the three sections. It editorializes -- adds an upbeat closing line, pads with "this is a great opportunity," sometimes invents a benefit the posting never mentioned. I keep the three sections and reject the rest. The keep/reject is the engineering decision, and it is the part of the story that shows I treated the model as a component I direct, not an oracle I obey.
+</p>
+
+<table>
+  <tr><th>Model gave back</th><th>Kept or rejected</th></tr>
+  <tr><td>The three labeled sections</td><td>kept -- it's the whole point</td></tr>
+  <tr><td>"This is a fantastic opportunity for growth!"</td><td>rejected -- cheerleading my user didn't ask for</td></tr>
+  <tr><td>A benefit not in the posting</td><td>rejected hard -- inventing facts is the dangerous failure for this user</td></tr>
+  <tr><td>A long preamble before the sections</td><td>rejected -- I parse to the labels and drop everything before</td></tr>
+</table>
+
+<h2>Why I can trust it -- the tests</h2>
+
+<p>
+  Here is the spine of the story. The Vitest suite from Week 7 is the reason I can put a thing I do not control in front of a person who is leaning on it. The tests pin the contract: the response parses into exactly the three labeled sections, missing sections are handled instead of crashing, a malformed or empty model response degrades to a friendly message rather than rendering garbage. The OpenAI call itself is mocked, so the tests assert <i>my handling</i> of the output, which is the part I own and the part that has to be reliable.
+</p>
+
+<pre><code>// summarize.test.js -- the tests pin the shape, OpenAI mocked
+it("parses the three labeled sections from a well-formed response", () =&gt; {
+  const out = parseSummary(SAMPLE_GOOD);
+  expect(out.whatThisIs).toBeTruthy();
+  expect(out.whatTheyWant).toBeTruthy();
+  expect(out.whatToBring).toBeTruthy();
+});
+
+it("degrades to a friendly message when the model returns garbage", () =&gt; {
+  const out = parseSummary("...unstructured rambling, no labels...");
+  expect(out.error).toMatch(/couldn't summarize/i);
+  // never renders raw garbage to the user
+});</code></pre>
+
+<div class="answer">
+  <strong>The strongest version of the story is the part where I didn't trust it</strong>
+  <p>My best 90-second material is not "the AI is great." It is the moment I distrusted the model and a test caught the drift before my user ever saw it. I wired in a non-deterministic component and the way I made it safe for a person who leans on it was the suite -- pinning the shape, handling the garbage path, degrading instead of rendering nonsense. The AI is the demo. The tests are the engineering, and the honest, gate-winning version of the story leads with the distrust.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A 90-second AI-touch story I can deliver tight: the real moment (wall-of-text posting, ten seconds to decide), the prompt and the three-section shape, the keep/reject decisions with inventing-a-benefit called out as the dangerous one, and the tests as the reason an uncontrolled output is safe to ship. Rehearsed and timed -- it runs at about 80 seconds, which leaves room. The version that leads with "here's where I didn't trust it and the test caught it" is the one I am taking to the gate.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

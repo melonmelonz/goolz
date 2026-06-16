@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 8 -- Day 3 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 8 Day 3. Go Live: Ship To Real Users. Fix the bugs testing found, do the last-mile cleanup, harden for production with favicon and OG tags and analytics, get real people onto the live URL with screenshots and feedback, and verify against the four criteria with evidence instead of vibes.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 3 -- Go Live: Ship To Real Users</h1>
+<div class="subtitle">NCD . WK8 . D3 . five exercises loaded . the day someone who is not me opens my thing</div>
+
+<p>
+  The app is on the internet already. I deployed it yesterday, watched the live URL serve the empty state on a phone that was not mine, and felt the specific vertigo of a thing that exists outside my laptop. So today is not a deploy day, exactly -- it is the day I make the deployed thing real for a person. The build week has been one long argument with myself about what counts, and there is one Must left standing on the list, the biggest one: documented user activity. Two to three real people, on the live URL, with screenshots and a sentence of feedback each. That is the gate requirement I have been circling for a week, and circling because it is the part I cannot fake. I can convince myself the code works. I cannot convince myself a stranger used it.
+</p>
+
+<p>
+  The morning is the unglamorous half. Yesterday's "test like a stranger" click-through surfaced three bugs that I never would have found by reading the code -- a long AI summary that blows past the bottom of its card, a deadline that renders as a raw ISO string the second you load it on a phone, and a flash of the old list right after a delete. None of them crash anything. All of them make the app look like a student project instead of a thing. So I triage them, I fix them, I do one polish should-have, and then I do the cleanup nobody sees: strip the leftover console.logs, finally kill the Week 4 placeholder tagline, and check the layout at 360px where my user's phone actually lives.
+</p>
+
+<p>
+  The afternoon is the part I had been avoiding. First the production hardening -- a favicon, OpenGraph and Twitter meta tags so the link previews like a real site when it lands as a text message, and a privacy-respecting analytics snippet so "documented user activity" has data underneath it and not just my memory of it. Then the real thing: I send the link to the guy who came home in March, I watch him use it without coaching, I get two more people on it, and I capture the evidence before it evaporates. And at the very end, the question that the whole week has been building toward and that I am not allowed to answer with a feeling: is it actually done? Four criteria, a proof next to each. Not at 11pm, not on vibes.
+</p>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>Where I left off:</b> end of Day 2. ReEntry Tech is deployed to a live Vercel URL over HTTPS, the board has a real empty state, and I cleared the should-have sweep -- create validation that trims, optimistic delete, and a loading spinner while the AI thinks. I ended the day doing a slow click-through "like a stranger" and it coughed up three new bugs.</p>
+  <p><b>What I'm doing today:</b> fix those three bugs, one polish should-have, the last-mile cleanup, then production hardening (favicon, OG tags, analytics), then get the real user plus two more onto the live URL with screenshots and feedback, then verify against the four criteria.</p>
+  <p><b>What I'm watching for:</b> the terror, honestly. Watching someone who is not me touch the thing, and the discipline to capture evidence in the moment instead of just feeling good and forgetting to screenshot. The gate does not accept "it went well." It accepts the screenshot.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Bugs From Testing, Triaged</div>
+  <p>The three bugs from yesterday's click-through are all P2 or P3 -- none of them crash the app, which is exactly why I would never have caught them by reading the route handlers. You only find them by clicking like a person.</p>
+  <table>
+    <tr><th>Bug</th><th>What happens</th><th>Priority</th></tr>
+    <tr><td>AI summary overflows the card</td><td>a long summary runs past the bottom edge of the card and bleeds over the row below it</td><td>P2</td></tr>
+    <tr><td>Deadline renders as raw ISO</td><td>the forklift cert deadline shows as <code>2026-07-14T00:00:00.000Z</code> on mobile instead of a date a human reads</td><td>P2</td></tr>
+    <tr><td>Flash of old list after delete</td><td>optimistic delete removes the card, then the server response briefly re-paints the old list before settling</td><td>P3</td></tr>
+  </table>
+  <p>The deadline one stings the most, because it is the field my user actually leans on -- a parole date, a cert deadline. Showing him <code>T00:00:00.000Z</code> is showing him that I never once looked at his data on a phone.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Last-Mile Cleanup</div>
+  <p>This is the small, invisible work that separates "a student project" from "a thing." Nobody sees the cleanup. They feel it. Three items: kill the <code>console.log</code> calls still sitting in the AI route, replace the Week 4 placeholder tagline that still reads "your next chapter starts here" with the real pitch, and pull the live URL up at 360px -- the actual width of a cheap Android, which is the actual phone my user has -- and fix whatever breaks. On Day 1 I logged the filter chips wrapping into a ragged stack below 380px; 360px is where I confirm it and fix it.</p>
+  <p>The console.logs are the tell. A debug <code>console.log(summary)</code> shipping to production is the software equivalent of leaving the price tag on. It does no harm and it announces that nobody did a final pass.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Production Hardening</div>
+  <p>Three things turn a deployed URL into something that reads as a real site. A favicon, so the browser tab is not a blank page icon. OpenGraph and Twitter meta tags, so when I text the link to my user it unfurls into a card with a title and a description instead of a naked blue URL. And a lightweight, privacy-respecting analytics snippet, so "documented user activity" has data behind it -- page views, not just my screenshots.</p>
+  <p>The OG tags matter more than they look like they do. My user is going to receive this app as a text message. A link that previews as a real site with a name and a one-line description is the difference between "this is a tool a person made for me" and "this looks like a scam, I'm not tapping that." For a reentry app, the shared link is often the entire first impression.</p>
+  <pre><code>&lt;!-- app/layout.js -- OpenGraph so the texted link previews like a real site --&gt;
+export const metadata = {
+  title: "ReEntry Tech -- your first 90 days, organized",
+  description:
+    "Track jobs, certs, and appointments in one place. Paste a job link, get plain-language bullets.",
+  openGraph: {
+    title: "ReEntry Tech",
+    description: "Jobs, certs, and appointments in one place.",
+    url: "https://reentry-tech.vercel.app",
+    siteName: "ReEntry Tech",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", title: "ReEntry Tech" },
+};</code></pre>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Documented User Activity</div>
+  <p>This is the gate Must, and it is the one I cannot do alone at my desk. The standard is concrete: two to three real people open the live URL, I watch them use it without coaching them, and I capture a screenshot plus one sentence of feedback per person. The watching is the point. A real user does things I never planned for -- and the first thing I learn is usually a usability finding I would have argued against if a classmate had suggested it.</p>
+  <p>The discipline here is to split the work in two: use it, then capture it. If I let myself just enjoy watching my user succeed, the evidence evaporates -- I will remember it went well and I will have nothing to show the gate. So the screenshot and the feedback sentence get captured in the moment, every time, before I let myself feel good about it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Is It Actually Done?</div>
+  <p>"Done" is a claim, and a claim needs evidence. Four criteria, and next to each one a proof I can point at -- not a feeling I have late at night that it is probably fine.</p>
+  <table>
+    <tr><th>Criterion</th><th>The proof</th></tr>
+    <tr><td>It works</td><td>I clicked every feature on the live URL -- create, edit, delete, filter, search, AI summary -- and observed each one</td></tr>
+    <tr><td>It's deployed</td><td>the real Vercel URL loads over HTTPS on a phone that is not mine</td></tr>
+    <tr><td>A real person used it</td><td>screenshots exist of three people using it, with a feedback sentence each</td></tr>
+    <tr><td>I can explain it</td><td>a one-paragraph walkthrough is drafted -- what it does, how I built it, what AI I used</td></tr>
+  </table>
+  <p>Every line has a proof or it is not checked. "I think the edit works" is not a check. "I edited a card on the live URL and watched the board update" is a check.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Fix The Bugs Testing Found</span>
+      <span class="ex-desc">triage and fix the three bugs the click-through surfaced -- overflow the AI summary into a scroll/clamp, format the raw ISO deadline with a small tested util, and kill the flash-of-old-list by reconciling the optimistic delete</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">The Last-Mile Cleanup</span>
+      <span class="ex-desc">strip the leftover console.logs from the AI route, replace the Week 4 placeholder tagline with the real pitch, and pull the layout up at 360px to fix the filter-chip wrap -- small, invisible, and exactly what makes it feel like a thing</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Production Hardening</span>
+      <span class="ex-desc">add a favicon, OpenGraph and Twitter meta tags so the texted link previews like a real site, and a privacy-respecting analytics snippet so documented user activity has data behind it and not just screenshots</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Documented User Activity</span>
+      <span class="ex-desc">get the real user plus two more onto the live URL, watch them use it without coaching, capture a screenshot and a feedback sentence per person -- split into use-it and capture-it so the evidence does not evaporate</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Is It Actually Done?</span>
+      <span class="ex-desc">verify against the four criteria with evidence -- it works, it's deployed, a real person used it, I can explain it -- a checklist with a proof next to each line instead of a feeling at 11pm</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- What Watching A Real User Taught Me</div>
+  <p>
+    Two minutes to my partner, not on what I built but on what I learned watching someone use it. The headline finding: my user tried to tap the whole card to open an opportunity, the way you tap anything on a phone, and the edit affordance was a small button tucked in the corner that he never reached for. He sat there for a second, a little confused, and that second told me more than every test I had written. He was not wrong. The card looks tappable, so it should be tappable. I had built the interaction the way it was easy to build, not the way a person expects it to behave. The point of the demo is that this is not a bug I could have reasoned my way to. It only exists because a person who is not me put a thumb on the screen.
+  </p>
+  <p>
+    The other thing I name is the feeling, because it is part of the lesson: the specific terror of handing the link over and then having to sit on my hands and not narrate. Every instinct said to lean in and explain. The whole value was in not doing that -- in letting the confusion happen so I could see it. <b>Partner challenge:</b> "what is the one thing you changed, or wanted to change, because of what you watched -- and would you have ever found it by yourself?" The honest answer for me is no, I would not have, and that is the entire argument for getting a real user on it before the gate instead of after.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    For the whole build week I have been treating "done" as a feeling I was waiting to arrive -- some moment late at night where I would lean back and just know the thing was finished. It never came, and today I understood why: it is not a feeling, it is a claim, and a claim is something you back with evidence. The four-criteria checklist did to "done" exactly what the Day 1 audit did to my bug list. It dragged a vague internal state into a row with a proof next to it. "I think a real person can use it" is a feeling. "Here are three screenshots of three people using it" is a fact. One of those survives the gate and one does not, and I had been planning to walk in with the feeling.
+  </p>
+  <p>
+    The deeper thing is that the evidence is not just for the gate. Watching my user reach for the card instead of the edit button, watching the deadline finally render as a date he could read instead of an ISO string -- that is the thing the whole project was supposed to be about, and I almost shipped it without ever seeing it happen. A reentry app is not a portfolio piece. Somebody is leaning on it for a forklift cert deadline and a parole date. The discipline of capturing evidence turned out to be the discipline of actually looking at the person I built it for, instead of looking at my own code and assuming it reached him. It did, mostly. But I only know that because I watched, and I only have proof because I captured it before I let myself feel good.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

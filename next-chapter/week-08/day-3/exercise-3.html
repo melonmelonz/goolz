@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Production Hardening / NCD W8D3</title>
+<meta name="description" content="Exercise 3: harden ReEntry Tech for production -- a favicon, OpenGraph and Twitter meta tags so a texted link previews like a real site, and a lightweight privacy-respecting analytics snippet so documented user activity has data behind it.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Production Hardening</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 35 min</div>
+
+<p>
+  Goal: take a URL that works and make it read like a real site. Three things -- a favicon so the tab is not a blank page, OpenGraph and Twitter tags so the link unfurls into a card when I text it, and a privacy-respecting analytics snippet so "documented user activity" has real numbers under it and not just my screenshots. The first two are about the first impression. The third is about being able to prove the impression happened.
+</p>
+
+<h2>Favicon</h2>
+
+<p>
+  Right now the browser tab shows the default blank-document icon, which on a phone's tab strip looks like nothing got made. Next.js App Router makes this almost free -- drop an <code>icon</code> file in <code>app/</code> and it wires up the tags for me. I used a small ship glyph, the same one this journal uses, because the whole thing is about getting underway.
+</p>
+
+<pre><code>// app/icon.svg -- App Router auto-serves it as the favicon, no &lt;link&gt; needed
+&lt;svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"&gt;
+  &lt;text y=".9em" font-size="90"&gt;&#x1F6A2;&lt;/text&gt;
+&lt;/svg&gt;</code></pre>
+
+<h2>OpenGraph and Twitter tags</h2>
+
+<p>
+  This is the one that actually matters, and it matters because of how my user is going to receive the app: as a text message with a link in it. A naked blue <code>vercel.app</code> URL in a text reads as sketchy -- nobody coming home wants to tap a random link that looks like a phishing test. A link that previews as a card with a name and a one-line description reads as a tool a person made on purpose. So I set the metadata in the App Router so every share unfurls cleanly.
+</p>
+
+<pre><code>// app/layout.js
+export const metadata = {
+  metadataBase: new URL("https://reentry-tech.vercel.app"),
+  title: "ReEntry Tech -- your first 90 days, organized",
+  description:
+    "Track jobs, certs, and appointments in one place. Paste a job link, get plain-language bullets.",
+  openGraph: {
+    title: "ReEntry Tech",
+    description: "Jobs, certs, and appointments in one place. Built for the first 90 days out.",
+    url: "https://reentry-tech.vercel.app",
+    siteName: "ReEntry Tech",
+    type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ReEntry Tech",
+    description: "Jobs, certs, and appointments in one place.",
+    images: ["/og.png"],
+  },
+};</code></pre>
+
+<p>
+  I verified it instead of trusting it -- pasted the deployed URL into a link-preview debugger and into an actual text message to myself, and watched it render the title, the description, and the image card. The thing previews like a site now, not like a link someone should be suspicious of.
+</p>
+
+<div class="answer">
+  <strong>The shared link is the first impression</strong>
+  <p>For most apps OG tags are polish. For a reentry app they are closer to a feature, because the first contact a real user has with the thing is a link in a text, and a link that looks like a scam does not get tapped. Someone who has every reason to be wary of an unexpected URL needs the preview to say, in one card, "this is real, a person made this for you." Making the shared link not look like a scam is part of making the app usable at all.</p>
+</div>
+
+<h2>Privacy-respecting analytics</h2>
+
+<p>
+  The gate Must is "documented user activity," and screenshots are evidence but they are not data. A lightweight, privacy-respecting analytics snippet gives me the other half -- page views and a sense of whether anyone came back -- without tracking individuals or shipping a third-party surveillance script onto an app used by people who have excellent reasons to value their privacy. So: cookieless, no personal data, just aggregate counts.
+</p>
+
+<pre><code>// app/layout.js -- a cookieless, privacy-first analytics include
+import Script from "next/script";
+
+// ...inside &lt;body&gt;, after children:
+&lt;Script
+  defer
+  data-domain="reentry-tech.vercel.app"
+  src="https://plausible.io/js/script.js"
+/&gt;</code></pre>
+
+<p>
+  No cookies, no cross-site tracking, nothing that fingerprints the person. It counts that the page was opened, which is exactly the documentation I need and exactly the limit of what I am willing to collect from this particular set of users.
+</p>
+
+<div class="answer">
+  <strong>Why privacy is not optional here</strong>
+  <p>I could bolt on a heavier analytics product and get more data. I will not. The people using this app are managing parole appointments and reentry logistics, and the bar for what I collect from them is higher than "what is convenient." Aggregate, cookieless page counts document the activity the gate wants and respect the user the app is for. The right amount of tracking for a reentry app is the least amount that still proves people showed up.</p>
+</div>
+
+<h2>Checkpoint</h2>
+<p>
+  The tab has an icon, the texted link unfurls into a real-looking card, and there is cookieless analytics quietly counting opens. The deployed thing now reads as a site instead of a build artifact, and "documented user activity" has data lining up behind the screenshots I am about to capture. Commit.
+</p>
+
+<pre><code>git commit -m "feat: favicon, OpenGraph/Twitter tags, cookieless analytics for prod"</code></pre>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

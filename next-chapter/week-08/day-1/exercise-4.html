@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Peer Review The Plan / NCD W8D1</title>
+<meta name="description" content="Exercise 4: swap sprint plans with a partner, add up the hours, hunt for an ignored P1, flag any Must that's really a Should, check Day 3 isn't overloaded, and revise off the feedback.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Peer Review The Plan</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: a second pair of eyes on the plan to catch the unrealistic estimate and the missing item I am too close to see. I swapped plans with a partner building a habit tracker. I read theirs against the five questions, they read mine, and the trade was honest in both directions -- the point is to find the hole before the sprint does, not to be nice.
+</p>
+
+<div class="card">
+  <div class="card-label">The Five Questions I Ran On Their Plan</div>
+  <ol>
+    <li><b>Realistic for three days?</b> Add up the hours. Any single task suspiciously large?</li>
+    <li><b>Anything missing from Must Have?</b> A broken feature they did not notice, a P1 they are stepping around?</li>
+    <li><b>Anything in Must that is really a Should?</b> A feature that is not essential for launch?</li>
+    <li><b>Is Day 3 overloaded?</b> It is deploy day -- four hours of Must work there means something has to move up.</li>
+    <li><b>Are the tasks specific?</b> "Fix bugs" is not a task. "Fix the 500 on POST /api/items" is.</li>
+  </ol>
+</div>
+
+<h2>What I told my partner</h2>
+<ul>
+  <li><b>Missing Must:</b> their habit tracker had "create a habit" in Must but "mark a habit done" sitting in Should -- and the whole app is marking habits done. A user who can create but never check off has a list, not a tracker. I told them: that is your one feature that proves it works, it belongs in Must.</li>
+  <li><b>Day 3 overloaded:</b> they had the AI coaching message scheduled for Day 3 morning. New AI feature on deploy day. Move it to Day 2 afternoon or cut it to Should.</li>
+  <li><b>Vague task:</b> "polish the UI" -- I made them turn it into "fix the streak counter resetting at midnight" and "align the habit cards on mobile," two specific things with a Done each.</li>
+</ul>
+
+<h2>What my partner told me</h2>
+<ul>
+  <li><b>"Your 'documented user activity' is an M but it is really two things."</b> Fair hit. Getting a user to <i>use</i> the live app is one task; capturing the screenshot and the feedback sentence is another, and the second one is the part people forget under pressure. I split it: "get user on live URL" (Day 2 afternoon) and "capture screenshots + one feedback line per user" (Day 3 afternoon) so the evidence does not get skipped.</li>
+  <li><b>"Block 2 on Day 1 is two S tasks back to back -- is that really under an hour?"</b> Honestly, maybe not, because the edit-revalidation touches the data-fetching path and those always have a surprise. I left it in the slot but flagged that if it runs over, the input guard (the actual P1) wins and the revalidation slides to Day 2 -- P1 before P2, always.</li>
+  <li><b>"Is the empty state really a Must?"</b> Same challenge as the verbal demo. It survives for the same reason: my one user opens an app with zero rows, so it is his first screen. But my partner made me write that justification down next to the item, so I can defend it at the gate instead of just asserting it.</li>
+</ul>
+
+<div class="answer">
+  <strong>The revision that mattered most</strong>
+  <p>Splitting "documented user activity" into use-it and capture-it. Left as one M, the capture half was going to evaporate -- I would get my user on the live URL, feel good, and never take the screenshot, and then on Day 4 the gate asks for evidence and I have a warm memory instead of a PNG. Two tasks, two Definitions of Done, one of which is literally "the screenshot file exists." Cheap insurance against a requirement I was on track to half-do.</p>
+</div>
+
+<h2>Deliverable</h2>
+<p>
+  A revised plan with the partner's feedback folded in: the user-activity Must split into use-it and capture-it with separate Dones, an explicit P1-beats-P2 fallback noted on Day 1 Block 2, and the empty-state justification written down so it survives a challenge. Plan is realistic, specific, and Day 3 is still just bugfix and deploy. Time to execute Block 1.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

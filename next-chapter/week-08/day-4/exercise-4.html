@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- The CLI Session Demo / NCD W8D4</title>
+<meta name="description" content="Exercise 4: show the build process not just the product -- a clean git log --oneline that reads like a story, the Vitest suite running green in the terminal, and a deploy command, all narrated out loud.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The CLI Session Demo</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 2 . 35 min</div>
+
+<p>
+  Goal: show the gate <i>how</i> I built the thing, not just the finished thing. Anyone can present a working app. The CLI session is the evidence of process -- a git history that reads like a story, a test suite running green live, and a deploy. Three artifacts in a terminal that prove there was a method here and not just luck. This exercise is getting the log clean, confirming the suite runs green from the terminal, and rehearsing the narration, because an artifact I can talk through is worth ten times one I can only display.
+</p>
+
+<h2>The git log that reads like a story</h2>
+
+<p>
+  The point of <code>git log --oneline</code> here is that conventional commit prefixes turn a list into a narrative. <code>fix:</code> killed a bug, <code>add:</code> landed a feature, <code>update:</code> refined one. Read bottom to top, it is the actual order I built ReEntry Tech in -- schema first, then the AI route, then the build-week fixes. No "wip", no "stuff", no "asdf". A reviewer can read the shape of the project off the log alone.
+</p>
+
+<pre><code>$ git log --oneline -10
+a1f4c0e update: line-clamp long AI summaries so they stop overflowing the card
+7b9e2d1 add: formatDate util for deadlines (TDD, raw ISO -&gt; Jul 14 2026)
+3c81a6f fix: reconcile optimistic delete so the old list stops flashing back
+e44d7b2 add: empty state on the board (zero-data + filtered-to-zero copy)
+9a2f5c8 fix: AI summary degrades instead of 500ing in prod (env + guard + catch)
+6e0d1b9 add: client-side type filter and search over the board
+2d6b0a3 update: trim-and-presence validation so blank titles can't insert
+5f1c9e7 add: AI summary route -- paste a job URL, get plain-language bullets
+b8c3f02 add: full CRUD on Opportunity against Postgres through Prisma
+0b3a8d4 add: Opportunity + Category schema, one-to-many relation</code></pre>
+
+<p>
+  I am going to narrate this, not just scroll it. Point at the bottom -- "this is the schema and the relationship going in first" -- and walk up: CRUD, then the AI route, then the filter, then the build-week <code>fix:</code> and <code>update:</code> commits where I hardened it for real users. Reading it out loud is the proof that I know what every commit was for. A log I can narrate is a log I lived.
+</p>
+
+<h2>The suite running green, live</h2>
+
+<p>
+  Then I run the tests in the terminal in front of them. Not a screenshot of green -- the actual command, the actual pass. This is the moment the AI-touch story from the last exercise becomes concrete: the tests that pin the summary shape are right there, passing, where anyone can see them.
+</p>
+
+<pre><code>$ npx vitest run
+
+ RUN  v1.6.0  /home/penn/reentry-tech
+
+ &#10003; lib/formatDate.test.js (4)
+ &#10003; lib/getDomain.test.js (3)
+ &#10003; app/api/summarize/summarize.test.js (5)
+ &#10003; app/api/board/route.test.js (2)
+
+ Test Files  4 passed (4)
+      Tests  14 passed (14)
+   Start at  09:41:02
+   Duration  1.12s</code></pre>
+
+<p>
+  The line I say over this: "These are the pure utils, the AI summary parsing, and the board GET handler with Prisma mocked -- fourteen tests, all green, run live so you're watching them pass, not trusting a screenshot." Running it live is a small flex and it lands, because everyone in the room knows a screenshot of green could be from last week.
+</p>
+
+<h2>The deploy</h2>
+
+<p>
+  And the last artifact: a deploy. I do not need to do a full production push on stage, but I show the command and the fact that this is how the live URL got there -- the same URL they can open on their phone. Process, product, and the bridge between them in one terminal.
+</p>
+
+<pre><code>$ git push          # Vercel builds + deploys on push to main
+$ npx prisma migrate deploy   # the database half, separate from the code half
+
+  Vercel  Production  https://reentry-tech.vercel.app   Ready</code></pre>
+
+<div class="answer">
+  <strong>The commits ARE the story of how I work</strong>
+  <p>I used to think a clean git history was housekeeping -- nice to have, nobody looks. Today it flipped: the log is a thing I can <i>show</i> instead of a claim I have to make. "I worked methodically" is a thing I'd have to ask them to believe. A log that reads schema -&gt; CRUD -&gt; feature -&gt; fix -&gt; fix, in conventional-commit prose, is that same claim as evidence they can read themselves. The history is the most honest artifact I have, because I can't fake it after the fact -- it's the literal record of the order I made decisions in.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  A three-part CLI session rehearsed end-to-end: a <code>git log --oneline</code> that narrates as a story from schema to hardening, the Vitest suite run live to green (14 passing), and the deploy command that ties the process to the live URL. Each artifact paired with a sentence I say while it is on screen, because the narration is the part being graded -- showing process, not just product. Walked through twice so the terminal commands and the talking line up.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

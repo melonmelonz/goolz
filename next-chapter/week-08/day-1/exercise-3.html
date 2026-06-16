@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- The Day-By-Day Sprint Plan / NCD W8D1</title>
+<meta name="description" content="Exercise 3: turn the prioritized backlog into a specific day-by-day sprint plan -- tiny user stories, S/M/L estimates, a Definition of Done each, P1s first and Day 3 reserved for bugfix and deploy.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The Day-By-Day Sprint Plan</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 2 . 30 min</div>
+
+<p>
+  Goal: take the five Musts and pin them to specific half-days, in the same vocabulary I used on the Friday agile board -- each task a tiny user story, an S/M/L estimate, and a Definition of Done that says exactly what proves it is finished. The four rules I am holding myself to: P1s go first, Musts get real time slots (not "work on stuff"), Day 3 morning is bugfix and polish only -- no new features on deploy day -- and I pad every estimate, because everything takes longer than I think.
+</p>
+
+<div class="card">
+  <div class="card-label">Vocabulary Check -- so this reads like Friday</div>
+  <p><b>User story:</b> "As a user, I can ___ so that ___." <b>Estimate:</b> S = under 30 min, M = 30-60 min, L = over an hour. <b>Definition of Done:</b> the observable thing that proves it works -- not "I wrote the code" but "I clicked it and saw X."</p>
+</div>
+
+<h2>Day 1 -- today, afternoon block (~2 hours)</h2>
+
+<p><b>Block 1 (~1h) -- P1: AI summary survives production.</b></p>
+<ul>
+  <li><b>Story:</b> As a user, I can paste a job link on the live site and get a summary instead of a crash.</li>
+  <li><b>Tasks:</b> set <code>OPENAI_API_KEY</code> in Vercel env; wrap the route in try/catch so a key/API failure returns a friendly "couldn't summarize that one" message; redeploy a preview. <b>(M)</b></li>
+  <li><b>Done:</b> on the preview URL, a valid posting link returns a summary (200), and a forced failure returns the friendly message -- no 500, page stays up.</li>
+</ul>
+
+<p><b>Block 2 (~1h) -- P1: guard the AI input + P2: stale board after edit.</b></p>
+<ul>
+  <li><b>Story:</b> As a user, an empty or junk paste tells me to fix it instead of breaking the page; and when I edit an opportunity I see the change immediately.</li>
+  <li><b>Tasks:</b> reject empty / non-URL input before the OpenAI call (S); add revalidation after the PUT so the board reflects the edit without a hard refresh (S). <b>(S + S)</b></li>
+  <li><b>Done:</b> empty box and "not a url" both show an inline message and never fire the call; editing a title updates the card on the board with no manual refresh.</li>
+</ul>
+
+<h2>Day 2 -- full build day (~6 hours)</h2>
+
+<p><b>Morning lab (~2.5h)</b></p>
+<ul>
+  <li><b>Deploy to production on a real URL (M).</b> Story: As a user, I can open ReEntry Tech at a public HTTPS URL on my phone. Done: the live URL loads the board, create works end-to-end, AI summary works -- tested from a phone, not just the laptop.</li>
+  <li><b>Empty state on the board (S).</b> Story: As a first-time user with no opportunities yet, I see a friendly prompt and a clear "Add your first one" button, not a blank rectangle. Done: a board with zero rows (or a filter matching zero) renders the empty state with a working CTA.</li>
+</ul>
+
+<p><b>Afternoon lab (~2.5h)</b></p>
+<ul>
+  <li><b>Should-have: presence validation + optimistic delete (S + S).</b> Done: an all-spaces title is rejected with a message; a deleted card disappears on click.</li>
+  <li><b>Start documented user activity (M, continues Day 3).</b> Story: a real person uses the live app. Done: at least one non-me user has added an opportunity on the live URL; I have a screenshot and a sentence of their feedback.</li>
+</ul>
+
+<p><b>End of afternoon (~30 min) -- test everything.</b> Click through every feature on the live URL, write down every new bug. This is where Day 3's first block comes from.</p>
+
+<h2>Day 3 -- morning only (~3 hours), deploy in the afternoon</h2>
+<ul>
+  <li><b>First block (~1h):</b> fix the bugs found in Day 2 testing. No new features -- triage what the click-through surfaced.</li>
+  <li><b>Second block (~1h):</b> one quick Should-have -- AI loading spinner, plus the mobile card-overlap fix if there is room.</li>
+  <li><b>Pre-lunch (~30 min):</b> final cleanup -- strip the <code>console.log</code>s from the AI route, swap the Week 4 placeholder tagline for the real pitch, check the layout at 360px.</li>
+  <li><b>Afternoon:</b> finish documented user activity (get to 2-3 users + screenshots), then the final deploy.</li>
+</ul>
+
+<div class="answer">
+  <strong>Why Day 3 morning has no new features</strong>
+  <p>Shipping a new feature on deploy day is the classic way an app that worked at lunch is broken at 4pm. Day 3 morning is reserved for fixing what Day 2's testing surfaced and one small polish item -- nothing that can introduce a new failure path right before the thing goes live. If I finish the Musts early, I pull from Should; I do not borrow trouble by scheduling Shoulds into the main plan.</p>
+</div>
+
+<h2>Deliverable</h2>
+<p>
+  A day-by-day plan with specific, checkbox-able tasks, each a user story with an S/M/L estimate and a Definition of Done. P1s sit in Day 1 Block 1. Day 3 is bugfix and deploy. The Musts add up to roughly eight hours against twelve-plus available, which is the buffer the rules demand. Next exercise hands it to a partner to find the holes I cannot see.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

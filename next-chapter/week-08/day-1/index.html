@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 8 -- Day 1 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 8 Day 1. Project Kickoff + Sprint Planning. Confirm the app, audit it honestly, prioritize with MoSCoW, triage bugs P1/P2/P3, build a day-by-day sprint plan, and start fixing P1s. The hardest part of shipping is deciding what not to build.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 1 -- Project Kickoff + Sprint Planning</h1>
+<div class="subtitle">NCD . WK8 . D1 . five exercises loaded . the week I stop building features and start deciding what not to build</div>
+
+<p>
+  Final build week. By Day 3 the app is on the internet, by Day 4 I present it for the Phase 2 gate, and between here and there is the part nobody tells you is the hard part. The hard part is not writing the code. I have spent seven weeks proving I can write the code, mostly with an AI pair leaning over my shoulder. The hard part is the list -- the one that has been quietly growing since Week 5, the half-built pages and the "I'll get to that later" items and the three bugs I keep stepping around because fixing them is less fun than adding the next thing. Today is the day I face that list honestly and decide, item by item, what actually matters.
+</p>
+
+<p>
+  The morning is the Kickoff Ceremony, and for most of the cohort -- me included -- it is a confirmation, not a pivot. I am not inventing a new app today. I am standing up the one I have been building since Week 4 and saying out loud, in one sentence, what it is and who it is for. That sentence has to survive a partner poking at it: is the scope right-sized for four days, what is the one feature that proves the thing works, what gets cut first when time runs out. If I can answer those three without flinching, I am ready to plan. If I cannot, that is the signal to scope down before I write another line.
+</p>
+
+<p>
+  Then the discipline I have been avoiding: prioritization. MoSCoW -- Must / Should / Could / Won't -- and a bug triage that sorts crashes from cosmetics. The whole afternoon is an audit and a plan and the first hour of execution. Not a fun afternoon, exactly. But every prototype I have ever abandoned died the same way: I kept adding "one more thing" until the one thing that actually mattered never got finished. This week I write the must-haves down and I do not let the list grow. Shipping something imperfect that works beats something perfect that does not exist.
+</p>
+
+<div class="card">
+  <div class="card-label">Kickoff Ceremony -- The One-Sentence Pitch</div>
+  <p><b>Confirming, not pivoting.</b> I am shipping <b>ReEntry Tech</b> -- an opportunities board for people coming home from incarceration. The pitch: <i>ReEntry Tech, for someone in their first ninety days out, tracks jobs, certifications, and appointments in one place and turns a wall-of-text job posting into plain-language bullet points.</i></p>
+  <p><b>My one user:</b> a specific person -- a guy I know who came home in March, juggling a parole appointment, two job leads, and a forklift cert deadline, all of it living in screenshots and a folded-up piece of paper. He is who I picture when I decide what is in and what is out.</p>
+  <p><b>The ONE must-have that proves it works:</b> he can add an opportunity and see it on the board, on a real URL, on his phone, without me sitting next to him. Everything else is in service of that.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>Where I left off:</b> end of Week 7. Full CRUD on the Opportunities board against Postgres through Prisma, a Vitest suite on the pure utils and the GET handler with the database mocked, and the AI-touch feature -- paste a job-posting URL and the OpenAI call summarizes it into "what this is / what they want / what to bring." It works on my laptop.</p>
+  <p><b>What I'm doing today:</b> confirming the app in the kickoff, then planning the sprint -- audit, prioritize with MoSCoW, build a day-by-day plan, and start fixing P1 bugs.</p>
+  <p><b>How I'm feeling about the launch:</b> honestly, a little anxious, and specifically about the gap between "works on localhost" and "works on a URL my user opens cold." That gap is where the P1s live and I know it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- What A Sprint Is</div>
+  <p>A sprint is a focused block of time with exactly three things: a clear goal, a defined scope, and a hard time limit. Mine is three days -- today's afternoon, all of Day 2, and Day 3 morning, with the deploy in Day 3 afternoon. Roughly twelve to fourteen hours of real build time. Not three weeks, not "until it's perfect." When the time is up I ship what I have.</p>
+  <p>The defined-scope half is the one people skip. Scope is not just the list of what gets built -- it is, equally and more importantly, the list of what does not. The question I am supposed to be asking is not "what would be cool" or "what did I originally plan back in Week 4." It is "what matters" -- what makes this usable, presentable, and something I am not embarrassed to show my user.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- MoSCoW</div>
+  <table>
+    <tr><th>Category</th><th>Means</th><th>Example for ReEntry Tech</th></tr>
+    <tr><td>Must Have</td><td>app does not work without it -- ship-blocker</td><td>"the AI summary 500s in production"</td></tr>
+    <tr><td>Should Have</td><td>important, app still functions without it</td><td>"reject an empty title on the create form"</td></tr>
+    <tr><td>Nice to Have</td><td>better, but not essential</td><td>"a loading spinner while the AI thinks"</td></tr>
+    <tr><td>Won't Do</td><td>not this sprint, period</td><td>"user accounts, a calendar view, notifications"</td></tr>
+  </table>
+  <p>The rules for Must Have are strict on purpose. Three to five items, max -- if everything is a must-have, nothing is. Must-haves are about the app <i>working</i>, not looking perfect. And the test for every candidate is one sentence: <b>"if this isn't done, can someone still open my app and use it?"</b> If the answer is yes, it is not a must-have, and it moves to Should.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Bug Triage: P1 / P2 / P3</div>
+  <table>
+    <tr><th>Priority</th><th>What it is</th><th>When</th></tr>
+    <tr><td>P1</td><td>app crashes or a core feature is dead</td><td>FIRST. today.</td></tr>
+    <tr><td>P2</td><td>feature broken but the app still runs</td><td>in must-have time</td></tr>
+    <tr><td>P3</td><td>cosmetic -- ugly but it works</td><td>if time allows</td></tr>
+  </table>
+  <p>P1s get fixed before anything else exists. If the app throws a 500 when my user pastes a job link, nothing else on the list matters until that is dead. The trap is spending Day 1 on a satisfying P3 -- realigning cards on mobile feels productive -- while a P1 sits there waiting to ruin the demo.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- What "Done" Means</div>
+  <p>Done is four things: it <b>works</b> (core features run without crashing), it is <b>deployed</b> (a real URL, not localhost), a <b>real person can use it</b> (someone who is not me opens it and figures out what to do), and I <b>can explain it</b> (walk someone through what it does, how I built it, what AI tools I used).</p>
+  <p>Done is explicitly <i>not</i>: every feature I imagined, a design that looks like a funded startup, zero bugs, or me being fully satisfied with every line. I have to keep reading that back to myself, because my instinct on a deadline is to polish the thing I just touched instead of finishing the thing that is still broken.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Trap Of "One More Feature"</div>
+  <p>It sounds like "let me just also add," or "it would only take an hour," or "the app would be so much better if." Every one of those trades time away from something already on the list. In a three-day sprint, one extra feature can be the reason a must-have does not get finished. The rule I am taping to the monitor: <b>if it is not on the Must Have list, it does not exist this week.</b></p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Audit My App</span>
+      <span class="ex-desc">click through every page and feature of ReEntry Tech, write down Works / Broken / Missing, and assign P1/P2/P3 to everything in the Broken column -- brutally honest, no generosity</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Prioritize The Backlog (MoSCoW)</span>
+      <span class="ex-desc">fold the audit into one backlog, sort into Must / Should / Could / Won't, run the "can someone still use it" test on every Must, and estimate S/M/L until the Musts fit the time</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Build The Day-By-Day Plan</span>
+      <span class="ex-desc">allocate the Musts across the three half-days as tiny user stories with S/M/L estimates and a Definition of Done each -- P1s first, Day 3 reserved for bugfix and deploy, buffer baked in</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Peer Review The Plan</span>
+      <span class="ex-desc">swap plans, add up the hours, hunt for a P1 the owner is ignoring, flag any Must that is really a Should, check Day 3 is not overloaded, revise off the feedback</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Start Building -- P1s First</span>
+      <span class="ex-desc">execute the Day 1 block: kill the AI-summary 500 in production with a wrapped route and a Vercel env var, fix the stale board after an edit, commit each green step</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- My Top 3 Must-Haves, Out Loud</div>
+  <p>
+    Two minutes to my partner, naming the three must-haves and why each is a must and not a should. <b>One:</b> the AI summary cannot 500 in production -- it is the whole AI-touch feature, the thing the gate wants, and right now the key only lives in <code>.env.local</code> so on a real URL it dies; if it is not done, the headline feature is a crash. <b>Two:</b> it has to be deployed to a live URL -- "done" literally requires it, and my user cannot open localhost from his phone. <b>Three:</b> the board needs an empty state -- a real first-time user opens a fresh app and an empty grey rectangle is indistinguishable from a broken page, so without it the very first impression reads as "broken." The thing I cut to make room: a second AI feature, "help me phrase a request to a parole officer," which I genuinely like and which is now firmly Won't Do this sprint.
+  </p>
+  <p>
+    Their challenge question was the one I was hoping to dodge: "is the empty state really a Must, or is that a Should?" I sat with it. It survives, but barely -- because my one user is, definitionally, opening an app with zero rows in it, so for <i>him</i> the empty state is the entire first screen. If my user were me, with a seeded database, it would be a Should. The user defines the priority. That is the answer I will give at the gate when they ask me to defend a call.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    I have always thought of prioritization as a planning chore -- the boring paperwork you do before the real work. Today it flipped into something else: it is the work. The audit was uncomfortable in a way I did not expect, because writing "the AI feature 500s in prod" in a column titled Broken, in my own handwriting, is different from knowing it vaguely in the back of my head. The back of my head had been protecting that bug. The column would not let it hide. Half the value of the exercise was just refusing to be generous with myself for forty minutes.
+  </p>
+  <p>
+    The deeper shift was the must-have test -- "can someone still use it." It is a ruthless little sentence and it dissolved arguments I had been having with myself for weeks. The second AI feature I love? Someone can use the app without it. Gone, to Won't Do, no debate. The empty state I was about to dismiss as polish? My specific user opens a screen with nothing on it, so for him there is no app without it. Stays. The sentence does not care what I find fun to build. It only cares whether the person I am building for can get value, and that turns out to be exactly the standard ReEntry Tech needs -- the data is about somebody's actual reentry, jobs and certs and a parole date he will act on, and "I thought it was cool" is not a reason to spend a day of a four-day sprint. What matters is what he can use on Day 4. Everything else is Won't Do.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

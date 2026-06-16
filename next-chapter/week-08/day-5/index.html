@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 8 -- Day 5 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 8 Day 5. The Phase 2 Gate: Present, Reflect, Next Chapter. Final pre-flight, map every gate requirement to evidence, present the app, run a blameless retrospective, and turn the Won't-Do backlog into a roadmap. Done is a decision, not a feeling.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 5 -- The Phase 2 Gate</h1>
+<div class="subtitle">NCD . WK8 . D5 . five exercises loaded . the growing untouched list is now a live URL a real person opens</div>
+
+<p>
+  Last day. Not the last day of building -- the building mostly ended Wednesday -- the last day of the phase, the one where I stand in front of the gate and say what I made and how I made it, and then sit down and account for the whole sprint honestly. There is a specific quiet to this morning that I did not expect. On Day 1 the work was a list that kept growing while I looked away from it. The half-built pages, the three bugs I stepped around, the AI feature I knew was shaky on deploy. That list does not exist anymore. It got triaged into a plan, the plan got executed, and the thing the list described is now a URL my user opens from his phone in the morning. I am not sure I have ever finished something this cleanly before. It feels strange, and a little bit like relief.
+</p>
+
+<p>
+  The morning is the gate. Before I present I run one final pre-flight -- open the live URL cold, click the four-criteria checklist one more time, confirm the screenshots and the demo script from Day 4 are loaded and in order. Then I present. The Day 4 rehearsal was the whole point of Day 4, so this is not improv: schema walkthrough, CRUD demo, the AI-touch story, the CLI session, in the order I drilled it. Five gate requirements, and for each one I can point at the exact evidence, because I built to the gate on purpose since the kickoff. The gate is not a trap. It is a checklist, and I wrote my must-haves to match it.
+</p>
+
+<p>
+  The afternoon is the part I am most curious about: the retrospective. Not a victory lap -- a blameless, specific accounting of what went well, what did not, and what I would do differently. The P1s I killed on the first afternoon. The MoSCoW cut that held all week. The one estimate that ran double. The should-have I never got to. And then the Won't-Do list, which I am going to stop calling a graveyard and start calling a roadmap, because "won't do this sprint" was always a dated decision and the date has now passed. I end the day not with a bow but pointed forward -- at what ReEntry Tech could be next, and at the next phase waiting after this one.
+</p>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>Where I left off:</b> end of Day 4. Presentation prepped and rehearsed -- schema walkthrough, CRUD demo script, the AI-touch story, a clean CLI session, run end to end as a timed dry run that came in under the limit with room to breathe. The app itself has been frozen and stable since Day 3, three real users on it, screenshots and feedback captured.</p>
+  <p><b>What I'm doing today:</b> final pre-flight on the live URL, present at the gate, then run a sprint retrospective and turn the backlog into a roadmap.</p>
+  <p><b>How I'm feeling walking into the gate:</b> calm, mostly, which surprises me. The anxiety on Day 1 was about the gap between localhost and a live URL my user opens cold. That gap is closed -- he has been opening it for three days. There is nothing left to be anxious about that I have not already watched work. A little proud, which I'll allow.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- What The Gate Checks</div>
+  <p>The Phase 2 gate is five requirements, and the reassuring thing is that none of them are a surprise. They are the same five I wrote the must-have list against on Day 1. The gate wants: one entity with relationships, CRUD create-and-read working end to end, one AI-touch feature, a deployed live URL, and documented user activity. For every one of those I can put my finger on a specific artifact in the project, which is the whole game -- you do not pass a gate by talking around it, you pass it by pointing at the thing.</p>
+  <table>
+    <tr><th>Gate requirement</th><th>My evidence</th></tr>
+    <tr><td>One entity with relationships</td><td>the Prisma <code>Opportunity</code> model belongs-to <code>Category</code> (one Category, many Opportunities)</td></tr>
+    <tr><td>CRUD create + read end to end</td><td>the create form posts, validates, inserts, redirects -- and the new row renders on the board</td></tr>
+    <tr><td>One AI-touch feature</td><td>paste a job-posting URL, OpenAI returns "what this is / what they want / what to bring"</td></tr>
+    <tr><td>Deployed live URL</td><td>the Vercel production URL, working end to end for someone who is not me</td></tr>
+    <tr><td>Documented user activity</td><td>3 real users on the live URL, screenshots plus written feedback captured Day 3</td></tr>
+  </table>
+  <p>The point of mapping these out the night before is that under the lights, "can you show me where the relationship is" should be a one-second answer, not a scramble through the codebase. I know where each one lives.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Pre-Flight</div>
+  <p>Before any demo, you smoke-test the live thing one last time. Not the localhost version, not the version in your memory -- the actual deployed URL, opened cold the way the panel will open it. The cost of skipping this is the demo-day heart attack: you click the headline feature in front of the room and it 500s because a redeploy went out an hour ago and you never reloaded the page. Five minutes of clicking saves that.</p>
+  <p>My pre-flight is the four-criteria done-check turned into a fast loop: it <b>works</b> (add an opportunity, see it on the board, run one AI summary), it is <b>deployed</b> (the live URL, on my phone, not localhost), a <b>real person used it</b> (the screenshots are open in a tab), and I <b>can explain it</b> (the script is printed and the schema is on screen). Click, confirm, breathe.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- How To Run A Retrospective</div>
+  <p>A retro has three columns and one rule. The columns: what went <b>well</b>, what went <b>badly</b>, what I would <b>do differently</b>. The rule: blameless. The point is not to feel good or to feel bad, it is to extract the one or two changes that make the next sprint better. A retro that produces no change to next time was a feelings session, not a retrospective.</p>
+  <pre><code>RETRO -- ReEntry Tech, Phase 2 sprint
+
+WELL                  | what worked, keep doing it
+BADLY                 | what hurt, name it specifically
+DIFFERENTLY           | the concrete change for next time
+
+rule: blameless. attack the process, not the person.
+output: 1-2 changes I will actually make, written down.</code></pre>
+  <p>The most useful line in any retro is the estimate I got wrong -- specifically wrong, "I said small and it was a day" -- because that is the line that calibrates the next estimate. Everything else is nice to know. The bad estimate is the thing you can spend.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Backlog Becomes A Roadmap</div>
+  <p>"Won't Do" is the most misread column on the MoSCoW board. It is not a graveyard and it is not "never." It is "not this sprint," which is a decision with a date stamped on it, and the date was the gate. Past the gate, the Won't-Do list stops being scope you cut and becomes the roadmap you would build next -- prioritized fresh, because what mattered least under a four-day clock is not necessarily what matters least with the gate behind you.</p>
+  <p>My cut list: a second AI feature (help me phrase a request to a parole officer or an employer), user accounts and auth, a calendar view, a categories-CRUD UI, notifications. Reframed as a roadmap and ordered by what I would actually build first if ReEntry Tech kept going -- and an honest question folded in about whether it should keep going at all, or whether the right next move is to hand it off rather than own it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- What This Sprint Taught Me</div>
+  <p>Three things, and I want them written down before the feeling fades. <b>One:</b> estimates run long. The empty state I called "small" on Day 1 ate most of an afternoon by the time it handled the loading and error cases honestly. Plan for the thing to be bigger than it looks. <b>Two:</b> cutting is the skill. The MoSCoW list did not protect itself -- I had to keep refusing the second AI feature all week, and every time I refused it, a must-have got finished instead. <b>Three:</b> done is a decision, not a feeling. I never woke up satisfied that the app was complete. I decided it was done -- works, deployed, a real person uses it, I can explain it -- and shipped on the decision, because the feeling was never going to arrive on its own.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Final Pre-Flight</span>
+      <span class="ex-desc">open the live URL cold one last time, run the four-criteria checklist with a proof beside each line, confirm the Day 4 screenshots and demo script are loaded -- the five-minute check that prevents the demo-day heart attack</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Map Every Gate Requirement To Evidence</span>
+      <span class="ex-desc">walk the gate's five requirements and point at the exact proof for each -- the Opportunity/Category schema, the create-to-board flow, the OpenAI summary, the Vercel URL, the 3 screenshots -- so every "show me" is a one-second answer</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Present At The Gate</span>
+      <span class="ex-desc">deliver the Day 4 script -- schema walkthrough, CRUD demo, AI story, CLI session -- then an honest reflection on how it actually went: what landed, what I fumbled, the question I didn't fully nail</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Sprint Retrospective</span>
+      <span class="ex-desc">a blameless three-column retro tied to the real week's numbers -- P1s dead Day 1, the cut that held, the estimate that ran 2x, the should-have I never reached -- ending in one change I'll actually make</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">The Backlog Becomes A Roadmap + Next Chapter</span>
+      <span class="ex-desc">reframe the Won't-Do list as a post-gate roadmap, prioritized for what I'd build first and whether I should at all, and close on forward motion -- what this phase taught and where the next one points</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">The Gate, In My Own Words</div>
+  <p>
+    If someone stopped me in the hall and asked what I did this phase, the honest version is short. I took an idea -- a board for someone in their first ninety days home, where the jobs and certs and appointments live in one place instead of in screenshots and a folded piece of paper -- and I made it real enough that the specific guy I built it for opens it on his phone in the morning. Not a mockup, not a demo on my laptop. A live URL with his data in it, a parole appointment and two job leads and a forklift cert deadline, all of it in rows he added himself. The gate checks five things and the app does all five, but that sentence is the one that matters to me. The thing I was picturing on Day 1 is a thing he can use on Day 5.
+  </p>
+  <p>
+    The unglamorous truth underneath it is that the phase was mostly about deciding, not building. I spent seven weeks proving I could write the code. This week I proved I could decide what not to write -- which estimate to trust, which feature to cut, when to call a thing done and walk away from it. That is the harder skill and it is the one I came in weakest at, and the gate is really a test of whether I learned it. I think I did. The empty list on my plan, every item checked, is the evidence.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    On Day 1 I wrote that "done" is a definition I had to keep reading back to myself, because my instinct on a deadline is to polish the thing I just touched instead of finishing the thing that is still broken. Today that definition stopped being a rule I was enforcing on myself and became something I actually believe. Done is a decision. Nobody hands it to you and the satisfied feeling never quite arrives -- there is always one more case to handle, one more bit of polish, the second AI feature I genuinely wanted to build. At some point you look at the four criteria, see that all four are true, and you decide. The deciding is the act. I had been treating "done" as a finish line I would feel myself cross, and it is not that. It is a call you make while a hundred things are still imperfect, because the things that matter are true.
+  </p>
+  <p>
+    The other thing, quieter, is what the cut feature taught me by being cut. I never built the parole-officer phrasing helper. I wanted to, I still want to, and the app is plainly better for me having not built it this week -- because the time it would have taken went into the empty state and the production hardening and getting three real people onto the live URL instead. Every hour I refused that feature, a must-have got finished. That is the whole lesson of the sprint compressed into one feature I love and did not make. It is not in the graveyard. It is at the top of a roadmap now, with the gate behind me and the date passed, and the next phase is already pulling at the edge of this one. I am not bowing. I am looking at what comes next.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

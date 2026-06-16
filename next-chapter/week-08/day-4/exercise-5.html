@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Dry Run + Defending Prioritization / NCD W8D4</title>
+<meta name="description" content="Exercise 5: a full timed run-through targeting five minutes, cut what drags, and prepare for the hardest gate question -- defend a feature you cut -- by rehearsing the answer for the second AI feature moved to Won't Do.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Dry Run + Defending Prioritization</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 2 . 40 min</div>
+
+<p>
+  Goal: stitch the four pieces into one presentation, run it start to finish against a timer targeting about five minutes, cut whatever drags, and then rehearse the single hardest question the gate can throw -- "defend a feature you cut." The first four exercises built the parts. This one assembles them, finds out how long the assembled thing actually takes (spoiler: too long), and trims. The dry run is mercy: it shows me my five-minute demo is really nine minutes while there is still a night to fix it, instead of finding out in the room.
+</p>
+
+<h2>The run order and the timer</h2>
+
+<p>
+  I set a timer and went start to finish, no stopping to fix things, just talking and clicking like it was real. The order: a one-line pitch, the schema walkthrough, the live CRUD demo, the AI-touch story, the CLI session, and a close. Then I wrote down what each part actually took versus what I had budgeted.
+</p>
+
+<table>
+  <tr><th>Segment</th><th>Budget</th><th>Actual</th><th>Verdict</th></tr>
+  <tr><td>One-line pitch</td><td>0:20</td><td>0:25</td><td>fine</td></tr>
+  <tr><td>Schema walkthrough</td><td>1:00</td><td>2:10</td><td>ran long -- I over-explained the foreign key</td></tr>
+  <tr><td>Live CRUD demo</td><td>1:00</td><td>1:05</td><td>fine, the script held</td></tr>
+  <tr><td>AI-touch story</td><td>1:30</td><td>1:25</td><td>good, already tight</td></tr>
+  <tr><td>CLI session</td><td>1:00</td><td>2:40</td><td>ran way long -- narrated every commit</td></tr>
+  <tr><td>Close</td><td>0:20</td><td>0:40</td><td>rambled the ending</td></tr>
+  <tr><td><b>Total</b></td><td><b>~5:10</b></td><td><b>8:25</b></td><td>three and a half minutes over</td></tr>
+</table>
+
+<div class="answer">
+  <strong>The dry run is where I find out it's actually nine minutes</strong>
+  <p>I would have sworn the assembled thing was five minutes. It was eight and a half. The over-run was not evenly spread -- two segments ate it, the schema and the CLI session, both because I narrated every detail instead of the load-bearing ones. You cannot feel this without a timer; in your head every segment is the length you intend, and on the clock it is the length you actually deliver. Finding the three extra minutes tonight is the entire reason to do a dry run instead of just feeling ready.</p>
+</div>
+
+<h2>What got cut</h2>
+
+<p>
+  The cuts came from the two long segments. I do not need to explain the mechanics of a foreign key -- I name the relationship, give the why in three short reasons, and move. And I do not narrate all ten commits -- I point at three load-bearing ones (schema, the AI fix, the deadline TDD) and let the rest scroll. Trimming is not losing content; it is trusting the artifact to speak so I do not have to.
+</p>
+
+<pre><code>CUTS (~3:15 recovered):
+  schema:  drop the foreign-key mechanics lecture       -1:00
+  schema:  three reasons stay, but as a list not a tour -0:10
+  CLI:     narrate 3 commits, not 10                    -1:30
+  CLI:     run tests, say one line, don't read each file -0:15
+  close:   one sentence, not three                      -0:20
+
+  new total: ~5:10  ->  fits</code></pre>
+
+<h2>The hardest question -- defend a feature you cut</h2>
+
+<p>
+  This is the gate question I am most likely to fumble, because cut features are easy to be vague about. The cut I am defending is the second AI feature -- "help me phrase a request to a parole officer," draft a respectful message asking to reschedule a check-in or explain a missed appointment. I genuinely liked it. It is arguably the most humane thing I imagined building. And I moved it to Won't Do, and I have to defend that with a straight face.
+</p>
+
+<table>
+  <tr><th>The question</th><th>My answer</th></tr>
+  <tr><td>"Why did you cut the parole-officer letter feature?"</td><td>"It failed the one must-have test: can someone use the app without it? Yes -- the core job of tracking opportunities works completely without it. So it's a Won't Do for a four-day sprint, not a Never."</td></tr>
+  <tr><td>"But it sounds like the most valuable feature."</td><td>"Maybe the most ambitious. But it's a second, riskier AI surface -- a sensitive message to an authority figure -- and getting it wrong has real stakes for my user. It needs more care than a four-day sprint gives, not less."</td></tr>
+  <tr><td>"So you cut it because it was hard?"</td><td>"I cut it because it wasn't necessary for the app to deliver its core value, and because shipping it half-baked would've been worse than not shipping it. Prioritization is choosing what not to build so the must-haves actually land."</td></tr>
+</table>
+
+<div class="answer">
+  <strong>The defense that holds</strong>
+  <p>The honest, strong version is not "it was too hard." It is "a user can get the app's core value without it, so it failed the must-have test -- and a sensitive AI message to a parole officer is exactly the kind of high-stakes surface I should not ship under a four-day deadline without real care." That answer respects the feature, owns the call, and ties it back to the prioritization discipline the whole week was about. The user defines the priority, and for the core loop, this one was genuinely optional.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A full presentation, assembled and timed: an 8:25 first run trimmed to about 5:10 by cutting the two segments that dragged, plus a rehearsed defense of the cut parole-officer feature with answers ready for the follow-up pushback. The thing I am walking into the gate with is not just an app that works -- it is the ability to explain every choice inside it and defend the ones I didn't make. That is what the gate grades, and after today I can do it out loud, on a clock, without flinching.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

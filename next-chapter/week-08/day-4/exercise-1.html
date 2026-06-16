@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- The Schema Verbal Walkthrough / NCD W8D4</title>
+<meta name="description" content="Exercise 1: write and rehearse the out-loud explanation of the ReEntry Tech data model -- the Opportunity entity, the one-to-many Category relationship, and why Category is its own table rather than a string column.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The Schema Verbal Walkthrough</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 2 . 35 min</div>
+
+<p>
+  Goal: be able to explain my data model out loud, cold, in about a minute -- the Opportunity entity, its fields, the relationship to Category, and the why behind the shape. The gate calls this the "one entity with relationships" walkthrough, and I thought it would be the easy exercise of the day until I actually tried it. I can write the schema in my sleep. Saying why it is shaped this way, to a person who is going to ask "why not just a string," is a different muscle and it turns out I had not been using it. This exercise is writing the script and rehearsing it until the why comes out clean.
+</p>
+
+<h2>The entity and the relationship</h2>
+
+<p>
+  The center of the app is the <b>Opportunity</b> -- the actual thing my user tracks. A job lead, a forklift cert with a deadline, a parole appointment, a resource. Each Opportunity <b>belongs to a Category</b>, and each Category <b>has many Opportunities</b>. That is a one-to-many: one on the Category side, many on the Opportunity side. The Opportunity holds the foreign key (<code>categoryId</code>) because the "many" side is always the side that carries the reference to the "one." That sentence -- the many side holds the key -- is the thing I want to be able to say without thinking, because it is the bit people fumble.
+</p>
+
+<pre><code>// schema.prisma
+model Opportunity {
+  id         String   @id @default(cuid())
+  title      String
+  type       String   // job | cert | appointment | resource
+  org        String?
+  sourceUrl  String?
+  location   String?
+  deadline   DateTime?
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  opportunities Opportunity[]   // the "many" side of the relation
+}</code></pre>
+
+<p>
+  Walking the fields: <code>title</code> is what shows on the card. <code>type</code> is the chip the board filters on -- job, cert, appointment, resource. <code>org</code>, <code>location</code>, and <code>sourceUrl</code> are the where-and-who, all optional because a lead is often half-known. <code>deadline</code> is the one I care about most -- a cert date, a parole date, the field a person actually acts on -- which is why Day 3 spent a whole bug fix turning it from a raw ISO string into something readable. <code>notes</code> is freeform. <code>createdAt</code> drives the newest-first ordering on the board. And <code>categoryId</code> is the foreign key that wires this Opportunity to its one Category.
+</p>
+
+<h2>The why -- the part I stalled on</h2>
+
+<p>
+  Here is the question the gate will absolutely ask: why is Category its own table with its own <code>id</code>, instead of just a <code>category</code> string column on Opportunity? I knew the answer was "because that's correct," which is not an answer. So I wrote down the three real reasons until I could say them without circling.
+</p>
+
+<table>
+  <tr><th>Reason</th><th>What it buys me</th></tr>
+  <tr><td>Integrity</td><td>a string column lets "Jobs", "jobs", and "Jobss" all coexist as different categories -- a typo silently forks the data. A separate table with a unique name means a category exists once and everything points at the same row.</td></tr>
+  <tr><td>Filtering</td><td>the board groups and filters on a stable <code>categoryId</code>, not on whatever text someone typed. Rename "Employment" to "Jobs" once on the Category and every linked Opportunity follows -- no find-and-replace across rows.</td></tr>
+  <tr><td>Future-proofing</td><td>a Category can grow a color, an icon, a description later, and that data lives in one place. A string column has nowhere to hang that -- I'd be bolting parallel columns onto every Opportunity.</td></tr>
+</table>
+
+<pre><code>// the difference, concretely:
+
+// string column -- a typo invents a whole new "category"
+Opportunity { category: "Jobs" }
+Opportunity { category: "jobs" }    // now two categories, silently
+
+// separate table -- one row, everything points at its id
+Category    { id: "cat_01", name: "Jobs" }
+Opportunity { categoryId: "cat_01" }
+Opportunity { categoryId: "cat_01" }   // same category, guaranteed</code></pre>
+
+<div class="answer">
+  <strong>What rehearsing the why exposed</strong>
+  <p>I had modeled this on instinct in Week 4 -- separate table, foreign key, done, the way you do it when you've seen it done. I never once articulated the tradeoff until I tried to say it out loud today, and the stall was the tell. Knowing a thing is correct and being able to say why it is correct are two different states, and building only ever required the first one. The rehearsal dragged the second one out of me. That is uncomfortable in exactly the useful way.</p>
+</div>
+
+<h2>The honest tradeoff</h2>
+
+<p>
+  The part I am choosing to say out loud rather than hide: for a four-day app with one user, a plain <code>category</code> string column would have worked fine. The integrity and filtering wins are real but small at this scale, and the future-proofing is hypothetical. The separate table is the textbook-correct call and the one I would defend without hesitation in a system that grows -- but at this size it is a defensible choice, not a forced one. I would rather walk in able to weigh that than pretend the separate table was obviously, urgently necessary, because the second a sharp reviewer pokes "did you really need that for one user," a pretended answer collapses and a weighed one holds.
+</p>
+
+<div class="answer">
+  <strong>The script I'll actually say</strong>
+  <p>"My core entity is the Opportunity -- jobs, certs, appointments, resources my user tracks. Each one belongs to a Category and a Category has many Opportunities, so it's a one-to-many, with the foreign key on the Opportunity side. I made Category its own table instead of a string column for integrity, for stable filtering, and so a category can grow attributes later. Honestly, for a four-day app a string would've worked -- I'd defend the separate table firmly in a bigger system and call it a reasonable-but-optional call here."</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A one-minute schema walkthrough I can deliver cold: the Opportunity entity and its fields, the one-to-many to Category with the foreign key on the many side, three concrete reasons for the separate table, and an honest read of the tradeoff at this scale. Rehearsed out loud three times, and the why came out clean by the third. The thing I am carrying forward is that I can now say <i>why</i>, not just <i>that</i> -- which is the entire difference the gate is grading.
+</p>
+
+<nav class="ex-nav">
+  <a href="./">&#9664; Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

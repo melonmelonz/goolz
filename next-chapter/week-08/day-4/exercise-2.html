@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- The CRUD Demo Script / NCD W8D4</title>
+<meta name="description" content="Exercise 2: build a rehearsed click-path that shows Create and Read end-to-end cleanly on a pre-seeded record, with a line to say at each click and a recovery line ready for when something breaks on stage.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>The CRUD Demo Script</h1>
+<div class="subtitle">Exercise 2 / 5 . Level 2 . 35 min</div>
+
+<p>
+  Goal: a click-path I can walk in my sleep that shows Create and Read working end-to-end, cleanly, without my fate resting on typing a form correctly in front of a room. The gate wants to see the app do its core loop. The mistake is treating that as improv -- opening the live app cold and hoping. I have watched solid projects stall because someone fat-fingered a form on stage and burned ninety seconds recovering. This exercise is scripting the loop and rehearsing it so my hands run the path while my mouth does the talking.
+</p>
+
+<h2>Pre-seed so the read step has something real</h2>
+
+<p>
+  The board should not be empty when I open it. An empty board is true to my user's first-run, but in a demo it makes the Read step look like nothing happened. So I seed one sensible record before the gate -- a real-shaped Opportunity that gives the board something to show and gives me a known thing to point at. The forklift cert is the obvious pick, because it is the record from the real story: a deadline of Jul 14, a type of cert, an org. It is concrete and it is the one I have been talking about all week.
+</p>
+
+<pre><code>// prisma/seed.js -- one known record so the demo never opens to an empty board
+await prisma.opportunity.create({
+  data: {
+    title: "Forklift certification -- deadline Jul 14",
+    type: "cert",
+    org: "Regional Workforce Center",
+    location: "downtown",
+    deadline: new Date("2026-07-14"),
+    notes: "OSHA forklift cert, free for first-90-days program.",
+    category: { connect: { name: "Training" } },
+  },
+});</code></pre>
+
+<h2>The script -- a line at every click</h2>
+
+<p>
+  The path is Read, then Create, then Read again so the new row shows up. At each click I have one rehearsed sentence. Not a paragraph -- a sentence -- because the point is to keep moving and let the app do the talking.
+</p>
+
+<table>
+  <tr><th>Click</th><th>What I say</th></tr>
+  <tr><td>Open the live URL</td><td>"This is the board -- every opportunity my user is tracking, newest first. Here's the forklift cert with its Jul 14 deadline."</td></tr>
+  <tr><td>Tap "Add"</td><td>"Adding one is the core loop -- title, type, an optional org and deadline."</td></tr>
+  <tr><td>Type the known record</td><td>"Say he gets a warehouse lead -- title, type job, the org, paste the link." (a short record I've typed twenty times)</td></tr>
+  <tr><td>Submit</td><td>"It validates the title isn't blank, writes to Postgres through Prisma, and revalidates the board."</td></tr>
+  <tr><td>Land back on the board</td><td>"And there it is, top of the list -- that's Create and Read end-to-end on the live URL."</td></tr>
+</table>
+
+<pre><code>// the create record I rehearse -- short, all-known, no surprises
+title:  "Warehouse picker -- 2nd shift"
+type:   "job"
+org:    "Eastside Logistics"
+source: "https://example-jobs.com/warehouse-picker"
+// (deadline + notes left blank on purpose -- fewer fields to fat-finger)</code></pre>
+
+<div class="answer">
+  <strong>A scripted demo is not dishonest</strong>
+  <p>I had a hangup that scripting the demo was somehow cheating -- like a real demo should be improvised to prove the app really works. That's backwards. Improvising in front of a room wastes the room's time on my typing, and a fumble teaches them nothing about the app. Knowing exactly what I'll click and say is respecting the audience's time. The app's honesty is in it being live and real; my honesty is in showing it at its clearest, not at its most accidental.</p>
+</div>
+
+<h2>The recovery line, decided in advance</h2>
+
+<p>
+  Sometimes it breaks anyway -- the network stalls, a deploy is mid-flight, the OpenAI call is slow. The rule is to decide the recovery line now, in calm, so I am not improvising composure under stress. One sentence, then move on, no apologizing into the void.
+</p>
+
+<pre><code>If the create hangs or errors live:
+  -&gt; "That's the network being slow -- here's the same flow on the
+      record I added earlier," and I point at the seeded forklift cert.
+  Then keep moving. No narrating the failure, no debugging on stage.</code></pre>
+
+<div class="answer">
+  <strong>Why a smooth recovery reads as confidence</strong>
+  <p>A demo that hiccups and recovers cleanly actually lands as more confident than one that never hiccups, because it shows I know the app well enough to route around a problem instead of freezing on it. The pre-seeded record is the safety net -- whatever fails live, I always have a real row already on the board to fall back to. The recovery line turns a potential disaster into a two-second pivot.</p>
+</div>
+
+<h2>Checkpoint</h2>
+
+<p>
+  A rehearsed Create-then-Read click-path with a one-line script at each step, a short pre-typed create record chosen to minimize fumble, one seeded forklift-cert row so the board is never empty and the read always shows something real, and a single recovery line decided in advance with the seeded record as the fallback. Walked end-to-end three times until my hands knew it. The demo no longer depends on live-typing luck -- which is the whole point.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

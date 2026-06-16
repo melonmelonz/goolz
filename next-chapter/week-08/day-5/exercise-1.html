@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Final Pre-Flight / NCD W8D5</title>
+<meta name="description" content="Exercise 1: the last smoke-test before presenting -- open the live URL cold, run the four-criteria checklist with a proof beside each line, and confirm the demo screenshots and script are ready.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6A2;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Final Pre-Flight</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1 . 20 min</div>
+
+<p>
+  Goal: prove the live thing works before I stand in front of anyone, by opening it cold and clicking it -- not trusting my memory of it working three days ago. The app has been frozen since Day 3, but "frozen" is a thing I believe and pre-flight is a thing I check. This is the twenty minutes that prevents the demo-day heart attack: the headline feature 500ing in front of the room because something shifted and I never reloaded. I open the production URL on my phone, the way the panel will open it, and I walk the four criteria with a piece of evidence beside each line.
+</p>
+
+<h2>The four-criteria checklist, with proof</h2>
+
+<p>
+  This is the Day 1 definition of done turned into a fast loop. Each line is not "do I think this is true" -- it is "click it and watch it be true."
+</p>
+
+<table>
+  <tr><th>Criterion</th><th>The click</th><th>Proof I watched it</th></tr>
+  <tr><td>Works</td><td>add an opportunity, see it land on the board</td><td>added "Forklift cert -- renewal," it rendered top of the board, newest first</td></tr>
+  <tr><td>Works (AI)</td><td>paste one real job-posting URL, get a summary</td><td>pasted an Indeed link, got three bullets back in ~3s, no error</td></tr>
+  <tr><td>Deployed</td><td>open the production URL on my phone, not localhost</td><td>loaded over cellular, not wifi, off the Vercel URL -- real network</td></tr>
+  <tr><td>A real person used it</td><td>screenshots open in a tab, ready to show</td><td>3 users' screenshots plus the feedback notes, loaded and labeled</td></tr>
+  <tr><td>I can explain it</td><td>the demo script is printed, the schema is on screen</td><td>Day 4 script in hand, <code>schema.prisma</code> open in the editor</td></tr>
+</table>
+
+<div class="answer">
+  <strong>Open it cold, on the real network</strong>
+  <p>The single most common pre-flight miss is testing localhost and calling the live URL checked. They are different machines with different environment variables -- the whole Day 1 P1 was an env var that existed locally and not on Vercel. So I open the production URL specifically, on cellular specifically, signed out of anything, the way a stranger would. If it works there, it works.</p>
+</div>
+
+<h2>Confirm the demo materials are loaded</h2>
+
+<p>
+  Pre-flight is not only the app. It is the kit I present with. A working app and a fumbled scramble for the right browser tab still reads as unprepared. So the second half of the check is the materials, laid out in the order I'll need them.
+</p>
+
+<pre><code>PRE-FLIGHT -- demo kit
+[x] production URL open in a tab, logged out, cold-loaded
+[x] phone on cellular with the same URL up (the "on his phone" shot)
+[x] schema.prisma open in the editor, scrolled to Opportunity/Category
+[x] create form ready -- I know exactly what I'm typing in the demo
+[x] one real job-posting URL copied, ready to paste for the AI bit
+[x] 3 user screenshots + feedback notes, open and labeled
+[x] Day 4 script printed, demo steps in order
+[x] terminal ready for the CLI session (prisma studio / a query)</code></pre>
+
+<div class="answer">
+  <strong>The five-minute check that prevents the heart attack</strong>
+  <p>If I only had five minutes, it is these three clicks: add one opportunity and watch it hit the board, run one AI summary and watch the bullets come back, and load the URL on my phone off cellular. Create-read works, the AI feature works on the deployed build, and it is genuinely live on a real network. Everything else in the kit is presentation polish. Those three clicks are the difference between "it works" being a belief and being a thing I watched happen ninety seconds before I started talking.</p>
+</div>
+
+<h2>What I found</h2>
+
+<p>
+  Nothing broken, which is the boring outcome you want from a pre-flight. One small thing: the AI summary took closer to four seconds than three on the cold load, the first call after the serverless function spun up. Not a bug -- a cold start -- but worth knowing so I narrate it in the demo ("first one's a little slow, it's waking up") instead of standing there in dead air looking like the thing hung. Pre-flight does not only catch failures. It catches the things I should say out loud so a normal delay does not read as a crash.
+</p>
+
+<h2>Deliverable</h2>
+
+<p>
+  A completed pre-flight: four criteria clicked and confirmed on the live production URL over a real network, the full demo kit loaded in order, and one cold-start quirk noted to narrate rather than panic over. The app is ready and so is the kit. Next exercise maps each gate requirement to the exact artifact, so "show me where" is never a scramble.
+</p>
+
+<nav class="ex-nav">
+  <a href="./">&#9664; Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
