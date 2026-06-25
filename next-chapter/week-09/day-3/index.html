@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 9 -- Day 3 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 9 Day 3. Automation Day 2: Extend + RAG + MCP. The workflow runs; today I make it production-ready, learn retrieval-augmented generation and the Model Context Protocol, and price the whole thing honestly.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 3 -- Automation Day 2: Extend + RAG + MCP</h1>
+<div class="subtitle">NCD . WK9 . D3 . four exercises loaded . the day the workflow earns its keep</div>
+
+<p>
+  Yesterday I built "First 90" -- a Zapier automation for a small reentry transitional-housing nonprofit that takes a case manager's intake note, extracts structured data with an AI step, filters junk, and logs it to a Google Sheet while routing urgent appointments to immediate SMS. It runs. The happy path works. That is exactly the kind of thing that lulls you into leaving it in a half-finished state, because when you click Test Zap and see the row appear in the sheet, something in your brain files it under Done. Today is about reminding myself that "the happy path works" is not the same as "it works."
+</p>
+
+<p>
+  So the first part of today is production-hardening First 90: error guards, conditional routing, a date normalizer, a second AI step for the resident-facing reminder. The second part is new territory -- RAG, retrieval-augmented generation, which is the pattern behind AI that actually knows your documents. I ran the course's <code>rag.mjs</code> script over a folder of local reentry resource notes and tested it properly, including the out-of-context question that it should refuse. The third part is MCP, Model Context Protocol -- the class treated it as exposure only, which is the right call, but I have been running MCP servers in my own setup already, so I wrote about it from that familiarity. And then we priced the whole thing, which turned out to be the most interesting hour of the day.
+</p>
+
+<p>
+  The hard part is not writing the code. I have spent seven weeks proving I can write the code, mostly with an AI pair leaning over my shoulder. The hard part is the pricing conversation I had with myself this afternoon -- the value formula said one number, and my conscience and my community said a lower one, and figuring out which of those to trust, and why, is the thing that actually stayed with me tonight.
+</p>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> scoped and built First 90 in Zapier -- Webhook trigger, AI extract step (JSON with <code>name</code>, <code>type</code>, <code>nextDate</code>, <code>urgency</code>, <code>isReal</code>), Filter, Google Sheets append, and a Paths split (urgent / court -> SMS + Slack DM; normal -> Monday digest queue). Tested the happy path, confirmed rows in the sheet and the Twilio SMS fired.</p>
+  <p><b>What I'm doing today:</b> hardening the workflow with error guarding and a date normalizer, running the RAG exercise over my resource docs, doing the pricing worksheet, and writing the one-page pricing summary for First 90.</p>
+  <p><b>Where I'm stuck:</b> the thing I flagged in standup is already the first thing I am fixing. The AI step returns <code>nextDate</code> as free text -- "next Tuesday," "the 14th," "06/14/26," whatever the note happened to say. The Google Sheet expects a real date. When the AI returns an ambiguous or empty value the row either errors out or logs a blank cell that will never trigger a reminder. A Zap that stops silently is worse than no Zap, because the case manager thinks it ran. That is where I am starting.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Production-Ready Workflows</div>
+  <p>A workflow in production has one job the happy-path test does not cover: it has to handle everything that is not the happy path. Bad data, partial data, an AI that returned creative JSON, a Twilio number that had a hiccup. The question is not "does it work?" -- we proved that yesterday. The question is "what happens when it doesn't?"</p>
+  <p><b>Filters as guards.</b> A Filter step is the simplest version of input validation in Zapier. Put one right after the AI step and make it a gate: continue only if <code>type</code> is in the allowed set and <code>nextDate</code> is non-empty. Everything else stops. But stopping silently is not enough -- you need to see the stop. The pattern is: Filter blocks -> a fallback Email-by-Zapier step sends you the raw payload and the AI output. Now you have a record of every failure and can tune the AI prompt to prevent the next one.</p>
+  <p><b>Paths for routing.</b> Filters are binary: continue or stop. Paths are multi-branch: urgent/court, normal, garbled date -- each branch does something different and appropriate. Urgent gets SMS and a Slack DM to the on-call case manager. Normal gets logged and queued. Garbled or missing date gets flagged for human review. The difference between a Zap with Paths and a Zap without is the difference between a system that handles your reality and one that handles your idealized test case.</p>
+  <p><b>The silent-failure rule.</b> A Zap that stops silently is worse than no Zap. "Worse" is not hyperbole -- it is materially worse, because the case manager believes the system ran. The resident who had a court date never got a reminder, but nobody knows that. Audibility is a feature. Error emails are not noise. They are the system telling you when it needs tuning.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- RAG: Retrieval-Augmented Generation</div>
+  <p>RAG is the pattern you reach for when you want an LLM to answer questions about your specific documents -- not documents from its training data, your documents. The four-step loop:</p>
+  <pre>
+  YOUR DOCS
+     |
+     v
+  [1] CHUNK  -- split each doc into pieces small enough to embed
+     |
+     v
+  [2] EMBED  -- turn each chunk into a vector (a list of ~1500 numbers)
+     |         via text-embedding-3-small; semantically similar
+     |         text gets mathematically similar vectors
+     v
+  [3] RETRIEVE -- at query time, embed the question; compute cosine
+     |            similarity between the question vector and every
+     |            chunk vector; take the top N most similar chunks
+     v
+  [4] INJECT  -- paste the top chunks into the system prompt as context;
+                 the model answers from THAT context, not from training
+  </pre>
+  <p><b>What RAG is NOT:</b></p>
+  <ul>
+    <li>Not magic. It is a search engine plus a language model. The retrieval step finds the right pieces; the LM synthesizes an answer from them. Both can fail.</li>
+    <li>Not fine-tuning. Fine-tuning changes the model's weights. RAG does not touch the model at all. The knowledge lives in your documents, not in the model.</li>
+    <li>Not always the right answer. If your use case is "the user can ask anything about a closed, bounded set of documents," RAG is excellent. If your use case is "the model needs to reason about general facts or its own capabilities," regular prompting is fine.</li>
+  </ul>
+  <p>The chunking strategy matters more than most tutorials say. Chunk too small and a piece of information gets split from its context (you get "walk-in 2pm to 5pm" with no organization name). Chunk too large and one vector represents too many topics and the similarity signal gets diluted. For resource documents -- short, self-contained entries -- paragraph-level chunks work well.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- MCP: Model Context Protocol</div>
+  <p>MCP -- Model Context Protocol -- is a standard that lets an AI assistant talk to external tools and data sources without bespoke glue code for each integration. The idea is that instead of writing a one-off connector every time you want Claude to read a Google Sheet or query a database, you run an MCP server that exposes those capabilities through a common interface, and any MCP-compatible client -- Claude, an agent, a Zapier AI step eventually -- can use it.</p>
+  <p>The class treated this as exposure-only, which is the honest call. You don't need MCP to build a useful automation this week. But the concept matters, and it matters specifically in the reentry context we are working in: imagine a case manager named Renee who wants one AI assistant that can look at the intake Google Sheet, post to the program's Slack, and retrieve documents from the resource Drive -- all in one conversation, without her switching between three tabs. That is exactly what MCP is for. One assistant, three MCP servers (Sheets, Slack, Drive), a standard protocol between them.</p>
+  <p>I have run MCP servers in my own setup -- the claude-peers network I use, the filesystem and Google services integrations, all of it running over MCP. So this is not abstract to me. The part I want to name for my own notes: MCP servers are just processes that speak a JSON protocol. Writing one is not significantly harder than writing a REST API. If the program has a developer who knows Node, the resource-search MCP server from Exercise 2 is maybe two hours of wrapping. That is the real upsell hiding behind the RAG exercise.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Pricing: Scope, Estimate, Value, Price</div>
+  <p>Five steps, in order. You cannot skip to step 5.</p>
+  <table>
+    <tr><th>Step</th><th>What you do</th><th>Why it comes first</th></tr>
+    <tr><td>1. Scope</td><td>write what it does and, just as importantly, what it does NOT do</td><td>the client's imagination of "the automation" is almost always larger than what you are building; a clear scope prevents the expand</td></tr>
+    <tr><td>2. Estimate</td><td>break the work into tasks, estimate hours per task, add a buffer</td><td>your cost floor is hours x your rate; you cannot price below your floor without working for free</td></tr>
+    <tr><td>3. Market research</td><td>look at what comparable solutions cost</td><td>tells you what the client might already be paying, or what they could buy off-the-shelf instead of hiring you</td></tr>
+    <tr><td>4. Value calc</td><td>estimate what the automation is worth to the client in time, money, or risk avoided</td><td>this is your ceiling; the formula is 15-20% of annual value</td></tr>
+    <tr><td>5. Price</td><td>set a number between floor and ceiling, with a reason</td><td>value-based pricing tells you the ceiling, not an obligation; where you land in that range is a business decision</td></tr>
+  </table>
+  <p>The key tension in practice: the formula says one number and your gut says another. The right move is to run the formula honestly first, so you know the ceiling, and then make a deliberate choice about where to land. Charging less ON PURPOSE for a client you believe in -- a cash-strapped nonprofit doing work you care about -- is a defensible choice you can say out loud. Charging less out of FEAR ("it only took a few hours") is not a pricing decision. It is the old reflex.</p>
+  <pre>
+  Worked example -- hypothetical automation, 10h build:
+  -------------------------------------------------------
+  Hours: 10  x  Rate: $75/hr  =  Cost floor: $750
+
+  Value delivered: 5 hrs/wk saved x $25/hr loaded rate
+                   = $125/wk = $6,500/yr
+
+  Formula ceiling: 15% of $6,500 = ~$975
+                   20% of $6,500 = ~$1,300
+
+  Range: $975 - $1,300 one-time
+
+  Where you land depends on:
+    - the client's budget reality
+    - whether you are building a relationship
+    - whether there is an ongoing component
+    - whether YOU want to work on this
+  </pre>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Extend Your Workflow</span>
+      <span class="ex-desc">harden First 90 with a Filter guard, a failure-notification fallback, Paths branching (urgent / normal / garbled), a date-normalizer Formatter step, and a second AI step that drafts the resident's reminder text -- 6+ steps, production-ready</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">RAG Worked Example</span>
+      <span class="ex-desc">run rag.mjs over three local reentry resource docs, test three queries (including the out-of-context refusal), extend to a fourth file, and compare paragraph vs sentence chunking -- the thing that tells you why chunk size matters</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Pricing Exercise: Scope + Estimate + Price</span>
+      <span class="ex-desc">the full pricing worksheet for First 90 -- scope, time estimate, market comps, value calc, and the price I actually named and why it is lower than the formula says and that's fine</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Build Your Pricing Model</span>
+      <span class="ex-desc">the one-page pricing summary for First 90 -- what it includes, setup fee, monthly maintenance, and what is explicitly out of scope -- the thing I hand to the client</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- Explain RAG In Plain English</div>
+  <p>
+    My partner's prompt was: "pretend I'm Renee. I asked the AI 'where can a resident get help with a bus pass' and it gave me a real answer instead of making something up. How?"
+  </p>
+  <p>
+    Here is how I explained it. Before I ran the AI, I fed it a folder of documents -- three markdown files I wrote by hand that describe the actual resources the program knows about: housing, legal aid, and jobs. I did not put them in the chat prompt. I ran a separate step that read each document, cut it into paragraph-sized pieces, and turned every piece into a number-list called an embedding. An embedding is a way of writing down "what this text is about" in math -- not the words themselves, but the meaning, encoded as numbers.
+  </p>
+  <p>
+    When Renee types "bus pass," the same math runs on her question. Then the script looks for which paragraph-embeddings are closest to the question-embedding -- "closest" in a geometric sense, two vectors pointing in roughly the same direction. The top two matches come back. In this case one of them happened to be from the transit notes I added in the Level 2 step. Those two paragraphs get pasted into the AI's system prompt as context, and the AI answers from them and only from them. It did not know about bus passes before that moment. It found the answer in the document, just like a person skimming a printed resource list.
+  </p>
+  <p>
+    The part that convinces people: I then asked "what's the refund policy?" -- a question that has no answer anywhere in my resource docs. The AI said "I don't have that information." It didn't hallucinate a policy, because the system prompt told it to answer only from context or say exactly that. The guard works because I put it there deliberately, not because the model is cautious by default.
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    The pricing exercise. Specifically the moment when I ran the value calculation -- 6 hours a week saved, $25 an hour, $7,800 a year, 15-20% of that is $1,170 to $1,560 -- and felt the old reflex fire up immediately. "That is too much. This is a nonprofit. They do not have money like that." And I almost let that reflex close the loop and arrive at $250 before I had even thought about it, which is how I would have priced this six months ago because I was afraid of the number and convinced I would scare the client away.
+  </p>
+  <p>
+    The thing that clicked is the difference between two ways of charging less than the formula. One is deliberate: I see the ceiling, I understand the client's budget reality, I choose a lower number on purpose and I can say exactly why. "I'm pricing at $900 because this is a reentry org, because I believe in this work, and because I want a long-term relationship where they actually call me when something breaks." That is a business decision. I can defend it and not feel bad about it, because I chose it with open eyes. The other way is fear: I never calculate the ceiling, I just assume any real number will scare the client, so I quote $250 because "it only took a few hours" and I go home having left $650 on the table and, more importantly, having told myself and the client that my work is worth $250. That is not generosity. That is the old reflex in a new context.
+  </p>
+  <p>
+    I priced First 90 at $900 one-time plus $75 a month. Not because that is what the formula commanded. Because I ran the formula, saw the ceiling, understood the client -- Renee and her two-person team serving thirty residents -- and made a choice I can state out loud. The formula is not an obligation. It is the number you need to know before you start deciding.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Webhook Trigger + Multi-Step Zap / NCD W9D2</title>
+<meta name="description" content="Exercise 3: replace the email trigger with a Webhooks Catch Hook, POST a real intake-shaped payload with curl, extract structured JSON with AI, filter on isReal and type, append to Google Sheets, and notify by Slack -- the full First 90 core build.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Webhook Trigger + Multi-Step Zap</h1>
+<div class="subtitle">Exercise 3 / 5 . Level 1-3 . 35 min</div>
+
+<p>
+  This is the real build. Exercises 1 and 2 were learning the loop and adding AI to it. This exercise wires the actual intake flow: a form somewhere posts to a URL, Zapier catches it, AI extracts a clean structured record, a filter guards against garbage, and the result lands in a spreadsheet that two case managers already have open. The email trigger is gone. The robot inbox was a learning scaffold. The webhook is the thing that makes this connectable to any intake form, any system, without an email account in the middle.
+</p>
+
+<h2>Step 1 -- Set up the Webhooks Catch Hook trigger</h2>
+
+<pre>App:    Webhooks by Zapier
+Event:  Catch Hook
+URL:    https://hooks.zapier.com/hooks/catch/[account]/[key]/
+        (Zapier assigns this -- it is the listening address)</pre>
+
+<p>
+  The Catch Hook gives you a URL. Whatever POSTs JSON to that URL becomes the trigger data for the Zap. I copy the URL, open a terminal, and use curl to fire a test payload. This is the one moment in today's class where being a Linux user is an unambiguous advantage -- everyone else is looking up how to install a REST client.
+</p>
+
+<h2>Step 2 -- The curl test</h2>
+
+<pre>curl -X POST -H "Content-Type: application/json" \
+  -d '{"name":"D.","note":"parole check-in next Thursday 9am, forklift cert class Mondays, needs bus pass"}' \
+  YOUR_WEBHOOK_URL</pre>
+
+<p>
+  Zapier's trigger test shows the payload it received, parsed into fields: <code>name</code>, <code>note</code>. This is the raw webhook data -- no structure beyond what I sent. The AI step's job is to read <code>note</code> and return the structure I actually need.
+</p>
+
+<h2>Step 3 -- AI extraction step</h2>
+
+<p>
+  The classify pattern from Exercise 2 returned one word. The extract pattern returns JSON. I need a structured record because I am writing to Google Sheets, where each column expects a specific field.
+</p>
+
+<pre>Prompt:
+  You are processing intake notes for a reentry nonprofit.
+  Extract the following fields from the note and return ONLY valid JSON,
+  no other text, no markdown.
+
+  Fields:
+    name       -- resident first name or initial (string)
+    type       -- appointment type: job, court, parole, cert, or housing (string)
+    nextDate   -- next appointment date as described, e.g. "Thursday 9am" (string)
+    urgency    -- "urgent" if within 48 hours or a court/parole date, else "normal" (string)
+    isReal     -- true if this is a genuine intake note, false if spam or test (boolean)
+
+  Example:
+  Note: "Maria has a court date Monday morning, criminal case"
+  Output: {"name":"Maria","type":"court","nextDate":"Monday morning","urgency":"urgent","isReal":true}
+
+  Now process this note:
+  Note: {{ trigger.note }}
+
+AI output (gpt-5-mini):
+  {"name":"D.","type":"parole","nextDate":"Thursday 9am","urgency":"urgent","isReal":true}</pre>
+
+<div class="answer">
+  <strong>Why the one-shot example matters twice as much here</strong>
+  <p>In Exercise 2 the one-shot was about format -- lowercase vs. capitalized. Here it is also about structure. Without the example, the model sometimes returns JSON with extra commentary ("Here is the extracted data:") or wraps the JSON in a markdown code block. Either breaks the downstream field mapping, which expects a raw JSON string it can parse. The example shows the model the exact output shape: bare JSON, nothing else. I tested without it first, got the markdown wrapper, added the example, and it was clean.</p>
+</div>
+
+<h2>Step 4 -- Filter (Level 2 and 3)</h2>
+
+<pre>Filter -- both conditions must be true:
+  Condition 1: {{ ai_step.isReal }}   (Boolean) is True
+  Condition 2: {{ ai_step.type }}     (Text) Contains one of:
+               job, court, parole, cert, housing</pre>
+
+<p>
+  Level 2 test: I POSTed a spam-shaped payload to watch the filter stop it.
+</p>
+
+<pre>Spam test payload:
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"name":"test","note":"win a free gift card click here"}' \
+  YOUR_WEBHOOK_URL
+
+AI output: {"name":"test","type":"unknown","nextDate":"","urgency":"normal","isReal":false}
+Filter result: halted -- isReal is false</pre>
+
+<p>
+  Zap History showed the run as orange/halted. No Sheets row was written, no Slack message sent, no task consumed for the downstream actions. The filter earned its spot.
+</p>
+
+<p>Level 3 -- what "junk" looks like and how the filter handles it:</p>
+
+<table>
+  <tr><th>Junk type</th><th>What the AI returns</th><th>Which condition catches it</th></tr>
+  <tr><td>Obvious spam</td><td><code>isReal: false</code>, type may be anything</td><td>Condition 1 -- isReal is false</td></tr>
+  <tr><td>AI returns prose instead of JSON</td><td>field mapping fails -- fields are undefined</td><td>Both conditions fail -- undefined is not true or a valid type</td></tr>
+  <tr><td>Plausible note but unrecognized type ("mental health")</td><td><code>isReal: true</code>, <code>type: "mental health"</code></td><td>Condition 2 -- type is not in the allowed set</td></tr>
+  <tr><td>Empty note field</td><td><code>isReal: false</code> (model has nothing to work with)</td><td>Condition 1</td></tr>
+</table>
+
+<div class="answer">
+  <strong>What the filter does not catch (today)</strong>
+  <p>A plausible-looking note where the model returns a valid type but a hallucinated date. <code>isReal: true</code>, <code>type: "parole"</code>, <code>nextDate: "next Wednesday"</code> -- but the actual note said "next month." The filter passes it, Sheets gets the row, and the case manager reads a wrong date. This is the category my partner asked about in the mini-demo, and it is Day 3's problem. Today the human still glances at the board as a backstop. The filter handles noise; it does not handle plausible errors.</p>
+</div>
+
+<h2>Step 5 -- Google Sheets append</h2>
+
+<pre>App:        Google Sheets
+Event:      Create Spreadsheet Row
+Spreadsheet: First 90 -- Case Management Board
+Sheet:       Residents
+Row fields:
+  Name       --> {{ ai_step.name }}
+  Type       --> {{ ai_step.type }}
+  Next Date  --> {{ ai_step.nextDate }}
+  Urgency    --> {{ ai_step.urgency }}
+  Logged At  --> {{ trigger.timestamp }}</pre>
+
+<p>
+  After the filter passes, Zapier appends a row. I opened Sheets after the test run and the row was there: "D. / parole / Thursday 9am / urgent / [timestamp]." The case manager does not need to open the Zap editor to see this -- she opens the spreadsheet she already has bookmarked.
+</p>
+
+<h2>Step 6 -- Slack notify (Path)</h2>
+
+<pre>Path A -- {{ ai_step.urgency }} equals "urgent" OR {{ ai_step.type }} equals "court"
+  Slack: send to #on-call
+    "URGENT -- {{ ai_step.name }}: {{ ai_step.type }} on {{ ai_step.nextDate }}"
+
+Path B -- all others
+  (no immediate action -- rolls into Monday digest)</pre>
+
+<h2>Deliverable</h2>
+
+<p>
+  A fully wired multi-step Zap: Webhooks Catch Hook trigger, AI extract step (gpt-5-mini, structured JSON output, one-shot example), Filter on isReal and type, Google Sheets append, and a Paths branch for urgent vs. normal. Four documented test runs in Zap History: a real urgent intake (all steps green, Slack fires), a real normal intake (green, no Slack), a spam POST (halted at filter), and an unrecognized-type POST (halted at filter). The First 90 core is live.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

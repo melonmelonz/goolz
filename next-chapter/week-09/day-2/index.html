@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 9 -- Day 2 / NCD</title>
+<meta name="description" content="Next Chapter Daily -- Week 9 Day 2. Automation Day 1: Zapier + AI Workflows. I build my first real Zap, add AI in the middle, wire a webhook, and document the sellable workflow I scoped yesterday. Five exercises loaded. The day no-code fought a coder and the coder learned something.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="/next-chapter/">&#9664; back to desktop</a>
+
+<h1>Day 2 -- Automation Day 1: Zapier + AI Workflows</h1>
+<div class="subtitle">NCD . WK9 . D2 . five exercises loaded . the day I built something a case manager can edit at 9pm without me</div>
+
+<p>
+  Yesterday I mapped a business problem: a small reentry nonprofit where two case managers hand-text appointment reminders every evening because there is no system. Thirty residents, parole check-ins, court dates, forklift certs -- all of it living in somebody's head and a spreadsheet that does not talk to a phone. I named it "First 90," because the first ninety days out is where most of the critical dates cluster. Yesterday was the map. Today I build it.
+</p>
+
+<p>
+  The build tool is Zapier. I want to be honest about how that landed for me, because I think the discomfort is actually the lesson. I have written kernel modules in Rust. I process LiDAR point clouds. Handing me Zapier's field-picker UI instead of a text editor feels like being asked to assemble furniture with oven mitts on. The reflex to just write the thing in Node -- 40 lines, done, deployed to a Worker in ten minutes -- is loud. I notice it every time I click a dropdown where I would normally type a function name. That tension is real, and I am not going to pretend it is not there. But the reason I am learning to work around the reflex is that the client is not me, and the thing I build has to survive after I leave.
+</p>
+
+<p>
+  The part that makes a $50 gig a $500 gig is putting AI in the middle. A webhook fires, a free-text intake note arrives, and instead of the case manager parsing it by hand, a gpt-5-mini call extracts a clean structured record: who, what kind of appointment, when, how urgent. The AI step turns unstructured human language into something a Filter can act on and a spreadsheet can accept. That is the value -- not the routing, not the logging, the AI-in-the-middle that makes the rest possible. Without that step you are just forwarding emails. With it you are running a triage system.
+</p>
+
+<div class="card">
+  <div class="card-label">Standup</div>
+  <p><b>What I did yesterday:</b> picked my Phase 3 client and problem, mapped a workflow (nightly reminder system for a small reentry nonprofit), wrote the pain/budget/value triangle, and scoped "First 90" -- a webhook-to-spreadsheet reminder pipeline for ~30 residents across two case managers.</p>
+  <p><b>What I'm doing today:</b> building it in Zapier. Sign up, get the vocabulary, wire a simple email-to-Slack Zap, add AI classification, replace the email trigger with a real webhook, chain the full multi-step flow, document the sellable workflow, and compare Zapier against one other tool by actually using it.</p>
+  <p><b>Where I'm stuck:</b> not stuck yet, but the Zapier UI is slower than writing code for me specifically, and I am keeping an eye on whether the friction is learning friction or tool-fit friction. Those feel the same at first and mean different things. The compare lab (Exercise 5) is where I plan to answer it.</p>
+  <p><b>Zap that caught my attention in pre-class browsing:</b> "New Google Form response -> create a Google Doc with AI summary -> send to Slack." Not because I would use it, but because the AI-in-the-middle pattern was obvious in a way I could see -- summarize form answers before a human ever opens them. That is exactly the shape of what I am building today, minus the form and the Doc.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Trigger / Action / Result</div>
+  <p>The fundamental unit of Zapier is a Zap, and every Zap follows one pattern: something happens (the trigger), Zapier does something about it (one or more actions), and the result lands somewhere useful. The trigger is always an event in some app -- a new email, a form submission, a webhook POST, a calendar event. The actions are what Zapier does in response -- create a row, send a message, call an API, run an AI prompt. The result is what the human on the other end sees: a Slack message, a spreadsheet row, an email, a logged record.</p>
+  <p>The course represents it as a linear flow and I think the ASCII version makes it concrete:</p>
+  <pre>TRIGGER                ACTION 1              ACTION 2          RESULT
+-----------            ----------            ----------        ----------
+Webhook POST   ----->  AI: extract   ----->  Sheets: append    Row logged
+(intake form)          JSON from note        (case-mgmt board) in board
+
+if urgent:
+FILTER                 ACTION 3
+----------             ----------
+is_urgent=true  ---->  Slack: notify
+                       on-call mgr</pre>
+  <p>Every node in the chain either transforms data (AI step, formatter) or sends it somewhere (Sheets, Slack, email). The skill is picking the right transformation at each node and passing data forward -- each action can use fields from every previous step. That last part is what makes the field-picker useful and what makes it feel like programming in slow motion if you are used to just writing <code>result.field</code>.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Zapier Vocabulary</div>
+  <table>
+    <tr><th>Term</th><th>What it means</th><th>Analog in code</th></tr>
+    <tr><td>Zap</td><td>a complete automation -- trigger plus one or more actions</td><td>a running process or cron job</td></tr>
+    <tr><td>Trigger</td><td>the event that starts the Zap; every Zap has exactly one</td><td>the event listener or HTTP handler</td></tr>
+    <tr><td>Action</td><td>a step the Zap takes after the trigger; you can chain many</td><td>a function call in the handler body</td></tr>
+    <tr><td>Task</td><td>one successful action run; Zapier bills by tasks consumed per month</td><td>a billable execution unit</td></tr>
+    <tr><td>Path</td><td>a conditional branch -- "if this condition, run these actions; else run those"</td><td><code>if / else</code> or a match arm</td></tr>
+    <tr><td>Filter</td><td>a step that stops the Zap entirely if a condition is not met; nothing downstream runs</td><td>an early return / guard clause</td></tr>
+    <tr><td>Storage</td><td>a simple key-value store inside Zapier; persists small state between Zap runs</td><td>a KV store or a global variable</td></tr>
+  </table>
+  <p>The vocabulary that matters most for today is Filter vs Path. A Filter is binary -- pass or stop. A Path is a branch -- left or right. I use a Filter to block spam before I write anything to Sheets, and I use a Path to split urgent from normal so urgent gets an immediate Slack ping and normal rolls into a digest. Both are guard logic, but Filter ends the run and Path continues it differently.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- The Tool Comparison Framework</div>
+  <p>Zapier is not the only automation platform, and one of the things Phase 3 is explicit about is that nobody pays you to be a "Zapier expert." They pay you to solve a problem, and the tool is how you solve it. The relevant question is not "which tool is best" but "which tool fits this client and this workflow." The comparison framework has four columns: tool, strength, trade-off, when to use it.</p>
+  <table>
+    <tr><th>Tool</th><th>Strength</th><th>Trade-off</th><th>Use when</th></tr>
+    <tr><td>Zapier</td><td>5,000+ app integrations, UI anyone can learn, huge template library</td><td>tasks add up fast on paid plans; complex logic gets awkward</td><td>the client needs to maintain it; the integrations already exist; simplicity beats power</td></tr>
+    <tr><td>Make.com</td><td>visual builder is cleaner for complex flows; more steps per scenario at lower cost</td><td>smaller app ecosystem than Zapier; steeper initial learning curve</td><td>moderately technical client; multi-step flows that would get expensive in Zapier</td></tr>
+    <tr><td>Pipedream</td><td>code-first (Node, Python, Go); full npm access in each step; generous free tier</td><td>client needs to read and edit code to maintain it; not a UI tool</td><td>the builder is technical; needs custom logic or an API not in Zapier; tight budget</td></tr>
+    <tr><td>Custom Node</td><td>full control, zero per-task fees, runs anywhere</td><td>you own the infrastructure, the uptime, and every bug; setup cost is real</td><td>high-volume, complex requirements, or a client willing to pay for a maintained service</td></tr>
+  </table>
+  <p>The meta-skill is the table itself, not the rows. Being able to name the trade-offs and point a client toward the right fit is the thing that gets you paid $900 instead of $90. Anyone can follow a Zapier tutorial. Fewer people can look at a client's constraints -- their technical comfort, their maintenance situation, their budget, their integrations -- and say "here is why this is the right tool for you specifically." That is the conversation.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Lecture Notes -- Adding AI to a Workflow</div>
+  <p>AI steps in Zapier sit between a trigger and a downstream action and do one of four things: classify, extract, summarize, or generate. Those are not categories I invented -- the course is explicit about them, and they map to almost every real use case I can think of.</p>
+  <table>
+    <tr><th>Mode</th><th>What you give it</th><th>What you get back</th><th>Example in First 90</th></tr>
+    <tr><td>Classify</td><td>a piece of text + a set of labels</td><td>one label from the set</td><td>urgency = urgent / normal / spam</td></tr>
+    <tr><td>Extract</td><td>messy free text + a schema</td><td>structured fields (JSON)</td><td>name, type, nextDate, urgency out of an intake note</td></tr>
+    <tr><td>Summarize</td><td>a long document or thread</td><td>a shorter version</td><td>a weekly digest of who has what coming up</td></tr>
+    <tr><td>Generate</td><td>a template + input variables</td><td>drafted text</td><td>a personalized reminder SMS for a resident</td></tr>
+  </table>
+  <p>For this workflow, Extract is the load-bearing step. The intake note is unstructured -- a case manager or a resident types something like "D. has a parole check-in Thursday 9am and forklift cert class Mondays" -- and I need a clean JSON record to append to Sheets. The AI turns human language into a row the spreadsheet can accept. Without it, I either require a structured form (friction for the client) or I parse the note by regex (wrong 30% of the time and fragile forever).</p>
+  <p>Zapier offers two AI options: <b>AI by Zapier</b>, which is their native action that calls a model (currently gpt-5-mini under the hood), and <b>chaining an OpenAI step</b> directly with your own API key. AI by Zapier is simpler to wire and does not require managing an API key in Zapier's credential store. Chaining OpenAI gives you model choice, system prompt control, and response format enforcement. For this client, AI by Zapier is the right call -- if she ever needs to tweak the prompt she can find it in the Zap editor, which she already knows how to open.</p>
+</div>
+
+<h2>Exercises</h2>
+
+<ul class="ex-list">
+  <li>
+    <a href="exercise-1.html">
+      <span class="ex-num">Exercise 1</span>
+      <span class="ex-title">Sign Up + First Zap</span>
+      <span class="ex-desc">wire Email by Zapier to a Slack channel, map trigger.subject into the message body, then add a Filter so the Zap only fires on subjects containing "INTAKE" -- understanding the loop before adding complexity</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-2.html">
+      <span class="ex-num">Exercise 2</span>
+      <span class="ex-title">Add AI to Your Zap</span>
+      <span class="ex-desc">add an AI classification step between the email trigger and Slack -- gpt-5-mini returns urgent / normal / spam -- then let the result drive a Path; fix a real one-shot prompt bug where the model returned "Urgent." instead of "urgent"</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-3.html">
+      <span class="ex-num">Exercise 3</span>
+      <span class="ex-title">Webhook Trigger + Multi-Step Zap</span>
+      <span class="ex-desc">replace the email trigger with a Webhooks Catch Hook, POST a curl payload that looks like a real intake note, extract structured JSON with AI, filter on isReal and type, append to Google Sheets, notify by Slack -- the full First 90 core</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-4.html">
+      <span class="ex-num">Exercise 4</span>
+      <span class="ex-title">Build Your Sellable Workflow</span>
+      <span class="ex-desc">document "First 90" in the required portfolio template -- workflow name, client, trigger, actions in order, time saved, pricing -- and sketch the premium tier; this artifact goes into the Week 10 portfolio and the Phase 3 gate</span>
+    </a>
+  </li>
+  <li>
+    <a href="exercise-5.html">
+      <span class="ex-num">Exercise 5</span>
+      <span class="ex-title">Compare Lab: Same Workflow in Another Tool</span>
+      <span class="ex-desc">rebuild the three-step core in Pipedream; feel the code-first path vs. Zapier's field-picker; write a three-sentence verdict on which tool wins for this specific client and why -- tool fit beats tool preference</span>
+    </a>
+  </li>
+</ul>
+
+<div class="card" style="margin-top:28px;">
+  <div class="card-label">Verbal Mini-Demo -- Walk The Zap, Name The Buyer</div>
+  <p>Two minutes to my partner, walking the First 90 workflow from trigger to result and naming who would pay for it.</p>
+  <p><b>Trigger:</b> a Webhooks Catch Hook. When a resident's intake note hits the nonprofit's intake form, the form POSTs to a URL I own. Zapier is listening on that URL.</p>
+  <p><b>Action 1 -- AI Extract:</b> gpt-5-mini receives the free-text note and returns a JSON object -- name, appointment type (job / court / parole / cert / housing), the next date, urgency, and a boolean <code>isReal</code> that tells me whether this is a real intake or noise.</p>
+  <p><b>Filter:</b> if <code>isReal</code> is false, or if the type is not in the allowed set, the Zap stops here. Nothing gets written to Sheets, nothing pings anyone. The garbage stays outside.</p>
+  <p><b>Action 2 -- Google Sheets append:</b> a new row lands on the case-management board -- resident first name, appointment type, date, urgency. Renee and her colleague can see it the moment it writes.</p>
+  <p><b>Paths:</b> if urgency is urgent or type is court, an immediate Slack message goes to the on-call case manager's phone. Normal appointments roll into a Monday morning digest email so nothing drowns in pings.</p>
+  <p><b>Result:</b> Renee's nightly hand-texting stops. A missed parole date becomes much harder, because the board sees it and the phone gets it.</p>
+  <p><b>Who pays:</b> a small reentry or transitional-housing nonprofit. The director -- the person who hired Renee, who gets called when something falls through -- is the buyer. She is not paying for the automation. She is paying to reduce the probability that a missed parole check-in ends someone's housing, because that outcome costs her the grant. The hours are secondary; the stakes are the sale.</p>
+  <p><b>Partner's question:</b> "What happens if the AI returns garbage -- like it can't find a date and just makes one up?"</p>
+  <p><b>My answer:</b> Right now, not enough. The Filter blocks obvious junk by checking <code>isReal</code> and the type field, but if the model hallucinates a date that looks plausible, it writes to Sheets without complaint. That is a real hole, and it is exactly what Day 3 covers -- error handling, validation, and what to do when the AI step produces output that passes the filter but is wrong. For now the case manager still glances at the board each morning, which means there is a human in the loop catching the bad rows. Removing that human-in-the-loop review is Day 3's job, not today's.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">The Thing That Clicked Today</div>
+  <p>
+    I spent most of today wanting to write actual code. Every time I dragged a field into Zapier's mapping panel I was mentally writing the same thing as a destructuring assignment, and it was taking four clicks to do what one line does. That is a real fact about the tool and I am not pretending it is not. But somewhere in the middle of Exercise 5 -- when I rebuilt the same three steps in Pipedream and felt genuine relief at typing in a code editor -- the real question finally sharpened: <em>who is maintaining this thing in six months?</em>
+  </p>
+  <p>
+    Not me. Renee is. She knows how to open a Zap and click into a step and read what it says in plain English. She does not know what a destructuring assignment is and she should not have to. If I build this in Pipedream because it feels better for me, I hand her a system she cannot touch without calling me first, and calling me first means she will not call at all, and the system rots. If I build it in Zapier, she can tweak the prompt herself, add a new appointment type herself, look at the step that broke and understand what it was trying to do.
+  </p>
+  <p>
+    The thing that clicked is what "delivering" actually means. It does not mean handing over a thing that works. It means handing over a thing that keeps working after I leave -- which requires the person who stays to be able to keep it. I chose the tool that is worse for me and better for her. I think that might be the whole job.
+  </p>
+</div>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

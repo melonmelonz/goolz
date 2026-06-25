@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- Stress-Test Each Other's Ideas / NCD W9D1</title>
+<meta name="description" content="Exercise 2: breakout-room peer stress-test of all three ideas -- is it real, painful, buildable, and priceable -- then a keep / park / drop decision for each.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Stress-Test Each Other's Ideas</h1>
+<div class="subtitle">Exercise 2 / 4 . Level 1-2 . 30 min</div>
+
+<p>
+  Breakout rooms. My partner for this exercise went through each of my three ideas with four questions, and I went through his. The four questions are the same for every idea: Is this real? Is it painful enough that someone changes behavior? Can you build it in a week? What would you charge -- and is that a number the client would pay? The instructions said to give honest feedback, not supportive feedback. My partner did. I am grateful for that.
+</p>
+<p>
+  My policy throughout: I am keeping businesses and people at the role level. No org names, no last names, nothing I would not be fine having indexed. That is my call and the program is fine with it.
+</p>
+
+<h2>The Four Questions Applied</h2>
+
+<table>
+  <tr>
+    <th>Question</th>
+    <th>Idea A -- Reentry Reminders</th>
+    <th>Idea B -- Scan-Op Admin</th>
+    <th>Idea C -- Barbershop Booking</th>
+  </tr>
+  <tr>
+    <td>Is it real?</td>
+    <td>Yes. Lived experience. I have watched Renee do this by hand. It is not a hypothesis.</td>
+    <td>Yes. The admin overhead on a scan job is real. But Penn's evidence is secondhand -- "I know the tools" is not the same as "I talked to three operators this week."</td>
+    <td>Yes. The phone-and-paper-book pain is real. But real is not sufficient.</td>
+  </tr>
+  <tr>
+    <td>Painful enough?</td>
+    <td>Yes, with stakes. A dropped date is not inconvenience -- it is a potential violation. That is the highest pain tier there is.</td>
+    <td>Yes. 3-4 hours of admin per job at $1-3k/job is a real cost. The slipping follow-ups translate directly to lost repeat work.</td>
+    <td>Yes, but it is a mild pain. The barber is annoyed, not at risk. He is also already functional without a solution.</td>
+  </tr>
+  <tr>
+    <td>Can you build it in a week?</td>
+    <td>Yes. The pipeline (form -> AI extract -> sheet -> SMS) is plumbing Penn has assembled before in different shapes. Honest estimate: 8-10 hours. The messiness of real intake notes adds time; the tools are not exotic.</td>
+    <td>Probably. The harder part is the context -- a "job done" summary that reads naturally for a scan client requires knowing what scan clients care about. Penn knows it, but he would need a real operator to test against.</td>
+    <td>Yes, trivially -- but so can any junior dev with a Booksy account.</td>
+  </tr>
+  <tr>
+    <td>What would you charge?</td>
+    <td>$900 one-time + $75/month. Partner's question: is the $900 real or is Penn underpricing out of loyalty to the community? Answer: probably some of both. The formula says $1,200-1,500. There is a deliberate values choice in the gap, and Penn is naming it rather than hiding it.</td>
+    <td>$400-600 for the automation setup. Possibly a small monthly. Partner thought the ceiling was higher given the per-job revenue -- "if a job pays $2,000 and you save two hours, $500 is easy." Hard to argue with that math.</td>
+    <td>Moot. The client can install Booksy for free.</td>
+  </tr>
+</table>
+
+<h2>Feedback Received Per Idea</h2>
+
+<div class="answer">
+  <strong>Idea A -- Reentry Reminders</strong>
+  <p>The feedback was the most direct on this one: "The stakes are the whole story. Everything else is implementation." My partner's only real pushback was on pricing and on whether a grant-funded org actually has the budget to say yes. His read was that $900 one-time is probably fine if there is a real warm contact and the person in the room can make the call without a 6-month procurement process. He also said the lived credibility is not a soft advantage -- "you are not pitching this as an outsider who read about reentry, you are pitching it as someone who came through it." That landed. Keep.</p>
+</div>
+
+<div class="answer">
+  <strong>Idea B -- Scan-Op Admin</strong>
+  <p>His feedback: technically interesting, lucrative market, but "do you actually know someone who does this?" When I said I do point-cloud processing but I do not have a warm contact with a solo operator actively complaining about admin, he said, "Then you're pitching a stranger, and that's a different exercise." He is right. The path to Idea B is a few genuine conversations with operators first -- not this week. Park.</p>
+</div>
+
+<div class="answer">
+  <strong>Idea C -- Barbershop Booking</strong>
+  <p>He had already found Booksy before I did. His take: "This is not a gap, it's a solved problem with a freemium tier. If you built this you'd be competing with free." Nothing to add to that. Drop.</p>
+</div>
+
+<h2>Decision: Keep / Park / Drop</h2>
+
+<table>
+  <tr><th>Idea</th><th>Decision</th><th>Reason</th></tr>
+  <tr><td>A -- Reentry Reminders</td><td><b>KEEP</b></td><td>Real pain with parole stakes, warm contact, lived credibility, genuine gap between "free fragile spreadsheet" and enterprise software the org can't afford. ReEntry Tech is an adjacent proof of interest. All three circles overlap.</td></tr>
+  <tr><td>B -- Scan-Op Admin</td><td><b>PARK</b></td><td>Lucrative, technically buildable, real pain -- but thin network. The right move is to have actual conversations with operators before pitching. Come back to this in a later week or after making those calls.</td></tr>
+  <tr><td>C -- Barbershop Booking</td><td><b>DROP</b></td><td>No market gap. Booksy and Square already own this at $0-30/month. Building it would be competing on price with a free product and that is not a position.</td></tr>
+</table>
+
+<div class="answer">
+  <strong>Why Idea A is the strongest</strong>
+  <p>The single most important thing the stress-test confirmed is that the warm contact plus lived experience is not sentimental -- it is a competitive advantage. The technical problem is not harder than what I built in Phase 2. The gap in the market is real and specific: nobody cheap does AI-structured intake plus automated SMS reminders for a tiny reentry program at a church-basement budget. The client already pays the cost in time and burnout. And I am not walking in as a stranger who saw a business opportunity. I am walking in as someone who knows what it feels like when a date gets dropped. That matters in a trust-first sale.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  Three ideas through the four-question stress-test with partner feedback documented per idea. One clear drop (Idea C), one park with a clear on-ramp back (Idea B), one keeper (Idea A). Idea A named as strongest based on the intersection of real stakes, warm contact, lived credibility, and a genuine market gap. Taking it into competitor research and pricing in Exercise 3.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

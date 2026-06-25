@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Sign Up + First Zap / NCD W9D2</title>
+<meta name="description" content="Exercise 1: sign up for Zapier, wire Email by Zapier to a Slack channel, map trigger fields into the message, and add a Filter so the Zap only fires on subjects containing INTAKE.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Sign Up + First Zap</h1>
+<div class="subtitle">Exercise 1 / 5 . Level 1-3 . 30 min</div>
+
+<p>
+  The point of this exercise is not to build something useful. It is to understand the loop: trigger fires, Zapier wakes up, action runs, result appears. Everything else -- the AI step, the webhook, the multi-step chain -- is just more nodes in that same loop. If I can wire one trigger to one action and watch data flow through the field mapping, I understand the fundamental thing. The rest is configuration.
+</p>
+
+<h2>Step 1 -- Account and first look</h2>
+
+<p>
+  Zapier sign-up is unremarkable. The thing I made a deliberate choice about was the email trigger: the course suggests connecting Gmail, but I used <b>Email by Zapier</b> instead -- their robot inbox. Zapier assigns you a dedicated address like <code>catch-hook@robot.zapier.com</code> and you send test emails to it. No OAuth prompt, no "allow Zapier to read your entire inbox," no worrying about what permission scope I just granted.
+</p>
+<p>
+  As a coder, giving a third-party service broad read access to my actual email to run a tutorial exercise is a non-starter. The robot inbox sidesteps it cleanly. The educational value is identical and I keep my Gmail credentials to myself. I flagged this to the class because I think it is the right default for anyone privacy-conscious, not just me specifically.
+</p>
+
+<h2>Step 2 -- Wire the trigger</h2>
+
+<p>Trigger configuration for a new Email by Zapier event:</p>
+
+<pre>App:     Email by Zapier
+Event:   New Inbound Email
+Address: [Zapier-assigned robot address]
+
+Fields available after trigger fires:
+  {{ trigger.from }}       -- sender address
+  {{ trigger.subject }}    -- subject line
+  {{ trigger.body_plain }} -- plain-text body
+  {{ trigger.date }}       -- timestamp</pre>
+
+<p>
+  I sent a test email to the robot address. Zapier's test step showed me the raw data it received. This is the first thing that is genuinely useful about the UI: you can see exactly what the trigger produced, field by field, before you configure any action. When I write an HTTP handler in code I have to add a log line and redeploy to see the request. Here it is just there, labeled.
+</p>
+
+<h2>Step 3 -- Wire the action</h2>
+
+<p>Action configuration for Slack:</p>
+
+<pre>App:      Slack
+Event:    Send Channel Message
+Channel:  #intake-log
+Message:  New intake received from {{ trigger.from }}
+          Subject: {{ trigger.subject }}
+          Body: {{ trigger.body_plain }}</pre>
+
+<p>
+  The field-picker is how you insert <code>{{ trigger.subject }}</code> -- you click a purple "+" icon and browse a tree of available fields from every previous step. For two fields this is fine. My honest reaction is that it is slower than typing, and I keep having the impulse to just type the variable name directly. You cannot. The tool wants you to use the picker. The reason, I think, is that it validates that the field actually exists in the trigger data, which is a real guard against typos. I grudgingly accept this as a reasonable trade.
+</p>
+
+<div class="answer">
+  <strong>What this Zap is</strong>
+  <p>An email routing rule with a destination that can be swapped out without touching email settings. I have always had email filters -- every mail client has had rules since the 90s. What Zapier adds is the action layer: instead of "move to folder," the action can be "create a Sheets row" or "run an AI step." This Zap is not impressive, but recognizing it as an email rule taken to its logical extreme meant I understood what I was building instead of just following steps.</p>
+</div>
+
+<h2>Step 4 -- Add a Filter (Level 3)</h2>
+
+<p>
+  Level 3 adds a Filter between the trigger and the Slack action. The requirement: only continue if the email subject contains the text "INTAKE." Any other subject stops the Zap cold -- no action fires, no task is consumed, nothing reaches Slack.
+</p>
+
+<pre>Filter configuration:
+  Field:     {{ trigger.subject }}
+  Condition: (Text) Contains
+  Value:     INTAKE
+
+Result: Zap continues only if subject has "INTAKE" in it.
+        All other emails stop here.</pre>
+
+<p>
+  I tested this with two emails: one with subject "INTAKE: D. -- parole Thursday" (passes) and one with subject "Question about bus passes" (stops). Zapier's Zap History shows both runs -- one green with a check, one orange with "Zap halted by filter." The orange one is the useful one to see. The filter works and it costs nothing to run, because a halted Zap does not consume a task.
+</p>
+
+<div class="answer">
+  <strong>Filter vs. the alternative</strong>
+  <p>The alternative to a filter is putting the condition in the action's logic, which means the action runs, realizes it does not need to do anything, and exits. You have paid for a task and done nothing useful. A filter is a guard clause at the architecture level instead of the function level, and the billing behavior is the concrete reason to use it early rather than late in the chain.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A live Zap: Email by Zapier trigger (robot inbox), Filter on subject contains "INTAKE," Slack action posting to a channel with the sender, subject, and body mapped from trigger fields. Two test runs documented in Zap History -- one that passes the filter and posts to Slack, one that is correctly halted. The loop is understood: trigger fires, data flows, filter guards, action runs. Everything from here is nodes in this same loop.
+</p>
+
+<nav class="ex-nav">
+  <a href="./">&#9664; Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

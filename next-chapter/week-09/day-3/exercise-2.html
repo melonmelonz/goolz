@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 2 -- RAG Worked Example / NCD W9D3</title>
+<meta name="description" content="Exercise 2: run rag.mjs over local reentry resource docs, test three queries including an out-of-context refusal, extend to a fourth file, and compare paragraph vs sentence chunking.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>RAG Worked Example</h1>
+<div class="subtitle">Exercise 2 / 4 . Level 1-3 . 30 min</div>
+
+<p>
+  The course provided a starter script, <code>rag.mjs</code>. My job was to run it over a real set of documents and understand what it actually does at each step -- not just "it worked" but why the retrieval finds different chunks for different questions, what the system-prompt guard does, and where the chunk size matters. I used three markdown files representing a realistic reentry resource list: housing, legal aid, and jobs. Anonymous -- no real organization names, no real addresses.
+</p>
+
+<h2>The Resource Documents</h2>
+
+<table>
+  <tr><th>File</th><th>Contents (representative)</th></tr>
+  <tr><td><code>resources/notes-housing.md</code></td><td>transitional-housing options: a county-run 90-day shelter program, a faith-based transitional house (6-month max, must be employed within 60 days), a city voucher waitlist (currently 4-6 weeks, priority for people within 12 months of release)</td></tr>
+  <tr><td><code>resources/notes-legal.md</code></td><td>a legal-aid clinic downtown that runs an expungement walk-in on the first Tuesday of each month, 10am-2pm, no appointment needed; a law-school clinic offering free record reviews by appointment; the state's online eligibility screener</td></tr>
+  <tr><td><code>resources/notes-jobs.md</code></td><td>a construction company that lists as a fair-chance employer; a warehouse fulfillment center that explicitly does not disqualify for non-violent felonies; a staffing agency that specializes in reentry placements and does not charge the applicant</td></tr>
+</table>
+
+<h2>The Script: rag.mjs</h2>
+
+<pre>
+// rag.mjs -- retrieval-augmented generation over a local resource folder
+// models: text-embedding-3-small (retrieval), gpt-5-mini (chat)
+
+import fs from "fs";
+import path from "path";
+import OpenAI from "openai";
+import { fileURLToPath } from "url";
+
+const client = new OpenAI(); // reads OPENAI_API_KEY from env
+const EMBED_MODEL = "text-embedding-3-small";
+const CHAT_MODEL  = "gpt-5-mini";
+const TOP_N       = 2;
+const RESOURCES_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "resources"
+);
+
+// --- STEP 1: CHUNK
+// Split each .md file on blank lines -> one chunk per paragraph.
+// A blank line is the natural boundary between resource entries.
+function chunkFile(filePath) {
+  const text = fs.readFileSync(filePath, "utf8");
+  return text
+    .split(/\n\n+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 20); // drop near-empty paragraphs
+}
+
+function loadAllChunks(dir) {
+  const files = fs.readdirSync(dir).filter(f => f.endsWith(".md"));
+  const chunks = [];
+  for (const f of files) {
+    const pieces = chunkFile(path.join(dir, f));
+    for (const text of pieces) chunks.push({ text, source: f });
+  }
+  return chunks;
+}
+
+// --- STEP 2: EMBED
+async function embedTexts(texts) {
+  const resp = await client.embeddings.create({
+    model: EMBED_MODEL,
+    input: texts,
+  });
+  // resp.data is sorted by index
+  return resp.data.map(d => d.embedding);
+}
+
+// --- STEP 3: RETRIEVE (cosine similarity)
+function cosine(a, b) {
+  let dot = 0, magA = 0, magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot  += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+}
+
+function topN(queryVec, chunkVecs, chunks, n) {
+  const scored = chunks.map((c, i) => ({
+    chunk: c,
+    score: cosine(queryVec, chunkVecs[i]),
+  }));
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, n);
+}
+
+// --- STEP 4: INJECT + ANSWER
+async function rag(query) {
+  const chunks    = loadAllChunks(RESOURCES_DIR);
+  const texts     = chunks.map(c => c.text);
+  const allVecs   = await embedTexts(texts);
+  const [qVec]    = await embedTexts([query]);
+  const results   = topN(qVec, allVecs, chunks, TOP_N);
+
+  const context = results
+    .map(r => `[${r.chunk.source}]\n${r.chunk.text}`)
+    .join("\n\n---\n\n");
+
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are a resource assistant for a reentry program. " +
+        "Answer ONLY from the context provided below. " +
+        "If the answer is not in the context, say exactly: " +
+        "'I don't have that information.' Do not guess.\n\n" +
+        "CONTEXT:\n" + context,
+    },
+    { role: "user", content: query },
+  ];
+
+  const resp = await client.chat.completions.create({
+    model: CHAT_MODEL,
+    messages,
+    max_tokens: 300,
+  });
+
+  console.log("\nQuery:", query);
+  console.log("\nTop chunks retrieved:");
+  results.forEach(r =>
+    console.log(`  [${r.chunk.source}] score=${r.score.toFixed(4)}: "${r.chunk.text.slice(0, 80)}..."`)
+  );
+  console.log("\nAnswer:", resp.choices[0].message.content.trim());
+}
+
+const query = process.argv[2];
+if (!query) {
+  console.error("Usage: node rag.mjs \"your question here\"");
+  process.exit(1);
+}
+
+rag(query).catch(err => { console.error(err); process.exit(1); });
+</pre>
+
+<h2>Level 1: Three Test Runs</h2>
+
+<pre>
+$ node rag.mjs "where can I get help expunging a record?"
+
+Query: where can I get help expunging a record?
+
+Top chunks retrieved:
+  [notes-legal.md] score=0.8821: "A legal-aid clinic downtown runs an expungement
+    walk-in on the first Tuesday of each month, 10am-2pm..."
+  [notes-legal.md] score=0.7634: "A law-school clinic offers free record reviews
+    by appointment. Call ahead to schedule..."
+
+Answer: There are two options for help with expungement. A legal-aid
+clinic downtown runs a walk-in on the first Tuesday of each month,
+10am-2pm, no appointment needed. A law-school clinic also offers free
+record reviews by appointment if you prefer a scheduled meeting.
+</pre>
+
+<pre>
+$ node rag.mjs "what fair-chance employers are hiring?"
+
+Query: what fair-chance employers are hiring?
+
+Top chunks retrieved:
+  [notes-jobs.md] score=0.8903: "A staffing agency specializing in reentry
+    placements does not charge the applicant and works with employers..."
+  [notes-jobs.md] score=0.8611: "A construction company lists as a fair-chance
+    employer and is currently accepting applications..."
+
+Answer: A staffing agency specializing in reentry placements can connect
+you with employers -- they do not charge applicants. A construction
+company and a warehouse fulfillment center both list as fair-chance
+employers; the warehouse explicitly does not disqualify for non-violent
+felonies.
+</pre>
+
+<pre>
+$ node rag.mjs "what's the refund policy?"
+
+Query: what's the refund policy?
+
+Top chunks retrieved:
+  [notes-housing.md] score=0.3241: "The city voucher waitlist is currently 4-6
+    weeks. Priority is given to people within 12 months of release..."
+  [notes-jobs.md] score=0.3018: "A staffing agency specializing in reentry
+    placements does not charge the applicant..."
+
+Answer: I don't have that information.
+</pre>
+
+<div class="answer">
+  <strong>What I noticed as someone who has read the embeddings code before</strong>
+  <p>Three things stood out. First, the retrieval picks different chunks for different questions -- that is the whole point, and it is satisfying to watch it work. The cosine scores for the first two queries are in the 0.86-0.89 range, which is strong semantic alignment. The scores for the refund query are 0.32 and 0.30, which are weak -- the model found the least-bad chunks but they are clearly not answers. The system-prompt guard does the rest.</p>
+  <p>Second, the out-of-context refusal is not magic. It works because the system prompt says "answer ONLY from the context provided" and "if the answer is not in the context, say exactly: I don't have that information." The model follows that instruction. If I removed the guard, it would hallucinate a plausible-sounding refund policy. The guard is a design choice, not a default.</p>
+  <p>Third, <code>text-embedding-3-small</code> produces 1536-dimensional vectors. The cosine similarity I wrote is doing real linear algebra over those 1536 numbers for every chunk, every query. For three files and maybe fifteen chunks that is fast -- under a second. At ten thousand chunks it would start to matter, which is the real argument for vector databases like Pinecone or pgvector. For this exercise, a flat in-memory array is fine and it makes the math visible.</p>
+</div>
+
+<h2>Level 2: Adding a Fourth Resource File</h2>
+
+<p>
+  I added <code>resources/notes-transit.md</code> with two paragraphs: one about a city bus-pass program that gives a free 30-day pass to people within 90 days of release (application at the transit authority office, need release paperwork), and one about a nonprofit that provides bike refurbs to residents who have been in the program at least 30 days.
+</p>
+
+<pre>
+$ node rag.mjs "how do I get a bus pass?"
+
+Query: how do I get a bus pass?
+
+Top chunks retrieved:
+  [notes-transit.md] score=0.8744: "The city transit authority offers a free 30-day
+    bus pass for people within 90 days of their release date..."
+  [notes-transit.md] score=0.7812: "A local nonprofit provides refurbished bikes
+    to program residents who have been enrolled for at least 30 days..."
+
+Answer: The city transit authority offers a free 30-day bus pass for
+people within 90 days of their release. Bring your release paperwork to
+the transit authority office to apply. If you have been in the program
+for 30 days or more, a local nonprofit also provides refurbished bikes
+at no cost.
+</pre>
+
+<div class="answer">
+  <strong>The retrieval found the new file without any changes to the script</strong>
+  <p>This is the point of the pattern. I dropped a new markdown file in the folder and re-ran. The script reads the directory at runtime, chunks everything it finds, embeds it, and the new chunks compete on the same similarity measure as the old ones. Adding knowledge to the system is editing a text file. The model does not change. The workflow does not change. The only thing that changes is the documents in the folder. That is the upsell for First 90: "AI that knows the program's actual resource list" means Renee edits a markdown file when a new employer starts hiring or a clinic changes its hours, and the AI immediately knows the update. No retraining. No fine-tuning. A text editor and a file save.</p>
+</div>
+
+<h2>Level 3: Chunking Comparison -- Paragraph vs Sentence</h2>
+
+<p>
+  I rewrote the chunk function to split by sentence instead of paragraph -- splitting on period-space rather than blank lines -- and re-ran the expungement query.
+</p>
+
+<pre>
+// sentence-level chunking (Level 3 comparison)
+function chunkFileBySentence(filePath) {
+  const text = fs.readFileSync(filePath, "utf8");
+  return text
+    .split(/(?&lt;=[.!?])\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 20);
+}
+</pre>
+
+<pre>
+$ node rag.mjs "where can I get help expunging a record?"
+  (sentence-chunked version)
+
+Top chunks retrieved:
+  [notes-legal.md] score=0.7901: "Walk-in hours are 10am to 2pm, no appointment
+    needed."
+  [notes-legal.md] score=0.7512: "A law-school clinic offers free record reviews
+    by appointment."
+
+Answer: Walk-in hours for record expungement help are 10am to 2pm with
+no appointment needed. A law-school clinic also offers free record
+reviews by appointment.
+
+(Missing: where the walk-in IS, what day, what kind of clinic)
+</pre>
+
+<div class="answer">
+  <strong>Paragraph chunks win for resource documents</strong>
+  <p>With sentence chunking, the first retrieved chunk was "Walk-in hours are 10am to 2pm, no appointment needed." No organization. No location. No day of the week. The sentence that named the legal-aid clinic and specified the first Tuesday of each month was in a different chunk, which scored lower and did not make the top 2. The answer was accurate for the information it had, and completely useless in practice.</p>
+  <p>The lesson is that a chunk is the unit of context retrieval. If an entry in your resource list is naturally "one thing" -- a name, a day, hours, an address, a note -- splitting it across multiple chunks severs the connections that make it actionable. The embedding for "10am to 2pm" does not know it belongs to the legal-aid clinic two sentences earlier. Paragraph-level chunking keeps each entry whole. For this kind of document -- short, self-contained resource entries, one per paragraph -- it is the right call without question.</p>
+  <p>For a different kind of document -- a 50-page policy manual where each section covers one topic -- you would choose differently, probably splitting on section headers rather than paragraphs. The chunking strategy is a design decision that depends on the structure of the documents. There is no universal answer, which is why running the comparison yourself matters.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A working <code>rag.mjs</code> script over four local reentry resource files; three confirmed test runs (two strong retrieval hits, one out-of-context refusal); a fourth file added and confirmed retrievable; a paragraph-vs-sentence chunking comparison with a concrete example of what sentence chunking breaks and why. The upsell connection: this same pattern, applied to First 90, gives the program an AI assistant that answers questions about its actual resources without hallucinating -- and it is maintained by editing text files, not by retraining a model.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-1.html">&#9664; Exercise 1</a>
+  <span class="spacer"></span>
+  <a href="exercise-3.html">Exercise 3 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

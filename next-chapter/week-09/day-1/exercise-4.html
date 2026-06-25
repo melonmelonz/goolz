@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Problem-Solution-Price Map / NCD W9D1</title>
+<meta name="description" content="Exercise 4: full problem-solution-price map for Idea A -- the reentry case-management reminder system. Who has it, how painful, how they solve it today, what to build, what tools, how long, what to charge.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Problem-Solution-Price Map</h1>
+<div class="subtitle">Exercise 4 / 4 . Level 1 . 20 min</div>
+
+<p>
+  The last exercise of the day is a single complete map for Idea A. Not a new idea -- just Idea A laid out in full, with the problem, the solution, and the price each on their own terms, all the numbers sourced honestly. The point is to have one clean document you could hand someone and they would understand the whole thing in two minutes. I have been building toward this all day; this is what it looks like assembled.
+</p>
+
+<h2>The Problem</h2>
+
+<table>
+  <tr><th>Dimension</th><th>Detail</th></tr>
+  <tr><td>Who has it</td><td>Two case managers at a small reentry / transitional-housing nonprofit, supporting roughly 30 residents. Not "nonprofits" as a category -- this specific type of org, at this specific scale, running lean on staff and budget. The case managers are the people who feel it; the residents are the people who pay when a date gets dropped.</td></tr>
+  <tr><td>How painful</td><td>6-8 hours per week of manual work: tracking every resident's parole check-ins, court dates, job application deadlines, and certification expirations in one shared Google Sheet, then texting reminders by hand the night before each event. The low-grade fear of a dropped date never fully goes away. A missed parole check-in is not a scheduling inconvenience -- it can be a violation, and a violation can mean going back inside. That is the pain ceiling. It is not about inconvenience.</td></tr>
+  <tr><td>How they solve it today</td><td>Shared Google Sheet, hand-texted reminders the night before, a case manager who has memorized the schedule and relies on herself not to forget anything. It mostly works until it doesn't. The system is one sick day, one bad week, one moment of overwhelm away from a dropped date.</td></tr>
+</table>
+
+<h2>The Solution</h2>
+
+<table>
+  <tr><th>Dimension</th><th>Detail</th></tr>
+  <tr><td>What I'd build</td><td>An automated intake-to-reminder pipeline: (1) case manager fills a form when a resident arrives, pasting or typing the intake note; (2) an AI step reads the free-text note and extracts structured fields -- name, parole check-in date, court dates, certification deadlines, job application dates; (3) the extracted data populates a row in the existing Google Sheet; (4) automated SMS reminders go to the resident the day before each deadline; (5) a Monday morning digest goes to the case manager listing all appointments for the week across all residents.</td></tr>
+  <tr><td>What tools</td><td>Google Forms (intake) or Typeform; Zapier with the "AI by Zapier" step or an OpenAI API call for the extraction; Google Sheets for the record; Twilio for SMS. If the Zapier automation has limitations, a lightweight Cloudflare Worker can replace the middle steps -- that is not exotic for me, but it increases the maintenance surface, so I would start with Zapier and only go custom if Zapier's AI step cannot handle the extraction reliably.</td></tr>
+  <tr><td>How long honestly</td><td>Eight hours for the core pipeline on clean data. Add two more hours for the messy cases -- intake notes that are not structured the way I expect, residents with multiple parole dates, edge cases in the date parsing. Call it ten hours total. Testing with real intake notes before handoff is not optional; the first draft will need adjustment to match how Renee actually writes things.</td></tr>
+</table>
+
+<h2>The Price</h2>
+
+<table>
+  <tr><th>Dimension</th><th>Detail</th></tr>
+  <tr><td>Competitor reference</td><td>CharityTracker: roughly $20/user/month (estimate, not confirmed from a published page -- exact pricing requires a demo request). Bonterra / Apricot: quote-only, signals enterprise pricing. Both are out of reach or out of scope for this client.</td></tr>
+  <tr><td>Value to the client</td><td>6-8 hours/week of Renee's time, conservatively at $25/hr equivalent, is ~$150-$200/week, or roughly $7,800-$10,400/year in labor. That is the quantifiable half. The unquantifiable half is the value of a prevented parole violation -- for the resident, for the org's outcomes, for the relationship. I cannot put a number on that half and I am not going to try.</td></tr>
+  <tr><td>What I'd charge</td><td>$900 one-time setup + $75/month for ongoing monitoring (checking the automation is running, updating when the org's process changes).</td></tr>
+  <tr><td>Where the number comes from</td><td>The value-based formula says $1,200-$1,500 based on the time savings. I am landing at $900 for three reasons: the client is grant-funded with a real budget ceiling; $900 is likely below the threshold that requires board approval at a small nonprofit; and there is a deliberate values choice in the gap between what the formula says and what I am charging. I am not pretending that gap does not exist. The Day 3 pricing session is going to push on this and I expect to not fully resolve it.</td></tr>
+</table>
+
+<div class="answer">
+  <strong>The honest version of the pricing tension</strong>
+  <p>The formula is clear: the time savings alone justify $1,200-$1,500 one-time. Value-based pricing is supposed to anchor to outcomes, not costs. By that logic I am leaving $300-$600 on the table.</p>
+  <p>The counter-argument I keep coming back to is that value-based pricing is not a mandate to charge the maximum the math supports. The client is a two-person nonprofit. The budget is grant money. The relationship is my community. There are forms of extracting maximum value from people who trust you that I want to have no part in, and I am keeping that line in view even when the math points the other way. The $900 is not a mistake or a failure of nerve. It is a choice. Day 3 is for arguing about whether it is the right one.</p>
+</div>
+
+<h2>The Full Map in One View</h2>
+
+<table>
+  <tr><th>Column</th><th>Summary</th></tr>
+  <tr><td>Problem</td><td>Two case managers, ~30 residents, 6-8 hrs/week of manual reminder-texting off a fragile shared Sheet, parole-violation stakes</td></tr>
+  <tr><td>Current solution</td><td>Google Sheet + hand-texted reminders the night before each event</td></tr>
+  <tr><td>My solution</td><td>Form -> AI extraction -> Sheet -> automated SMS + Monday digest</td></tr>
+  <tr><td>Tools</td><td>Google Forms, Zapier + AI step, Google Sheets, Twilio</td></tr>
+  <tr><td>Build time</td><td>~10 hours including testing against real intake notes</td></tr>
+  <tr><td>Competitor pricing</td><td>CharityTracker ~$20/user/mo (estimate); Bonterra quote-only; real incumbent is free and fragile</td></tr>
+  <tr><td>Value to client</td><td>~$7,800-$10,400/yr in time savings + the unquantifiable value of a prevented violation</td></tr>
+  <tr><td>My price</td><td>$900 one-time + $75/month (formula says $1,200-$1,500; I'm landing lower by choice)</td></tr>
+</table>
+
+<h2>Deliverable</h2>
+
+<p>
+  A complete problem-solution-price map for Idea A. All numbers sourced and annotated honestly -- where I estimated, I said so; where pricing was opaque in the market, I named the opacity; where my price departs from what the formula suggests, I named that too. This is the artifact I would bring to an actual conversation with Renee's org. Everything on it is something I can defend out loud.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="./">Menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

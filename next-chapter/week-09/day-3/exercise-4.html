@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Build Your Pricing Model / NCD W9D3</title>
+<meta name="description" content="Exercise 4: the one-page pricing summary for First 90 -- setup fee, monthly maintenance, what is included, and what is explicitly out of scope.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Build Your Pricing Model</h1>
+<div class="subtitle">Exercise 4 / 4 . Level 1 . 20 min</div>
+
+<p>
+  The deliverable from Exercise 3, written in the course's one-page format. This is the thing I hand to the client -- or in this case, the thing I bring to Day 4 when I put together the formal proposal for First 90. It is short on purpose. Renee does not need the pricing worksheet. She needs to know what she is buying, what it costs, and what it does not include, all on one page without jargon.
+</p>
+
+<h2>First 90 -- One-Page Pricing Summary</h2>
+
+<pre>
+  ============================================================
+  FIRST 90 -- AUTOMATED INTAKE + REMINDER WORKFLOW
+  For a small reentry / transitional-housing nonprofit
+  ============================================================
+
+  WHAT IT DOES
+  ------------
+  Takes a case manager's free-text intake note, extracts the
+  resident's name, appointment type, date, and urgency using AI,
+  and routes it automatically:
+
+    - Urgent / court dates -> immediate SMS + Slack alert to
+      the on-call case manager
+    - Normal appointments -> logged to Google Sheet + queued
+      for the Monday digest with a drafted reminder text
+    - Bad or incomplete data -> surfaced by email so nothing
+      fails silently
+
+  The case manager submits one note. The system handles the
+  rest while the case manager is with the next resident.
+
+
+  WHAT'S INCLUDED IN SETUP
+  -------------------------
+  - Full Zapier workflow (6+ steps, error guarding, multi-path
+    routing, AI extract + AI reminder drafter)
+  - Google Sheet setup or migration to the new structure
+  - Twilio SMS integration (you provide the number)
+  - Slack integration (your existing workspace)
+  - Date normalization step (consistent format, no more "next
+    Tuesday" in the date column)
+  - Two weeks of post-launch monitoring and support
+  - One-page operations guide for your team
+
+
+  PRICING
+  -------
+  Setup + Build (one-time):    $900
+  Monthly Maintenance:          $75 / month
+
+  Monthly maintenance includes:
+    - Zap monitoring and incident response
+    - Twilio SMS cost pass-through (no markup)
+    - Up to 2 small adjustments per month
+    - Email response within 24 hours on weekdays
+
+
+  NOT INCLUDED
+  ------------
+  - Legal, medical, or case-management advice of any kind
+  - Resident-facing portal or mobile app
+  - Integration with court systems, parole databases, or
+    any government data source
+  - Automated scheduled reminders (future scope -- quoted
+    separately if you want it)
+  - Anything that replaces the case manager's judgment
+
+  The system is a tool. It logs, routes, and reminds.
+  The case manager still makes every decision.
+
+
+  WHAT YOU PROVIDE
+  ----------------
+  - A Google account with a Sheet we can work with
+  - A Twilio account and phone number (I can help set it up;
+    you pay Twilio directly -- roughly $1-2/mo at this volume)
+  - A Slack workspace where your team already operates
+  - Access to your current intake form so I can connect
+    the webhook
+
+
+  OPTIONAL ADD-ON
+  ---------------
+  RAG Resource Layer:   +$300 one-time
+
+  Indexes your program's resource documents (housing, legal
+  aid, jobs, transit, etc.) so a case manager can ask
+  "where does a resident get a bus pass?" and get your
+  program's actual answer -- not a hallucination.
+
+  Updated by editing a text file. No retraining required.
+
+
+  ============================================================
+  Questions? Ready to start?
+  Contact: [Penn's email]
+  ============================================================
+</pre>
+
+<div class="answer">
+  <strong>Why the "not included" section is as important as the price</strong>
+  <p>The out-of-scope list is not a legal disclaimer. It is the thing that keeps the relationship honest from the first conversation. If I hand this to Renee and she reads "resident-facing portal -- not included" and says "oh, that is actually the thing we need most," I want to know that now, not after I have taken $900 and spent a week building the intake workflow. The one-page format forces the conversation early. That is its purpose.</p>
+</div>
+
+<h2>What I'll Bring to Day 4</h2>
+
+<p>
+  This pricing summary goes into the Day 4 proposal. The proposal will also include a one-paragraph problem statement (what Renee's situation is and why the current spreadsheet process is the pain), a two-paragraph solution description (what First 90 does and how it changes the week), this pricing page, and a short "next steps" section: sign, share the Google Sheet access and Twilio creds, schedule the one-hour setup call. That is the whole document. It should fit on two pages.
+</p>
+
+<p>
+  I went back and forth on whether to include the value calculation in the proposal. The math -- 6 hours saved, $7,800 a year -- is real, and it is on my side. But showing a nonprofit the dollar value of their staff's time and then charging a percentage of it has the flavor of a consulting firm doing a McKinsey slide. For Renee specifically, I think the better move is to name the time saving in plain English ("your case managers get back about six hours a week") and leave the math as my homework, not hers. If she asks why $900, I have the answer. I do not need to lead with it.
+</p>
+
+<h2>Deliverable</h2>
+
+<p>
+  A one-page pricing summary for First 90 in the course format: what it does, what is included in setup, the $900 one-time fee and $75/month maintenance, the explicit not-included list, what the client provides, and the optional RAG add-on at +$300. Ready to drop into the Day 4 proposal without editing.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="./">Menu</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

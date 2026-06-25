@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 4 -- Build Your Sellable Workflow / NCD W9D2</title>
+<meta name="description" content="Exercise 4: document First 90 in the portfolio workflow template -- name, client, trigger, actions, time saved, pricing -- and sketch the premium tier. This artifact carries into the Week 10 portfolio and the Phase 3 gate.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Build Your Sellable Workflow</h1>
+<div class="subtitle">Exercise 4 / 5 . Level 1-3 . 30 min</div>
+
+<p>
+  The build is done. This exercise is about documenting it in the format the course uses for the portfolio -- the thing that goes in front of a client and makes the case that I built something real, not a tutorial. The template forces precision: if I cannot fill in every row honestly, the workflow is not actually done. It has also been the most clarifying thing I have done today, because writing "time saved per week: ~6 hours" requires me to actually trace the nightly hand-texting process and count the minutes, which I had estimated but not calculated.
+</p>
+
+<h2>Workflow documentation -- required template</h2>
+
+<pre>WORKFLOW NAME:    First 90
+TAGLINE:          Automated intake triage for the first 90 days that matter
+
+FOR:              Small reentry / transitional-housing nonprofits
+                  (2-4 case managers, 20-40 residents, no dedicated tech staff)
+
+CLIENT PERSONA:   Program director who is accountable when a resident misses
+                  a parole check-in. Not tech-averse -- uses Google Workspace --
+                  but cannot maintain code. Pays to reduce catastrophic outcomes,
+                  not to save time.
+
+TRIGGER:          Webhooks by Zapier -- Catch Hook
+                  (intake form on the nonprofit's site POSTs a JSON payload
+                   with resident first name/initial and a free-text note)
+
+ACTIONS (in order):
+  1. AI by Zapier (gpt-5-mini)
+     Extract structured JSON from the intake note:
+     name, type, nextDate, urgency, isReal
+
+  2. Filter
+     Continue only if isReal = true AND type in
+     {job, court, parole, cert, housing}
+     Halts on spam, test submissions, or unrecognized appointment types
+
+  3. Google Sheets -- Create Row
+     Append to the case-management board:
+     Name / Type / Next Date / Urgency / Logged At
+
+  4. Paths (branch on urgency + type)
+     Path A: urgency = urgent OR type = court
+       -> Slack: immediate message to #on-call channel
+     Path B: all others
+       -> (logged; rolls into Monday digest -- see premium tier)
+
+WHAT IT DOES:
+  Receives a free-text intake note, extracts a structured record,
+  filters out garbage, logs to the shared board, and immediately
+  alerts the on-call case manager for any urgent or court-related entry.
+
+TIME SAVED PER WEEK (estimate):
+  Nightly review of pending appointments:  ~20 min x 5 nights = 100 min
+  Hand-texting reminders to residents:     ~8 min x 20 reminders = 160 min
+  Re-entering intake notes to spreadsheet: ~5 min x 15 notes = 75 min
+  Chasing missed entries the next day:     ~30 min / 2x per week = 60 min
+  ---
+  Total saved: ~395 min / week, call it ~6.5 hours
+  Conservative estimate I'd use with a client: ~6 hours / week
+
+WHAT I'D CHARGE:
+  Basic build (this Zap):    $900 one-time
+  Optional maintenance:      $75 / month
+  (covers Zapier plan share, prompt updates, new appointment types)
+
+  Justification for the price:
+  A missed parole check-in is not an inconvenience -- it can end a
+  resident's housing and reactivate a sentence. The director does not
+  need me to save her case managers 6 hours a week. She needs me to
+  make that outcome less likely. $900 is cheap insurance on a grant
+  that gets pulled if her program has a high recidivism rate.</pre>
+
+<h2>Level 3 -- Premium tier</h2>
+
+<p>
+  The basic build (documented above) is the foundation. The premium tier adds three capabilities:
+</p>
+
+<table>
+  <tr><th>Addition</th><th>What it does</th><th>How it works</th></tr>
+  <tr><td>Monday digest</td><td>case managers start the week with a single email: who has what coming up in the next 7 days, sorted by urgency</td><td>a scheduled Zap (every Monday 7am) reads the Sheets board, filters for nextDate within 7 days, and sends a formatted digest email to both case managers</td></tr>
+  <tr><td>Monthly summary</td><td>director gets a once-a-month count: how many intakes by type, how many were urgent, how many upcoming dates logged -- program-level visibility without opening the spreadsheet</td><td>a monthly scheduled Zap reads Sheets, counts rows by type and urgency for the prior month, sends a summary email to the director</td></tr>
+  <tr><td>Twilio SMS to residents</td><td>48 hours before a logged appointment date, the resident receives a direct text reminder -- not mediated by the case manager</td><td>a daily scheduled Zap checks nextDate for entries within 48 hours, calls Twilio to send SMS to the resident's number (requires adding a phone field to intake)</td></tr>
+</table>
+
+<div class="answer">
+  <strong>Why the premium tier exists in the portfolio</strong>
+  <p>The $900 build is the thing I can close in a single conversation. The $75/month and the premium tier expansions are the reason there is a second conversation. Clients who see the basic build working will ask "can it also text the residents directly?" The answer is yes, and it is scoped, and it has a number. Having it written down before the client asks is the difference between a freelancer and someone who looks like they have done this before.</p>
+</div>
+
+<h2>Portfolio and Phase 3 gate</h2>
+
+<div class="answer">
+  <strong>Where this artifact goes</strong>
+  <p>This document is the seed for the Week 10 portfolio entry. The Week 10 brief asks for a completed workflow with documentation, a pricing rationale, and evidence of a working build -- Zap History screenshots or a live demo URL. The template I filled in above is the documentation. The Zap History from Exercise 3 is the evidence. The Phase 3 gate requires at least one sellable workflow with a named client type and a price I can defend. First 90 is that workflow.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A completed workflow document in the required template format: name, client persona, trigger, ordered action list, one-sentence description, time saved with breakdown, pricing with justification. A Level 3 premium tier table with three additions, each with what it does and how it is built. This document is checked into my NCD journal and is the base artifact for the Week 10 portfolio and the Phase 3 gate review.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-3.html">&#9664; Exercise 3</a>
+  <span class="spacer"></span>
+  <a href="exercise-5.html">Exercise 5 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

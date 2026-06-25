@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 1 -- Extend Your Workflow / NCD W9D3</title>
+<meta name="description" content="Exercise 1: harden First 90 with a Filter guard, failure-notification fallback, Paths branching, a date-normalizer Formatter step, and a second AI step that drafts the resident's reminder text.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Extend Your Workflow</h1>
+<div class="subtitle">Exercise 1 / 4 . Level 1-3 . 40 min</div>
+
+<p>
+  First 90 runs. The happy path works: an intake note comes in over the webhook, the AI step extracts a JSON object, the row lands in the sheet, Twilio fires an SMS for urgent appointments. What I proved yesterday is that the thing can work. Today's job is making it work reliably when the input is bad, the AI is creative, or nobody is watching. A Zap that silently skips a court-date appointment is not a working Zap. It is a liability.
+</p>
+
+<h2>The Final Workflow Shape</h2>
+
+<pre>
+  [1] TRIGGER: Catch Hook (Webhook)
+         |
+         v
+  [2] AI: Extract JSON
+         { name, type, nextDate, urgency, isReal }
+         |
+         v
+  [3] FILTER (guard): continue ONLY if
+         type IN [appointment, court, housing, employment, other]
+         AND nextDate is not empty
+         |-- FAILS? --> [3b] Email-by-Zapier: raw payload
+         |                  + AI output to penn@...
+         v
+  [4] FORMATTER: Date/Time -> Convert Format
+         input: {{2.nextDate}}  (free text from AI)
+         output: YYYY-MM-DD
+         |
+         v
+  [5] AI: Draft Reminder Text
+         "Write a one-sentence reminder for a resident
+          named {{2.name}} about their {{2.type}} on
+          {{4.output}}. Keep it under 25 words. Plain text."
+         |
+         v
+  [6] PATHS:
+         |--[A] urgency=high OR type=court
+         |       [6A-1] Slack: DM on-call case manager
+         |       [6A-2] Twilio SMS: to on-call number
+         |
+         |--[B] urgency=normal AND type != court
+         |       [6B-1] Google Sheets: append row
+         |                (name, type, date, reminder text)
+         |       [6B-2] queue for Monday digest
+         |
+         |--[C] nextDate missing or type unrecognized
+                 [6C-1] Google Sheets: append to review queue tab
+</pre>
+
+<h2>Part A -- The Filter Guard and Failure Notification</h2>
+
+<p>
+  The Filter goes right after the AI step. The conditions are specific: <code>type</code> must be a member of the allowed set (appointment, court, housing, employment, other) and <code>nextDate</code> must exist and be non-empty. If either condition fails, the Zap stops -- but not silently.
+</p>
+
+<p>
+  I added a separate Email-by-Zapier step on the failure branch. It sends the raw webhook payload and the full AI output to my email, with a subject line of "First 90 filter blocked -- review." That gives me two things: a record of everything the filter ever blocked, and the data I need to understand whether the AI prompt needs tuning. Failures are information. The filter does not hide them, it surfaces them.
+</p>
+
+<div class="answer">
+  <strong>Tested: passing and failing inputs both confirmed in Zap History</strong>
+  <p>I sent a well-formed test webhook -- real name, type "court," a date string, urgency "high" -- and confirmed the Zap continued through all six steps. Then I sent a deliberately bad one: type "unknown," nextDate empty. The Filter blocked it at step 3, the fallback email fired with the raw payload, and Zap History showed a clean "Stopped by Filter" entry. Visible failure is the goal. I got visible failure.</p>
+</div>
+
+<h2>Part B -- Paths: Three Routes, Three Different Outcomes</h2>
+
+<p>
+  The Paths step at step 6 has three branches. The logic is readable:
+</p>
+
+<table>
+  <tr><th>Path</th><th>Condition</th><th>Actions</th></tr>
+  <tr><td>A -- Urgent</td><td><code>urgency = high</code> OR <code>type = court</code></td><td>Slack DM to on-call case manager + Twilio SMS to on-call number immediately</td></tr>
+  <tr><td>B -- Normal</td><td><code>urgency = normal</code> AND <code>type != court</code></td><td>Google Sheets append (name, type, date, reminder text) + tag for Monday digest</td></tr>
+  <tr><td>C -- Review</td><td>anything that passed the Filter but has a missing or garbled date after Formatter</td><td>append to a separate "Review Queue" tab in the sheet for the case manager to handle manually</td></tr>
+</table>
+
+<p>
+  Path C deserves a note. The Filter already blocks empty <code>nextDate</code> values, so Path C is for the case where the AI returned something non-empty that the Formatter step cannot parse into a date -- "sometime next week," or a string in a format the date converter cannot handle. Those get logged to the review tab instead of being quietly dropped. Renee can look at that tab on Monday and handle the two or three rows that needed a human eye.
+</p>
+
+<h2>Part C -- Date Normalizer and Reminder Drafter</h2>
+
+<p>
+  The Formatter by Zapier step (step 4) uses the "Date / Time" action, "Convert Format," with the input set to <code>{{2.nextDate}}</code> -- whatever the AI returned -- and the output format set to <code>YYYY-MM-DD</code>. Zapier's Formatter handles a surprisingly wide range of input formats: "June 14th," "6/14/26," "next Tuesday" relative to the run date. It does not handle everything, which is exactly what Path C is for.
+</p>
+
+<p>
+  The second AI step (step 5) gets the normalized date and drafts the one-line reminder the resident will actually receive. The prompt is brief and constrained:
+</p>
+
+<pre>
+System: You write short, warm, plain-text appointment reminders.
+        No markdown. No quotes. Maximum 25 words.
+
+User: Write a reminder for a resident named {{2.name}} about
+      their {{2.type}} appointment on {{4.output}}.
+</pre>
+
+<div class="answer">
+  <strong>Why a second AI step instead of doing this in the first one</strong>
+  <p>The first AI step has one job: parse intake text into structured fields. Asking it to also draft a reminder in the same output is asking it to produce two different formats at once -- JSON for the router and plain text for the resident. That is a prompt that fights itself. Splitting into two steps keeps each step's instruction simple and its output predictable. The cost is one extra API call per run. On this volume -- maybe thirty residents, a handful of intakes a day -- that is cents a month. The reliability is worth it.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A six-step Zapier workflow with: a Filter guard (step 3) that passes only valid, date-bearing records; a failure-notification fallback email for everything the filter blocks; a Formatter step (step 4) that normalizes the AI's free-text date to <code>YYYY-MM-DD</code>; a second AI step (step 5) that drafts the resident's reminder text; and a three-branch Paths step (step 6) routing urgent records to immediate SMS/Slack, normal records to the sheet and digest queue, and garbled-date records to the review tab. Both passing and failing test runs confirmed in Zap History.
+</p>
+
+<nav class="ex-nav">
+  <a href="./">&#9664; Menu</a>
+  <span class="spacer"></span>
+  <a href="exercise-2.html">Exercise 2 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

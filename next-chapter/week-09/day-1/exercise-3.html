@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Competitor Research + Pricing / NCD W9D1</title>
+<meta name="description" content="Exercise 3: competitor research and pricing for Idea A -- the reentry case-management reminder system. Map the landscape, find the gap, write the positioning pitch.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Competitor Research + Pricing</h1>
+<div class="subtitle">Exercise 3 / 4 . Level 1-3 . 30 min</div>
+
+<p>
+  The exercise is for Idea A only -- the reentry case-management reminder system. Goal: map the real competitor landscape, figure out what things actually cost (or, where that is not possible, document why it is not possible), locate the gap, and write a positioning pitch in one paragraph.
+</p>
+<p>
+  One thing the lecture said explicitly that I am taking seriously here: the tool I used to research pricing can make up numbers. Where I could not confirm a price from a published page, I am saying so rather than inventing a confident exact number. Opaque pricing is itself a finding -- it tells you something about who the product is for.
+</p>
+
+<h2>Competitor Landscape</h2>
+
+<table>
+  <tr><th>Competitor</th><th>What They Offer</th><th>Price</th><th>What's Missing for This Use Case</th></tr>
+  <tr>
+    <td>CharityTracker (Simon Solutions)</td>
+    <td>Shared case-management database for human-service orgs: client records, notes, referrals, outcomes reporting. Multi-org data sharing is the headline feature.</td>
+    <td>Somewhere in the $20/user/month range -- I have seen this figure cited but their pricing page requires a demo request, so I cannot confirm it. Treat as a rough estimate, not a quote.</td>
+    <td>No automated SMS reminders out of the box. Built for coalitions of orgs sharing data, not a two-person team managing their own residents. The onboarding assumes more organizational capacity than a two-staff nonprofit has.</td>
+  </tr>
+  <tr>
+    <td>Bonterra / Apricot (formerly Social Solutions)</td>
+    <td>Enterprise case-management platform: configurable intake forms, outcomes dashboards, compliance reporting, API integrations.</td>
+    <td>Quote-only. I spent 15 minutes trying to find a published price and could not. The sales flow is designed for a procurement conversation, not a credit card form. Estimates I found in forums ranged from "expensive" to "tens of thousands per year for larger orgs" -- neither of which I can verify.</td>
+    <td>The opacity is the answer. This is not priced for a two-person nonprofit; it is priced for a county agency or a large national org. The onboarding is measured in months. It is correct software for the wrong client.</td>
+  </tr>
+  <tr>
+    <td>Calendly / Acuity Scheduling + reminder add-on</td>
+    <td>Appointment scheduling with confirmation and reminder notifications.</td>
+    <td>~$10-16/month for a paid plan, depending on the tier.</td>
+    <td>Models bookings and appointments, not residents. No intake form, no free-text AI extraction, no case notes, no parole-deadline logic, no case manager digest. You could bolt reminders onto the resident's Google Calendar, but you cannot get the structured-intake piece from a scheduling tool.</td>
+  </tr>
+  <tr>
+    <td>The real incumbent</td>
+    <td>A shared Google Sheet + the case manager's thumbs.</td>
+    <td>Free.</td>
+    <td>Fragile -- any new field requires a column and discipline. No automation. The reminder takes Renee's attention every single night. It burns her out slowly and drops dates occasionally, and occasional is too often when the stakes are a potential violation.</td>
+  </tr>
+</table>
+
+<div class="answer">
+  <strong>What opaque pricing is telling you</strong>
+  <p>Both CharityTracker (partial opacity, demo required) and Bonterra (full opacity, quote-only) are sending a signal: this software is not for you unless you have a procurement process and a budget conversation. For a two-person nonprofit running on grants, that signal is loud. The real decision these organizations make is not "CharityTracker or Bonterra" -- it is "Google Sheets or something we can actually afford and onboard." That is the gap I am sitting in.</p>
+</div>
+
+<h2>The Gap</h2>
+
+<p>
+  The landscape looks like this: on one end, the free fragile spreadsheet that works until it doesn't. On the other end, enterprise case-management software that costs more than the nonprofit's monthly budget and takes months to stand up. In the middle: nothing that does specifically what a small reentry program needs, which is AI-structured intake plus automated SMS reminders plus a case manager digest, at a church-basement price.
+</p>
+
+<p>
+  The closest thing to a gap-filler would be a Zapier workflow duct-taped together by someone technical. But nobody at this nonprofit is technical, and maintaining a multi-step Zapier automation is not something a case manager can do at 9pm when a step breaks. What they need is something that works and that they can hand me when it doesn't. That is the service layer, not just the tool.
+</p>
+
+<h2>Level 3 -- Positioning Pitch</h2>
+
+<div class="answer">
+  <strong>One-paragraph pitch</strong>
+  <p>I help small reentry programs make sure no resident misses a parole check-in or court date, by turning the intake spreadsheet they already keep into an automated reminder system. The case manager fills in a form when a new resident arrives; the AI pulls the dates out of the intake notes; the sheet updates; and the night before each deadline, the resident gets a text -- without Renee having to remember to send it. Unlike enterprise case-management software that runs into the thousands per year and takes months to onboard, I build this in a week on the tools the program already uses, for a one-time fee of $900. If they want me keeping an eye on it -- checking that the automations are still running, updating when something changes -- that is $75 a month.</p>
+</div>
+
+<h2>Pricing Notes</h2>
+
+<p>
+  The formula for value-based pricing anchors to the time savings: 6-8 hours per week of manual reminder work, conservatively at $25/hour, is roughly $150-$200/week, or about $7,800-$10,000/year in equivalent labor cost. A $900 one-time fee is less than six weeks of the current cost. On those numbers, the formula would suggest something like $1,200-$1,500 as a reasonable one-time price.
+</p>
+
+<p>
+  I am landing at $900 deliberately. The reasons: the client is a grant-funded nonprofit with a real budget ceiling, not a solo operator billing $2,000/job. The relationship matters -- this is my community, not a stranger I am selling to from a cold email. And there is a real possibility that a higher number trips a procurement approval process that makes the whole thing stall for three months. $900 is below most "needs board approval" thresholds for small nonprofits.
+</p>
+
+<p>
+  Whether that is the right call is a question I am genuinely not settled on. The Day 3 pricing session is apparently built for exactly this fight. I will bring it there.
+</p>
+
+<h2>Deliverable</h2>
+
+<p>
+  A competitor landscape with honest uncertainty about pricing noted where applicable. Two clear signals: enterprise tools are priced out of reach for this client, and the free incumbent (Google Sheets) is fragile enough that the pain is real. A one-paragraph positioning pitch that anchors to the specific outcome (no missed parole dates) and positions between the free-fragile option and the expensive-enterprise option. Pricing set at $900 one-time / $75 monthly, with the formula case for a higher number documented and the values reasoning for the lower number named.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

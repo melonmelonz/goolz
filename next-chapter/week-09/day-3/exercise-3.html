@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 3 -- Pricing Exercise / NCD W9D3</title>
+<meta name="description" content="Exercise 3: the full pricing worksheet for First 90 -- scope, time estimate, market comps, value calculation, and the price I actually named and why it is lower than the formula says.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Pricing Exercise: Scope + Estimate + Price</h1>
+<div class="subtitle">Exercise 3 / 4 . Level 1-3 . 40 min</div>
+
+<p>
+  Five steps: scope, estimate, market research, value calculation, price. The order matters. I cannot price First 90 honestly until I know what it does, how long it took, what Renee could buy instead, and what it is worth to her program. Running the steps in order is the discipline. The number at the end is not the hard part. Knowing the ceiling before you quote a number is the hard part.
+</p>
+
+<h2>Step 1 -- Scope</h2>
+
+<h3>What First 90 does</h3>
+<ul>
+  <li>Accepts a case manager's free-text intake note over a webhook (submitted from whatever intake form the program already uses)</li>
+  <li>Uses an AI step to extract a structured record: resident name, appointment type, next date, urgency flag, and a validity check</li>
+  <li>Normalizes the date to a consistent format so reminders can be reliably scheduled</li>
+  <li>Routes urgent and court-date appointments to immediate SMS + Slack notification to the on-call case manager</li>
+  <li>Logs all records to the program's Google Sheet with a drafted one-line reminder for the resident</li>
+  <li>Queues normal records for the Monday digest</li>
+  <li>Flags and surfaces records that fail the guard (bad data, garbled date) by email, so failures are visible and not silent</li>
+</ul>
+
+<h3>What it does NOT do</h3>
+<ul>
+  <li>Does not replace the case manager's judgment -- it is a routing and logging tool, not a decision-maker</li>
+  <li>Gives no legal or medical advice</li>
+  <li>Does not include a resident-facing portal in this version -- residents receive SMS reminders, that is all</li>
+  <li>Does not integrate with court systems, parole databases, or any external government data</li>
+  <li>Does not send automated reminders on a schedule in this version -- that is a named future scope item</li>
+</ul>
+
+<h3>What the client provides</h3>
+<ul>
+  <li>Their Google Sheet (I work with their existing structure or create a clean one during setup)</li>
+  <li>A Twilio account and number (I can help them set it up; they pay the Twilio bill directly)</li>
+  <li>A Slack workspace where the case managers already operate</li>
+  <li>Their intake form (whatever they currently use -- I connect the webhook to it)</li>
+  <li>The resource documents for the RAG layer, if they want that added</li>
+</ul>
+
+<div class="answer">
+  <strong>Writing what it does NOT do is not modesty -- it is protection</strong>
+  <p>The scope section that matters most is the "does not" list. Renee's imagination of "the AI automation" probably includes things I have not built -- a resident portal, automatic court reminders, integration with the parole system. If I do not put those in writing as out-of-scope, the conversation about them will happen after I have taken the money. The "does not" list is the scope wall I am holding. Everything inside it is what I am delivering. Everything outside it is a future contract.</p>
+</div>
+
+<h2>Step 2 -- Time Estimate</h2>
+
+<table>
+  <tr><th>Task</th><th>Estimated Hours</th><th>Notes</th></tr>
+  <tr><td>Initial setup (Zapier account review, connect integrations, test webhook)</td><td>1h</td><td>their Google account, their Slack, their Twilio -- OAuth setup takes time if they have never done it</td></tr>
+  <tr><td>Build core workflow (AI step + Filter + Sheets append)</td><td>4h</td><td>the bulk of the work; includes prompt iteration until the JSON extraction is reliable</td></tr>
+  <tr><td>Error handling + Paths + date normalizer + reminder drafter</td><td>1.5h</td><td>today's exercise is a proof of concept; this is the real build time for a client</td></tr>
+  <tr><td>Documentation + client walkthrough</td><td>1h</td><td>a one-page guide for Renee that explains what the Zap does, what the error emails mean, and how to tell me if something breaks</td></tr>
+  <tr><td>Buffer (20%)</td><td>~1.5h</td><td>things that take longer than expected; always happens</td></tr>
+</table>
+
+<p>
+  Total: roughly 9 hours. I am calling it 8 because I already built the version in the course and I know this scope well. The 20% buffer is there precisely for the things I do not know yet -- Renee's Zapier account might have a quirk, the intake form webhook might send a different field name than I expect, the date formats in her notes might be exotic.
+</p>
+
+<h2>Step 3 -- Market Research</h2>
+
+<table>
+  <tr><th>Competitor / Alternative</th><th>What it costs</th><th>What it does</th><th>Relevant notes</th></tr>
+  <tr><td>CharityTracker</td><td>~$20/user/mo</td><td>case management database, intake tracking, reporting</td><td>no automated SMS, no AI extraction; two case managers = $40/mo = $480/yr just to store the records</td></tr>
+  <tr><td>Bonterra / Apricot</td><td>quote-only, opaque</td><td>enterprise nonprofit case management with workflow automation</td><td>I requested a quote; they do not publish pricing; this is itself a finding -- "opaque pricing" is a tax on small nonprofits who do not have time to do sales calls</td></tr>
+  <tr><td>Free spreadsheet (incumbent)</td><td>$0</td><td>Renee and her colleague type rows manually</td><td>fragile, no reminders, no error surfacing; the real competitor because it is the default; I am not replacing a SaaS, I am replacing a Tuesday morning</td></tr>
+</table>
+
+<div class="answer">
+  <strong>The Bonterra / Apricot finding matters</strong>
+  <p>The fact that the enterprise solution for this space does not publish its pricing is relevant context for my client. It means the well-funded option is inaccessible to a two-person team that cannot afford a multi-month procurement process. The automation I am selling is not competing with CharityTracker on features. It is competing with a spreadsheet on reliability and time. That is a different conversation, and it informs the price.</p>
+</div>
+
+<h2>Step 4 -- Value Calculation</h2>
+
+<pre>
+  Time saved per week:
+    - Manual data entry from intake notes: ~2 hrs/wk
+    - Chasing down appointment records: ~1 hr/wk
+    - Composing and sending SMS reminders manually: ~1 hr/wk
+    - Sorting urgent vs. normal at the start of each day: ~2 hrs/wk
+    -----------------------------------------------
+    Total: ~6 hrs/wk saved across both case managers
+
+  Loaded rate for a case manager at a small nonprofit: ~$25/hr
+  (includes salary, benefits, overhead; conservative)
+
+  Weekly value: 6 hrs x $25 = $150/wk
+
+  Annual value: $150 x 52 = $7,800/yr
+
+  Uncounted value:
+    A missed court date is not a calendar error. It is a parole violation.
+    For a resident 90 days out, it can mean reincarceration. That risk is
+    not quantifiable, but it is real, and it is the actual thing this
+    automation is guarding against. I am not going to put a dollar figure
+    on it. I am noting that it exists, because it is the reason "reliable"
+    matters more than "convenient" for this particular client.
+
+  Formula: 15-20% of annual value
+    15% of $7,800 = $1,170
+    20% of $7,800 = $1,560
+    Range: $1,170 - $1,560 one-time
+
+  My cost floor: 8h x $75/hr = $600
+  (I am pricing below market rate because I am early in this work
+   and building a portfolio; $75/hr is already a discount)
+</pre>
+
+<h2>Step 5 -- The Price, and the Tension Around It</h2>
+
+<p>
+  The formula says somewhere between $1,170 and $1,560. My cost floor is $600. I have room. And I am not charging $1,400.
+</p>
+
+<p>
+  Here is how I thought through it. The first instinct was the old one: $250, maybe $300, because "it only took a few days" and "they are a nonprofit" and "I do not want to scare them." I have priced things from fear before. The number always came out too low, and the reason was always some version of "I was not sure I was worth more." That is not a pricing method. It is an anxiety.
+</p>
+
+<p>
+  So I ran the formula first, all the way through, before I let myself name a number. The formula said $1,170-$1,560. That is the ceiling -- what this is worth to Renee in recovered time and reduced risk per year. I am not obligated to charge the ceiling. Value-based pricing tells me the ceiling so I can make a deliberate choice about where to land, not so I am commanded to extract maximum value from a two-person nonprofit serving people who just got out of prison.
+</p>
+
+<p>
+  My actual price: <strong>$900 one-time + $75 per month.</strong>
+</p>
+
+<p>
+  The reasoning I can state out loud: $900 is 11.5% of annual value -- inside the range, on the lower end. The monthly fee covers monitoring, the Twilio pass-through, and up to a couple of small adjustments per month -- it also means I stay attached to the thing and Renee can call me when something changes. I am choosing to charge less than the ceiling because this is my own community, because I believe in the work, and because a $900 invoice is achievable for a small nonprofit in a way that $1,400 might not be. Those are real business reasons, not fear. I can say them to Renee's face.
+</p>
+
+<div class="answer">
+  <strong>The key distinction</strong>
+  <p>Charging less ON PURPOSE -- knowing the ceiling, choosing a lower number for stated reasons -- is a business decision. Charging less out of FEAR -- never running the formula, quoting low because you assume any real number will scare the client -- is not pricing. It is self-doubt with a dollar sign. The formula does not command you to charge the maximum. It tells you what the maximum is, so that wherever you land, you know you chose it.</p>
+</div>
+
+<h2>Level 3 -- Full Pricing Page (Tiers)</h2>
+
+<pre>
+  FIRST 90 -- Pricing
+
+  -------------------------------------------------------
+  SETUP + BUILD             $900  (one-time)
+  -------------------------------------------------------
+  What's included:
+    - Full Zapier workflow (trigger, AI extract, filter,
+      formatter, paths, Sheets append, SMS/Slack routing)
+    - Error-notification fallback emails
+    - Google Sheet setup or migration
+    - Twilio + Slack integration
+    - Client walkthrough + one-page operations guide
+    - 2 weeks of post-launch support included
+
+  -------------------------------------------------------
+  MONTHLY MAINTENANCE       $75 / mo
+  -------------------------------------------------------
+  What's included:
+    - Zap monitoring (I check it when it breaks)
+    - Twilio SMS cost pass-through (no markup)
+    - Up to 2 small changes per month (new appointment type,
+      routing adjustment, prompt tweak)
+    - Email response within 24 hours on weekdays
+
+  -------------------------------------------------------
+  NOT INCLUDED (named out of scope)
+  -------------------------------------------------------
+    - Legal, medical, or case-management advice of any kind
+    - Resident-facing portal or app
+    - Integration with government databases, parole systems,
+      or court scheduling systems
+    - Automated scheduled reminders (future scope, quoted separately)
+    - Major workflow rebuilds or new feature development
+      (quoted as new project)
+
+  -------------------------------------------------------
+  ADD-ON: RAG Resource Layer  +$300 one-time  (optional)
+  -------------------------------------------------------
+  What it adds:
+    - Index your program's resource docs (housing, legal,
+      jobs, transit, etc.) into a local vector store
+    - Case managers can query: "where does a resident get
+      a bus pass?" and get your program's actual answer
+    - Updated by editing markdown files (no retraining)
+    - Delivered as a standalone script + documented process
+</pre>
+
+<h2>Deliverable</h2>
+
+<p>
+  A complete pricing worksheet for First 90: scope and out-of-scope defined in writing; an 8-hour time estimate broken by task; market research covering two named SaaS alternatives and the free spreadsheet incumbent; a value calculation showing $7,800 annual value and a formula range of $1,170-$1,560; a stated price of $900 one-time + $75/month with explicit reasoning; and a full tiered pricing page including the RAG add-on. The pricing tension -- formula versus deliberate discount -- is resolved in writing, not avoided.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-2.html">&#9664; Exercise 2</a>
+  <span class="spacer"></span>
+  <a href="exercise-4.html">Exercise 4 &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>

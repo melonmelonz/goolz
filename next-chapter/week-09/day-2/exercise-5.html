@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ex 5 -- Compare Lab: Same Workflow in Another Tool / NCD W9D2</title>
+<meta name="description" content="Exercise 5: rebuild the three-step First 90 core in Pipedream, compare the code-first path against Zapier's field-picker, and write a three-sentence verdict on which tool wins for this client and why.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F4BC;</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="back" href="./">&#9664; back to menu</a>
+
+<h1>Compare Lab: Same Workflow in Another Tool</h1>
+<div class="subtitle">Exercise 5 / 5 . Level 2 . 30 min</div>
+
+<p>
+  The compare lab is why I was looking forward to today ending. I have been using oven mitts for four exercises and I wanted to feel the code-first path. I chose Pipedream because it is the tool on the comparison table that most resembles writing actual code -- each step is a JavaScript function, full npm access, real editor, real console output. I rebuilt the three-step core: webhook trigger, AI extraction, Google Sheets append. Same logic, different tool. The goal was not to have an opinion about which is better. The goal was to earn the opinion through contact.
+</p>
+
+<h2>The Pipedream build</h2>
+
+<p>
+  Pipedream gives you a workflow editor where each step is either a pre-built action or a code step. I used one pre-built step (the HTTP trigger, equivalent to Zapier's Catch Hook) and wrote the rest as code.
+</p>
+
+<pre>// Step 1 -- HTTP trigger (Pipedream built-in)
+// Receives POST, exposes event.body
+
+// Step 2 -- AI extraction (code step)
+import { OpenAI } from "openai";
+
+export default defineComponent({
+  async run({ steps }) {
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const note = steps.trigger.event.body.note;
+
+    const resp = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Extract intake fields and return ONLY valid JSON:
+{"name":string,"type":"job|court|parole|cert|housing","nextDate":string,"urgency":"urgent|normal","isReal":boolean}
+Example: {"name":"D.","type":"parole","nextDate":"Thursday 9am","urgency":"urgent","isReal":true}`
+        },
+        { role: "user", content: note }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    return JSON.parse(resp.choices[0].message.content);
+  }
+});
+
+// Step 3 -- Google Sheets append (code step using googleapis)
+import { google } from "googleapis";
+
+export default defineComponent({
+  async run({ steps }) {
+    const extracted = steps.ai_extract.$return_value;
+    if (!extracted.isReal) return { skipped: true };
+
+    const auth = new google.auth.GoogleAuth({
+      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"]
+    });
+    const sheets = google.sheets({ version: "v4", auth });
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.SHEET_ID,
+      range: "Residents!A:E",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[
+          extracted.name,
+          extracted.type,
+          extracted.nextDate,
+          extracted.urgency,
+          new Date().toISOString()
+        ]]
+      }
+    });
+
+    return { appended: true, name: extracted.name };
+  }
+});</pre>
+
+<h2>Comparison -- what I noticed</h2>
+
+<table>
+  <tr><th>Dimension</th><th>Zapier</th><th>Pipedream</th></tr>
+  <tr><td>Writing the AI prompt</td><td>text box in a UI card; usable but not a real editor</td><td>a string in code; syntax-highlighted, version-controlled with the step, copyable with one key</td></tr>
+  <tr><td>Field mapping</td><td>field-picker -- browse, click, insert; validates the field exists</td><td>just write <code>steps.ai_extract.$return_value.name</code> -- feels natural</td></tr>
+  <tr><td>Debugging a bad output</td><td>look at step preview in the test panel</td><td><code>console.log</code>, see output immediately in the step console below the editor</td></tr>
+  <tr><td>Adding a new appointment type</td><td>update the prompt text in the AI step UI card</td><td>edit the system prompt string, redeploy the step</td></tr>
+  <tr><td>Authentication (Google Sheets)</td><td>OAuth popup, stored credential, no JSON in sight</td><td>service account key as an env var, passed to the auth constructor in code</td></tr>
+  <tr><td>Someone else editing it later</td><td>open the Zap, read the steps in plain English</td><td>open the step, read JavaScript</td></tr>
+</table>
+
+<div class="answer">
+  <strong>What felt easier in Pipedream</strong>
+  <p>Writing the AI step. The difference between typing a string in a code editor and filling in a text box in a UI is the difference between writing and pointing. I had the prompt drafted, revised, and tested in about four minutes. In Zapier the same iteration took longer because every save triggers a re-test cycle through the UI. And <code>response_format: { type: "json_object" }</code> in the OpenAI call eliminates the entire "model returned markdown-wrapped JSON" problem that required the one-shot example in Exercise 2. The code path has a tool for that. Zapier does not expose it.</p>
+</div>
+
+<div class="answer">
+  <strong>What felt better in Zapier</strong>
+  <p>The Google Sheets integration. In Zapier: authorize with OAuth, pick the spreadsheet from a dropdown, pick the sheet, map the columns. Five minutes, no JSON, no service account, no IAM configuration. In Pipedream I set up a Google Cloud service account, downloaded a credentials JSON, pasted it into an env var, and wrote an auth constructor. That is fifteen minutes of boilerplate that has nothing to do with the workflow logic, and it is what a client sees if I hand her a Pipedream workflow and she needs to re-authenticate it. She will call me. In Zapier she clicks "reconnect" and enters her Google password.</p>
+</div>
+
+<h2>The three-sentence verdict</h2>
+
+<p>
+  Pipedream felt more natural to me -- writing JavaScript field access instead of clicking a field-picker, and having a real code editor for the AI prompt instead of a text box, is genuinely faster and more precise for someone who types faster than they click.
+</p>
+<p>
+  Zapier has better prebuilt integrations for the apps this client actually uses -- the Google Sheets OAuth flow alone saved me fifteen minutes of service account setup that a non-technical person could not replicate without help.
+</p>
+<p>
+  I would pick Zapier for this client, and the reason has nothing to do with which tool I prefer: Renee needs to be able to open the thing and understand what it is doing after I am gone, and she can read a Zapier step card but will never open a JavaScript function -- so the tool that is worse for me is the right tool for the job.
+</p>
+
+<div class="answer">
+  <strong>Tool fit beats tool preference -- the actual meta-skill</strong>
+  <p>I have spent four exercises today fighting the urge to just write the code. Pipedream proved the urge was justified -- the code path really is faster and more precise for me. But "faster for me" is only the right criterion when I am the one maintaining the thing. I am not. The meta-skill is knowing the difference between "I would use this tool" and "my client can use this tool," and being honest about which question matters when the gig ends.</p>
+</div>
+
+<h2>Deliverable</h2>
+
+<p>
+  A working three-step Pipedream workflow (webhook, AI extract, Sheets append) with the code for each step documented above. A comparison table across six dimensions -- field mapping, debugging, authentication, future edits -- with honest observations in both directions. A three-sentence verdict that names which tool felt easier, which had better integrations, and which I would pick for this specific client with a clear reason. The verdict is Zapier, not because it is the better tool, but because it is the better fit.
+</p>
+
+<nav class="ex-nav">
+  <a href="exercise-4.html">&#9664; Exercise 4</a>
+  <span class="spacer"></span>
+  <a href="./">Menu &#9654;</a>
+</nav>
+
+<div class="foot">
+  made on linux . <a href="/">goolz.org</a> . ncd
+</div>
+
+</body>
+</html>
