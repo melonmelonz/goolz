@@ -448,7 +448,6 @@ cd pwg-rooms && npx wrangler dev
 │ 2026-05-01 │ Playing With Goolz reskin (violet/sage/candle/bone)     │
 │            │   + AI ghosts · mobile D-pad · audio toggle · deeplink  │
 │ 2026-05-01 │ /games/pwf3* → /games/pwg* 301; PWF3 standalone retired │
-│            │   · timer-leak audit · API CSRF lockdown                │
 │ 1893    · │ The Goolz Society convenes for the first time          │
 └────────┴────────────────────────────────────────────────────────────┘
 ```
@@ -463,6 +462,14 @@ cd pwg-rooms && npx wrangler dev
 [x] Split DO into sibling pwg-rooms Worker
 [ ] PWG: spectator mode
 ```
+
+---
+
+## ░░ WHY GOOLZ.ORG ░░
+
+ICANN opened `.org` to general use in 2003. It is not restricted to
+nonprofits. The Society uses it because it feels right for a small
+voluntary society on a small voluntary subject.
 
 ---
 
