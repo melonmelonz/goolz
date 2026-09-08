@@ -7,7 +7,7 @@ pages_build_output_dir = "."
 binding = "GOOLZ_KV"
 id = "d329b89f482c41eda425aa955d1ca494"
 
-# ── KV: notepad docs (next-chapter app) ──────────────────
+# ── KV: notepad docs (functions/api/docs) ──────────────────
 [[kv_namespaces]]
 binding = "NOTEPAD_DOCS"
 id = "2d8ce6ac0309462bbc2ff3934f2a33c1"

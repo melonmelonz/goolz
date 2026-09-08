@@ -55,14 +55,13 @@
       repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);
   }
 
-  /* When framed inside the Win95 GOOLZ.exe window we drop page chrome
-     that doesn't make sense in an embedded context: the floating
-     fullscreen button (the host page can pop the standalone in a tab)
-     and oversized canvases.  body.embed is set early in the inline
-     script when window.parent !== window. */
+  /* When framed in an iframe we drop page chrome that doesn't make
+     sense in an embedded context: the floating fullscreen button (the
+     host page can pop the standalone in a tab) and oversized canvases.
+     body.embed is set early in the inline script when
+     window.parent !== window. */
   body.embed { padding: 0; }
   body.embed #fs-toggle { display: none; }
-  body.embed #desktop-back { display: none; }
   body.embed #lobby {
     width: 96%;
     max-width: 100%;
@@ -247,23 +246,6 @@
   #fs-toggle    { right: 46px; }
   #audio-toggle.muted { color: var(--muted); }
   #audio-toggle:hover, #fs-toggle:hover { background: var(--accent); color: var(--bg-dk); }
-  /* "← back to desktop" — hidden when embedded inside the Win95 GOOLZ.exe
-     iframe (close the window instead). Top-left, same chiclet as audio/fs. */
-  #desktop-back {
-    position: fixed; top: 10px; left: 10px; z-index: 50;
-    height: 28px; padding: 0 10px;
-    border: 2px solid var(--line);
-    background: var(--bg-dk);
-    color: var(--accent);
-    font-family: inherit; font-size: 10px; letter-spacing: 1px;
-    text-decoration: none;
-    box-shadow: 2px 2px 0 0 var(--accent);
-    display: inline-flex; align-items: center; justify-content: center;
-    -webkit-font-smoothing: none;
-  }
-  #desktop-back:hover { background: var(--accent); color: var(--bg-dk); }
-  :fullscreen #desktop-back { display: none; }
-
   /* Fullscreen — canvas dominates, chrome shrinks. */
   :fullscreen body, :fullscreen #game { background: var(--bg-dk); }
   :fullscreen #game { width: 100vw; height: 100vh; justify-content: center; gap: 4px; }
@@ -396,7 +378,6 @@
 </head>
 <body>
 
-<a id="desktop-back" href="/next-chapter/" title="back to the desktop">← DESKTOP</a>
 <button id="audio-toggle" title="audio" aria-label="toggle audio">♪</button>
 <button id="fs-toggle" title="fullscreen" aria-label="toggle fullscreen">⛶</button>
 
@@ -486,10 +467,10 @@
 'use strict';
 
 // ───────────────────────────────────────────────────────────────────────
-// Embed detection — when framed inside the Win95 desktop's GOOLZ.exe
-// window we strip the page chrome (floating fullscreen button + outer
-// drop-shadow + oversized canvas) so the lobby and game fit a 660×500
-// window.  Same-origin iframe so window.parent access is allowed.
+// Embed detection — when framed in an iframe we strip the page chrome
+// (floating fullscreen button + outer drop-shadow + oversized canvas)
+// so the lobby and game fit a small host window.  Same-origin iframe so
+// window.parent access is allowed.
 // ───────────────────────────────────────────────────────────────────────
 try {
   if (window.parent !== window) document.body.classList.add('embed');

@@ -1,7 +1,7 @@
 # ── Security headers (apply to everything) ────────────────────
-# X-Frame-Options + frame-ancestors are SAMEORIGIN/'self' so the
-# Win95 desktop at /next-chapter can iframe /games/pwg/ without
-# losing protection against external sites embedding goolz.org.
+# X-Frame-Options + frame-ancestors are SAMEORIGIN/'self' so pages
+# on goolz.org can frame each other, while external sites still
+# cannot embed goolz.org.
 /*
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
