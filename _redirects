@@ -7,8 +7,8 @@
 /next-chapter      /                  301
 /next-chapter/*    /                  301
 
-# 311 Anomaly Tracker SPA
-/311/*             /311/index.html    200
+# 311 Anomaly Tracker SPA: handled by functions/311/[[path]].js. A 200-rewrite
+# here does not fire, because Pages resolves assets before redirect rules.
 
 # Worker source and bare /games should not be browsable pages
 /pwg-rooms/*       /404.html          404
