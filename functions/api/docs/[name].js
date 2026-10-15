@@ -2,6 +2,7 @@
 // DELETE /api/docs/:name  → delete document
 import {
   isAllowedOrigin,
+  isAllowedWriteOrigin,
   json,
   sanitizeDocName,
   preflight,
@@ -25,6 +26,8 @@ export async function onRequest(ctx) {
   }
 
   if (request.method === 'DELETE') {
+    if (!isAllowedWriteOrigin(origin)) return json({ error: 'Forbidden origin' }, 403, origin);
+
     await env.NOTEPAD_DOCS.delete(name);
     return json({ ok: true }, 200, origin);
   }

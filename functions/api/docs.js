@@ -2,6 +2,7 @@
 // POST /api/docs        → { name, content } → save document
 import {
   isAllowedOrigin,
+  isAllowedWriteOrigin,
   json,
   sanitizeDocName,
   preflight,
@@ -23,6 +24,8 @@ export async function onRequest(ctx) {
   }
 
   if (request.method === 'POST') {
+    if (!isAllowedWriteOrigin(origin)) return json({ error: 'Forbidden origin' }, 403, origin);
+
     // Enforce content-length before reading body
     const cl = parseInt(request.headers.get('content-length') || '0', 10);
     if (cl > MAX_CONTENT + 512) return json({ error: 'Payload too large' }, 413, origin);

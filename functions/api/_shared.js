@@ -19,6 +19,13 @@ export function isAllowedOrigin(origin) {
   return !origin || ALLOWED_ORIGINS.has(origin);
 }
 
+// Writes are stricter than reads. A missing Origin header is fine for a GET,
+// but it is not authorization: without this, any unauthenticated curl could
+// write or delete documents in KV.
+export function isAllowedWriteOrigin(origin) {
+  return Boolean(origin) && ALLOWED_ORIGINS.has(origin);
+}
+
 export function corsHeaders(origin) {
   if (origin && ALLOWED_ORIGINS.has(origin)) {
     return {
