@@ -3,10 +3,6 @@
 /games/pwf3/       /games/pwg/        301
 /games/pwf3/*      /games/pwg/:splat  301
 
-# next-chapter was severed from goolz.org; send old inbound links home
-/next-chapter      /                  301
-/next-chapter/*    /                  301
-
 # 311 Anomaly Tracker SPA: handled by functions/311/[[path]].js. A 200-rewrite
 # here does not fire, because Pages resolves assets before redirect rules.
 
